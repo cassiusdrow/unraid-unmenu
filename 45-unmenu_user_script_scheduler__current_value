@@ -1,0 +1,8 @@
+#define USER_SCRIPT_LABEL Get Disk Scheduler queuing mode
+#define USER_SCRIPT_DESCR Display the current disk device I/O scheduler mode 
+echo "<pre>"
+for i in /sys/block/[sh]d*/queue/scheduler
+do 
+  echo -n $i " "
+  cat $i
+done

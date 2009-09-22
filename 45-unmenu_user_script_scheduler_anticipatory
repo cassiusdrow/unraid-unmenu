@@ -1,0 +1,9 @@
+#define USER_SCRIPT_LABEL Set Disk Scheduler to 'anticipatory' queuing  mode
+#define USER_SCRIPT_DESCR Set the disk device I/O scheduler to use Anticipatory-Queuing  (anticipatory)
+echo "<pre>"
+ for i in /sys/block/[sh]d*/queue/scheduler
+ do 
+  echo -n $i " " ;
+  echo anticipatory >$i;
+  cat $i; 
+done

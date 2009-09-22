@@ -1,0 +1,9 @@
+#define USER_SCRIPT_LABEL Restart UnMenu
+#define USER_SCRIPT_DESCR Restart the unmenu.awk server process to allow it to re-read the set of plugins and config files.
+# The parent of this "button" is a shell, its parent is the awk process we want to kill it to re-start it.
+# We need to get the browser back to the main page first... since it will expect to be there when restarted.
+# we also need to use nohup to have another process group for the actual sleep 10 seconds/kill, otherwise 
+# the shell "awk" spawns waits and does not let the javascript get sent to the browser
+awk_pid=`ps -fp $PPID | grep -v PPID | awk '{ print $3 }'`
+echo "<script type=\"text/javascript\">window.location=\"/\"</script>"
+nohup sh -c "sleep 10; kill -USR1 $awk_pid" 1>/dev/null 2>&1 &
