@@ -3,7 +3,7 @@ BEGIN {
 #define ADD_ON_MENU        Share ISO
 #define ADD_ON_STATUS      NO
 #define ADD_ON_TYPE        awk
-#define ADD_ON_VERSION     1.0 
+#define ADD_ON_VERSION     1.1  
 
   if ( MyHost == "" ) {
       "uname -n" | getline MyHost
@@ -129,7 +129,7 @@ BEGIN {
 	gsub("\\\\'","",mount_name)
 	gsub("'","",mount_name)
 
-	# create the mount point
+	# un-mount the file
 	system("umount '" theFile "'" );
         num_mounts=GetLoopMountedISO()
         # Name of samba config file has changed as of unRAID 4.5-beta3
@@ -212,7 +212,7 @@ BEGIN {
         num_mounts=GetLoopMountedISO()
 	# If successful, create a user-share, if not, display error
 
-	if ( isLoopMounted( mount_name )  == "n" ) {
+	if ( isLoopMounted( base_name )  == "n" ) {
 		if ( num_mounts == 8 ) {
 		   print "<hr><font color=red>Unable to mount " mount_name ".  Max number ISO Shares already exist.</font><br>"
          	} else {
@@ -240,7 +240,7 @@ BEGIN {
                   ORS = "\n"
                   print "[" mount_name "]" >> sharefile
                   print "        path = /var/tmp/mnt/" mount_name > sharefile
-                  print "        read only = Yes" > sharefile
+                  print "        read only = No" > sharefile
                   print "        force user = root" > sharefile
                   print "        map archive = Yes" > sharefile
                   print "        map system = Yes" > sharefile
@@ -458,7 +458,7 @@ function getDirectoryListing( theDir , out_html, cmd) {
 
      #  don't list non-ISO files
      if ( theType == "file" ) {
-        if ( ! match( tolower(theFile) ,/.*\.iso/) ) {
+        if ( ! match( tolower(theFile) ,/.*\.iso$/) ) {
           continue;
 	}
      }
@@ -478,7 +478,8 @@ function getDirectoryListing( theDir , out_html, cmd) {
      # file date
      gsub(" ","\\&nbsp;",d[7])
      out_html=out_html "<td align=\"right\"  class=\"" tdclass "\">" d[6] " " d[7] " " d[8] "</td>"
-     if (theFile ~ ".ISO" || theFile ~ ".iso" ) { 
+#     if (theFile ~ ".ISO" || theFile ~ ".iso" ) { 
+     if ( match( tolower(theFile) ,/.*\.iso$/) ) { 
        gsub(/ /,"%20",theDir)
        if ( isLoopMounted( theFile ) == "y" ) {
          out_html=out_html "<td><a href=\"http://" MyHost ":" MyPort "/share_iso?dir=" theDir "&unshare_iso=" theDir theFile theSlash "\">UnShare ISO</a></td>"
@@ -516,30 +517,40 @@ function GetAllowedFolders(cfile) {
 function PrintLoopMounted ( out_str) {
 	out_str=""
 	for (a in loop_iso ) {
-                if (loop_iso[a] ~ ".ISO" || loop_iso[a] ~ ".iso" ) { 
-		    out_str = out_str loop_iso[a] "<br>"
+                if (loop_iso[a] ~ ".ISO$" || loop_iso[a] ~ ".iso$" || loop_iso[a] ~ "*$" ) { 
+                    bn=getBaseName( loop_iso[a])
+                    bn_len=length(bn)
+                    dir_name=substr(loop_iso[a], 1, length(loop_iso[a]) - bn_len)
+                    out_str = out_str loop_iso[a] " <a href=\"http://" MyHost ":" MyPort "/share_iso?dir=" dir_name "&unshare_iso=" loop_iso[a] "\">UnShare ISO</a><br>"
+		    #out_str = out_str loop_iso[a] "<br>"
 		}
 	}
 	if ( out_str == "" ) out_str = "No ISO files shared currently."
 	return out_str
 }
 
-function isLoopMounted( theFile ) {
+function isLoopMounted( theFile ,fn,fnl) {
 
 	gsub("%27","'",theFile)
 	gsub("'","",theFile)
-	#print "testing: " theFile "<br>"
+# 	print "testing: " theFile "<br>"
 	is_looped="n"
 	for (a in loop_iso ) {
-	#	print " -- " loop_iso[a] "<br>"
-		if ( loop_iso[a] ~ theFile ) {
+                fn=getBaseName(loop_iso[a])
+                fnl=length(fn)
+                if ( substr(fn,fnl , 1) == "*") {
+                   fn=substr(fn,1,fnl - 1)
+                }
+# 		print " -- " fn "<br>"
+		if ( theFile ~ fn ) {
 	           is_looped="y"
-	#	print " -- LOOPED " loop_iso[a] "<br>"
+#  	           print " -- LOOPED " loop_iso[a] "<br>"
+                   break;
 	        }
 	}
         return is_looped
 }
-function GetLoopMountedISO ( cmd,lfile) {
+function OldGetLoopMountedISO ( cmd,lfile) {
     RS="\n"
     i=1
     cmd="losetup -a"
@@ -548,6 +559,21 @@ function GetLoopMountedISO ( cmd,lfile) {
     while (( cmd | getline lfile ) > 0) {
         match(lfile, /^(\/dev\/loop[0-9]+:.*)( \()(.+)(\))$/, f)
 	loop_iso[i]=f[3]
+	gsub("'","",loop_iso[i])
+	i++
+    }
+    close(cmd)
+    return i - 1
+}
+function GetLoopMountedISO ( cmd,lfile) {
+    RS="\n"
+    i=1
+    cmd="mount | grep \"loop=/dev/loop\""
+    delete loop_iso;
+    delete f;
+    while (( cmd | getline lfile ) > 0) {
+        match(lfile, /^(.*)( on \/var\/tmp\/mnt.*)$/, f)
+	loop_iso[i]=f[1]
 	gsub("'","",loop_iso[i])
 	i++
     }
