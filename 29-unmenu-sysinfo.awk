@@ -5,22 +5,26 @@ BEGIN {
 #define ADD_ON_TYPE    awk
 #define ADD_ON_VERSION 1.2 - contributed by bubbaQ
 #define ADD_ON_VERSION 1.3 - modified to better deal with utilities not yet installed Joe L.
+#define ADD_ON_VERSION 1.4 - Added new buttons for free space, mounted file systems -  Joe L.
 #define ADD_ON_HEAD <STYLE type='text/css'>.db {color:red;}</STYLE>
 
   CGI_setup()
   num_commands=0;
 
   LoadCmds("function", "CPU Info", "", "", "CPU Info" );
+  LoadCmds("exec", "Memory Info", "/usr/bin/free", "", "Memory Info" );
   LoadCmds("function", "Ethernet Info", "", "", "Information about your network interface");
   LoadCmds("exec", "Ps info", "/usr/bin/ps -eaf", "", "A current Process Listing");
   LoadCmds("exec", "Fuser info", "/usr/bin/fuser -mv /mnt/disk* /mnt/user/* 2>&1","You don't appear to have fuser installed.", "File systems and user-shares in use");
   LoadCmds("exec", "Uptime", "/usr/bin/uptime;/usr/bin/uname -a", "", "Up-time");
   LoadCmds("exec", "Top Processes", "/usr/bin/top -b -n1", "", "Processes using the most system resources");
   LoadCmds("exec", "Open Files", "/usr/bin/lsof /dev/md*", "You don't appear to have lsof installed.", "A list of open files");
+  LoadCmds("exec", "Mounted File Systems", "/bin/mount", "", "A list of mounted file systems");
+  LoadCmds("exec", "File System Space", "/usr/bin/df", "", "A list of file system usage statistics");
   LoadCmds("exec", "List Devices", "/usr/bin/lsdev", "You don't appear to have lsdev installed", "A listing of the devices on your server");
   LoadCmds("exec", "UPS Status", "/sbin/apcaccess status", "You don't appear to have a UPS monitoring program installed","UPS Status");
   LoadCmds("exec", "PCI Devices", "/sbin/lspci -v", 
-          "PCI Utilities can be installed from <a href='http://packages.slackware.it/package.php?q=current/pciutils-2.2.10-i486-1'>here</a>.",
+          "PCI Utilities can be installed from the <a href=\"package_manager\">unMENU Package Manager.</a>",
           "A listing of the PCI devices on your server");
   LoadCmds("exec", "Loaded Modules", "/sbin/lsmod", "", "Loaded Kernel Modules");
 

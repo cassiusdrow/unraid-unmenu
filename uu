@@ -12,6 +12,10 @@ then
    echo "Sorry, $d/unmenu.awk does not seem to exist"
    exit 2
 fi
+# close the open file descriptors to the console
+exec 0>&-
+exec 1>&-
+exec 2>&-
 # disable access time update on flash drive.
 # This will keep config file read from writing to flash drive to modify access times.
 mount -o remount,noatime,nodiratime /boot
@@ -22,12 +26,12 @@ mount -o remount,noatime,nodiratime /boot
         awk -W re-interval -f ./unmenu.awk 2>&1 1</dev/null
         ret=$?
         case $ret in
-        0) break ;;      # normal exit
-        2) break ;;      # locked file
-        3) continue ;;   # re-start unmenu to re-read conf files and plug-ins
+        0) echo "unmenu.awk stopped"; break ;;      # normal exit
+        2) echo "unmenu.awk unable to start.  It  may already be running"; break ;;      # locked file
+        3|138) continue ;;   # re-start unmenu to re-read conf files and plug-ins
         143) break ;;    # process killed
         141) continue ;; # i/o error when browser closes port
-        *) echo "exit status $ret" ; continue ;;
+        *) echo "exit status $ret - unmenu.awk will be re-started" ; continue ;;
         esac
     done 2>&1 </dev/null 
 ) | logger -tunmenu -plocal7.info -is &

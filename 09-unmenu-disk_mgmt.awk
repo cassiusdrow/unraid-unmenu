@@ -7,6 +7,8 @@ BEGIN {
 #ADD_ON_VERSION 1.0 - Joe L.
 #ADD_ON_VERSION 1.1 - improved ability to kill processes using disk being un-mounted. Joe L.
 #ADD_ON_VERSION 1.2 - print reiserfsck commands for rebuild-tree (if needed) to screen. Joe L.
+#ADD_ON_VERSION 1.3 - print more of smartctl output on long/short test requests Joe L.
+#ADD_ON_VERSION 1.4 - use spinup/spindown commands now available in 4.5 unRAID Joe L.
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
    GetConfigValues(ScriptDirectory "/" LocalConfigFile, "");
@@ -32,6 +34,17 @@ BEGIN {
    directory_mask = CONFIG["directory_mask"] ? CONFIG["directory_mask"] :  "711"
 
    GetArrayStatus();
+   if ( has_spinup == "" ) {
+     has_spinup="false"
+     while (("/root/mdcmd status|strings" | getline a) > 0 ) {
+       if ( a ~ "rdevSpinupGroup" ) { 
+           has_spinup="true"; 
+           break;
+       }
+     }
+     close("/root/mdcmd status|strings")
+   }
+
    GetDiskData()
    for ( i =0; i<numdisks; i++ ) {
      GetDiskFreeSpace( disk_name[i], i);
@@ -95,7 +108,6 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   # user pressed the "HDParm Infobutton"
   if ( GETARG["disk_device"] != "" && GETARG["hdparm"] == "HDParm Info" ) {
     DiskCommandOutput = "<b><u><font size=\"+1\">HDParm Info for " d[1] " " d[2] "</font></u></b><br><pre>"
-    #smartctl -a -d ata /dev/$disk_device    
     cmd="hdparm -I " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0)  {
@@ -106,9 +118,10 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   }
   # user pressed the "Smart Statistics button"
   if ( GETARG["disk_device"] != "" && GETARG["smart_stats"] == "Smart Status Report" ) {
+    SpinUp(d[3])
     DiskCommandOutput = "<b><u><font size=\"+1\">Statistics for " d[1] " " d[2] "</font></u></b><br><pre>"
-    #smartctl -a -d ata /dev/$disk_device    
     cmd="smartctl -a -d ata " d[1]
+    DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b>" ORS
     RS="\n"
     while (( cmd | getline f ) > 0)  {
         DiskCommandOutput = DiskCommandOutput f ORS
@@ -118,21 +131,29 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   }
   # user pressed the "Smart Short Test button"
   if ( GETARG["disk_device"] != "" && GETARG["smart_short"] == "Short Smart Test" ) {
-    DiskCommandOutput = "Smart Short Test of " d[1] " will take from several minutes to an hour or more."
-    #smartctl -t short /dev/$disk_device    
-    cmd="smartctl -t short " d[1]
+    SpinUp(d[3])
+    DiskCommandOutput = "Smart Short Test of " d[1] " will take from several minutes to an hour or more.<br><pre>"
+    cmd="smartctl -t short -d ata " d[1] " 2>&1"
     RS="\n"
-    while (( cmd | getline f ) > 0) ;
+    DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b>" ORS
+    while (( cmd | getline f ) > 0)  {
+        DiskCommandOutput = DiskCommandOutput f ORS
+    }
     close(cmd);
+    DiskCommandOutput = DiskCommandOutput "</pre>"
   }
   # user pressed the "Smart Long Test button"
   if ( GETARG["disk_device"] != "" && GETARG["smart_long"] == "Long Smart Test" ) {
-    DiskCommandOutput = "Smart Long Test of " d[1] " could take several hours or more."
-    #smartctl -t long /dev/$disk_device    
-    cmd="smartctl -t long " d[1]
+    SpinUp(d[3])
+    DiskCommandOutput = "Smart Long Test of " d[1] " could take several hours or more.<br>You must disable disk spin-down during this test, otherwise it will abort when the disk is spun down.<pre>"
+    cmd="smartctl -t long -d ata " d[1] " 2>&1"
     RS="\n"
-    while (( cmd | getline f ) > 0) ;
+    DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b>" ORS
+    while (( cmd | getline f ) > 0)  {
+        DiskCommandOutput = DiskCommandOutput f ORS
+    }
     close(cmd);
+    DiskCommandOutput = DiskCommandOutput "</pre>"
   }
   # user pressed the "Spin Down"
   if ( GETARG["disk_device"] != "" && GETARG["spin_down"] == "Spin Down" ) {
@@ -141,8 +162,8 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   }
   # user pressed the "Spin Up"
   if ( GETARG["disk_device"] != "" && GETARG["spin_up"] == "Spin Up" ) {
-    DiskCommandOutput =  d[1] " has been spun up."
-    SpinUp(d[1])
+    DiskCommandOutput =  d[1] " (" d[3] ") has been spun up."
+    SpinUp(d[3])
   }
   if ( GETARG["disk_device"] != "" && GETARG["umount"] == "Un-Mount Drive" ) {
     if ( d[3] ~ "md" ) {
@@ -205,8 +226,9 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Short Test of /dev/" d[2] " will take from several minutes to an hour or more.<pre>"
-          cmd="smartctl -t short /dev/" d[2] " 2>&1"
+          cmd="smartctl -t short -d ata /dev/" d[2] " 2>&1"
           RS="\n"
+          DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b><br>" ORS
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
           }
@@ -217,8 +239,9 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Long Test of " d[2] " could take several hours or more.<pre>"
-          cmd="smartctl -t long /dev/" d[2] " 2>&1"
+          cmd="smartctl -t long -d ata /dev/" d[2] " 2>&1"
           RS="\n"
+          DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b><br>" ORS
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
           }
@@ -255,6 +278,12 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "mkreiserfs " d[2] "<pre>"
           cmd="mkreiserfs  -q /dev/" d[2] " 2>&1"
+          RS="\n"
+          while (( cmd | getline f ) > 0)  {
+              DiskCommandOutput = DiskCommandOutput f ORS
+          }
+          close(cmd);
+          cmd="sfdisk --change-id /dev/" d[2] " 1 83 2>&1"
           RS="\n"
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
@@ -488,7 +517,7 @@ function DiskManagement(select_value, i, outstr ) {
     i = numdisks + 1;
     outstr = outstr "<tr><td align=\"left\" colspan=\"99\"><ul><li>Short SMART tests take a few minutes or more to run, "
     outstr = outstr "Long SMART tests can take hours. SMART reports and tests will spin up the drive.<br>"
-    outstr = outstr "Long and Short SMART test results will appear in the Smart-Status-Report once they complete.<br><br>"
+    outstr = outstr "Long and Short SMART test results will appear in the Smart-Status-Report once they complete.<br>You must disable disk-spin-down during a \"long\" test, otherwise, the test will abort when the disk is spun down.<br><br>"
     outstr = outstr "<li>File System Checks can take from a few minutes to 45 minutes or more in a large file system with lots of files.<br> "
     outstr = outstr "It will appear as if the browser is hung waiting for the web-server to return. "
     outstr = outstr "<b>Be patient, it eventually will.</b><br>File System Check output is also sent to the System Log<br><br>"
@@ -845,12 +874,18 @@ function  SpinUp( disk, cmd, f) {
     # by reading a single "random" block from each disk in turn.  
     srand() # important to get random numbers when unmenu is re-started.
     for ( i =0; i<numdisks; i++ ) {
-        if ( "/dev/" disk_device[i] == disk || disk == "All Disks" ) {
-            # calculate a random block between 1 and the max blocks on the device
-            skip_blocks = 1 + int( rand() * disk_size[i] );
+#print disk_name[i] ORS
+        if ( disk_name[i] == disk ) {
+            if ( has_spinup == "true" ) {
+               cmd="/root/mdcmd spinup " i " >/dev/null 2>&1"
+            } else {
+               # calculate a random block between 1 and the max blocks on the device
+               skip_blocks = 1 + int( rand() * disk_size[i] );
 
-            cmd="dd if=/dev/" disk_device[i] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
-        #    print cmd
+               #cmd="dd if=/dev/" disk_device[i] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
+               cmd="dd if=/dev/" disk_name[i] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
+            }
+            #print cmd ORS
             system(cmd);
         }
     }
@@ -859,9 +894,13 @@ function  SpinUp( disk, cmd, f) {
 function SpinDown( disk, cmd, i, f) {
     # Spin Down the drives
     for ( i =0; i<numdisks; i++ ) {
-        if ( "/dev/" disk_device[i] == disk || disk == "All Disks" ) {
-            cmd="/usr/sbin/hdparm -y /dev/" disk_device[i]
-        #    print cmd
+        if ( "/dev/" disk_device[i] == disk ) {
+            if ( has_spinup == "true" ) {
+               cmd="/root/mdcmd spindown " i
+            } else {
+               cmd="/usr/sbin/hdparm -y /dev/" disk_device[i]
+            }
+          #    print cmd
             while (( cmd | getline f ) > 0) ;
             close(cmd);
         }

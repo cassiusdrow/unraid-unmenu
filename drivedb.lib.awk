@@ -1,4 +1,5 @@
 #ADD_ON_VERSION 1.41 - contributed by bjp999
+#ADD_ON_VERSION 1.42 - changed spinup method
 
 #-----------------------------------------------------------------------
 # This function begins the creation of the drivedb[] associative array. 
@@ -1059,8 +1060,11 @@ function SpinUpAll(cmd, ix, disk_blocks, skip_blocks, spunupdrives)
             system("sleep 5");
          }
          disk_blocks = GetRawDiskBlocks( "/dev/" drivedb[ix, "dev"] )
+         disk_blocks = disk_blocks - 128 # skip the first cylinder
          #perr(dev " disk blocks = " disk_blocks);
          skip_blocks = 1 + int( rand() * disk_blocks );
+         cmd="/root/mdcmd spinup " ix " > /dev/null 2>&1"
+         system(cmd);
          cmd="nohup dd if=/dev/" drivedb[ix, "dev"] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1 &"
          system(cmd);
          close(cmd);
@@ -1084,8 +1088,11 @@ function SpinUpSmart(cmd, ix, disk_blocks, skip_blocks, spunupdrives)
             system("sleep 5");
          }
          disk_blocks = GetRawDiskBlocks( "/dev/" drivedb[ix, "dev"] )
+         disk_blocks = disk_blocks - 128 # skip the first cylinder
          #perr(dev " disk blocks = " disk_blocks);
          skip_blocks = 1 + int( rand() * disk_blocks );
+         cmd="/root/mdcmd spinup " ix " > /dev/null 2>&1"
+         system(cmd);
          cmd="nohup dd if=/dev/" drivedb[ix, "dev"] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1 &"
          system(cmd);
          close(cmd);

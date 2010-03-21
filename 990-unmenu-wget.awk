@@ -9,6 +9,12 @@ BEGIN {
 #define ADD_ON_VERSION     1.3 Added code to identify mal-formed package .conf files.
 #define ADD_ON_VERSION     1.4 fixed incorrect button name when package exists on server, but different version.
 #define ADD_ON_VERSION     1.5 Improved handling of download when 404 "not-found" error returned on download URL
+#define ADD_ON_VERSION     1.6 Fixed initialization of version string.
+#define ADD_ON_VERSION     2.0 Modified for new features of configurable/editable package-variables
+#define ADD_ON_VERSION     2.1 Modified to allow more than one URL per package to support needed libraries, etc.
+#define ADD_ON_VERSION     2.2 Added newline prior to auto-install command, in case user did not add newline at the end of the "go" file
+#define ADD_ON_VERSION     2.2.1 Fixed bug with input variables with embedded spaces
+#define ADD_ON_VERSION     2.2.2 Fixed bug with input variables with special characters
 
 
   if ( MyHost == "" ) {
@@ -89,7 +95,14 @@ BEGIN {
 	  package_name[package_count]   = substr(line,c[3,"start"],c[3,"length"])
           package_descr[package_count]  = ""
           package_url[package_count]    = ""
+          package_extra_url[package_count]    = ""
+          package_extra_url_count[package_count] = 0
           package_file[package_count]   = "PACKAGE_FILE undefined"
+          package_extra_file[package_count]   = "EXTRA PACKAGE_FILE undefined"
+          package_extra_file_count[package_count] = 0
+          package_md5[package_count]    = ""
+          package_extra_md5[package_count]    = ""
+          package_extra_md5_count[package_count] = 0
           package_installed[package_count]   = ""
           package_version_test[package_count]   = "echo undefined"
           package_version_string[package_count]   = ""
@@ -97,6 +110,8 @@ BEGIN {
           package_dependency_count[package_count] = 0
           package_install_count[package_count] = 0
           package_installation[package_count, 0]   = "PACKAGE_INSTALLATION undefined"
+          package_variable_count[package_count] = 0
+          package_variable[package_count, 0]   = "PACKAGE_VARIABLE undefined"
           package_mem[package_count]   = ""
       }
       # expect the package description.  There may be more than one line, just concatenate
@@ -112,16 +127,37 @@ BEGIN {
 	  package_url[package_count] = substr(line,c[3,"start"],c[3,"length"])
       }
       delete c;
+      # the extra URLs to download the package
+      match( line , /^(PACKAGE_EXTRA_URL)([\t =]+)(.+)/, c)
+      if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+          package_extra_url_count[package_count]++
+	  package_extra_url[package_count,package_extra_url_count[package_count]] = substr(line,c[3,"start"],c[3,"length"])
+      }
+      delete c;
       # the name of a file to test if exists.  If it exists, package is already downloaded.
       match( line , /^(PACKAGE_FILE)([\t =]+)(.+)/, c)
       if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
 	  package_file[package_count] = substr(line,c[3,"start"],c[3,"length"])
       }
       delete c;
+      # the name of extra file to test if exists.  If it exists, extra file is already downloaded.
+      match( line , /^(PACKAGE_EXTRA_FILE)([\t =]+)(.+)/, c)
+      if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+          package_extra_file_count[package_count]++
+	  package_extra_file[package_count,package_extra_file_count[package_count]] = substr(line,c[3,"start"],c[3,"length"])
+      }
+      delete c;
       # the MD5 checksum to verify the downloaded package arrived intact.
       match( line , /^(PACKAGE_MD5)([\t =]+)(.+)/, c)
       if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
 	  package_md5[package_count] = substr(line,c[3,"start"],c[3,"length"])
+      }
+      delete c;
+      # the MD5 checksum to verify the downloaded extra file arrived intact.
+      match( line , /^(PACKAGE_EXTRA_MD5)([\t =]+)(.+)/, c)
+      if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+          package_extra_md5_count[package_count]++
+	  package_extra_md5[package_count,package_extra_md5_count[package_count]] = substr(line,c[3,"start"],c[3,"length"])
       }
       delete c;
       # the name of a file to test if package installed.  If it exists, package is installed.
@@ -148,6 +184,13 @@ BEGIN {
       if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
           package_dependency_count[package_count]++
 	  package_depend[package_count, package_dependency_count[package_count]] = substr(line,c[3,"start"],c[3,"length"])
+      }
+      # package configurable variables(one per line) This is a "two-dimensional" array
+      # and may have multiple members, one per variable.  
+      match( line , /^(PACKAGE_VARIABLE)([\t =]+)(.+)/, c)
+      if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+          package_variable_count[package_count]++
+	  package_variable[package_count, package_variable_count[package_count]] = substr(line,c[3,"start"],c[3,"length"])
       }
       # package installation commands (one per line) This is a "two-dimensional" array
       # and may have multiple members, one per command.  
@@ -178,8 +221,13 @@ BEGIN {
   MyPrefix    = "http://" MyHost ":" MyPort
 
   theHTML = "" 
+  edit_package_file=""
+  save_edit_flag=""
+  delete edit_variable;
   for (a in PARAM) {
       if ( PARAM[a] ~ "manual_install-" ) {
+#theHTML = theHTML PARAM[a] "<br>" 
+
           OLD_RS = RS
           OLD_ORS = ORS
           ORS = "\n"
@@ -193,16 +241,39 @@ BEGIN {
             if ( the_package == package_file[i] ) {
                manual_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".manual_install"
                print "SCRIPT_DIRECTORY=" ScriptDirectory > manual_install_file
+               for ( pc=1; pc <= package_variable_count[i]; pc++ ) {
+                  delete f;
+                  match ( package_variable[i,pc] , /^([^\|]*)(\|\|)([^=]*)(=)(.*)(\|\|)(.*)/, f);
+                  if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[4,"length"] > 0 ) {
+                    theVar = substr(package_variable[i,pc],f[3,"start"],f[3,"length"])
+                    theVal = substr(package_variable[i,pc],f[5,"start"],f[5,"length"])
+                    
+                    #print theVar > manual_install_file
+                    print theVar "=\"" theVal "\"" > manual_install_file
+                  }
+               } 
                for ( pc=1; pc <= package_install_count[i]; pc++ ) {
+                  #theHTML = theHTML package_installation[i,pc] ORS
                   print package_installation[i,pc] > manual_install_file
                } 
                close(manual_install_file)
-               
-               cmd = "chmod +x '" manual_install_file "';cd '" PACKAGE_DIRECTORY "'; sh -c '" manual_install_file "' 2>&1"
-               while (( cmd | getline inst_out  ) > 0) {
+               install_output="/tmp/unmenu_manual_install.out" 
+               cmd = "chmod +x '" manual_install_file "';cd '" PACKAGE_DIRECTORY "'; sh '" manual_install_file "' >" install_output " 2>&1"
+               system(cmd);
+               while (( getline inst_out < install_output ) > 0 ) {
                   theHTML = theHTML inst_out ORS
                }
+               close(install_output)
+
+              # while (( cmd | getline inst_out  ) > 0) {
+              #    theHTML = theHTML inst_out ORS
+              # }
+
                theHTML = theHTML "</pre>"
+               auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
+               if (FileExists(auto_install_file) == "yes" ) { 
+                  system("cp " manual_install_file " " auto_install_file)
+               }
                if ( FileExists( package_installed[i] ) == "yes" ) {
                  theHTML = theHTML "<font color=\"blue\"><b>" the_package " is now installed:</b></font><br><pre>"
                } else {
@@ -228,6 +299,14 @@ BEGIN {
             if ( the_package == package_file[i] ) {
                auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
                print "SCRIPT_DIRECTORY=" ScriptDirectory > auto_install_file
+               for ( pc=1; pc <= package_variable_count[i]; pc++ ) {
+                  delete f;
+                  match ( package_variable[i,pc] , /^([^\|]*)(\|\|)(.*)(\|\|)(.*)/, f);
+                  if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[3,"length"] > 0 ) {
+                    theVar = substr(package_variable[i,pc],f[3,"start"],f[3,"length"])
+                    print theVar > auto_install_file
+                  }
+               } 
                for ( pc=1; pc <= package_install_count[i]; pc++ ) {
                   print package_installation[i,pc] > auto_install_file
                } 
@@ -251,7 +330,7 @@ BEGIN {
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
                auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
-               system("rm '" auto_install_file "'" )
+               system("rm '" auto_install_file "' 2>/dev/null" )
                break;
             }
           }
@@ -280,104 +359,217 @@ BEGIN {
                } else {
                  theHTML = theHTML "<font color=\"red\"><b>" the_package " not successfully downloaded</b></font><br>"
                }
+               for ( p = 1; p <= package_extra_url_count[i]; p++ ) {
+                 match( package_extra_url[i,p] , /^(http:\/\/)([^\/]*)(.*)/, c)
+                 if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+                   theServer = substr(package_extra_url[i,p],c[2,"start"],c[2,"length"])
+                   #theURL    = "/" substr(package_extra_url[i,p],c[3,"start"],c[3,"length"])
+                   port   = "/80"
+                   download_package(package_name[i], PACKAGE_DIRECTORY "/" package_extra_file[i,p],  theServer, port, package_extra_url[i,p] )
+                 }
+                 if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" ) {
+                   theHTML = theHTML "<font color=\"blue\"><b>" package_extra_file[i,p] " has been downloaded</b></font><br>"
+                 } else {
+                   theHTML = theHTML "<font color=\"red\"><b>" package_extra_file[i,p] " not successfully downloaded</b></font><br>"
+                 }
+               }
                break;
             }
           }
           ORS = OLD_ORS
           break;
       }
+      if ( PARAM[a] ~ "edit-" ) {
+          delete f;
+          match ( PARAM[a], /^edit-([^=]*)(=)(.*)/, f);
+          if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[3,"length"] > 0 ) {
+            edit_package_file = substr(PARAM[a],f[1,"start"],f[1,"length"])
+          }
+      }
+      if ( PARAM[a] ~ "save_edit-" ) {
+          delete f;
+          match ( PARAM[a], /^save_edit-([^=]*)(=)(.*)/, f);
+          if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[3,"length"] > 0 ) {
+            edit_package_file = substr(PARAM[a],f[1,"start"],f[1,"length"])
+          }
+          save_edit_flag="save"
+      }
+      if ( PARAM[a] ~ "var-" ) {
+          delete f;
+#theHTML = theHTML PARAM[a] "<br>"
+          match ( PARAM[a], /^var-([^=]*)(=)(.*)/, f);
+          if ( f[1,"length"] > 0 && f[2,"length"] > 0 ) {
+             edit_package_var = substr(PARAM[a],f[1,"start"],f[1,"length"])
+             edit_package_value = unencodeHex(substr(PARAM[a],f[3,"start"],f[3,"length"]))
+	     edit_variable[edit_package_var] = edit_package_value
+#theHTML = theHTML edit_package_var " = " edit_package_value "<br>"
+          }
+      }
+  }
+  
+  if ( save_edit_flag == "save" ) {
+    # need to replace the value in the package_variable array with the new value
+    # match the package in the package array
+    for ( i = 1; i <= package_count; i++ ) {
+      if (package_file[i] == edit_package_file ) {
+
+        # save a copy of the old .conf file, 
+        old_conf=package[i - 1] strftime("-%Y-%m-%d-%H%M%S.bak")
+        system("cp '" package[i - 1] "' '" old_conf "'")
+
+        # and lastly re-write the .conf file, then remove .manual_install and .auto_install files if present.
+        for (ev in edit_variable) {
+          # find the matching variable in the package
+          for ( vv = 1; vv <= package_variable_count[i]; vv++ ) {
+            delete f;
+            match ( package_variable[i,vv] , /^([^\|]*)(\|\|)([^=]+)(=)(.*)(\|\|)(.*)/, f);
+            if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[4,"length"] > 0 && f[5,"length"] >= 0 ) {
+               theVar = substr(package_variable[i,vv],f[1,"start"],f[1,"length"])
+               theVarName = substr(package_variable[i,vv],f[3,"start"],f[3,"length"])
+               theVarVal = substr(package_variable[i,vv],f[5,"start"],f[5,"length"])
+               theVarDesc = substr(package_variable[i,vv],f[7,"start"],f[7,"length"])
+	       if ( theVarName == ev ) {
+                  # substitute the new value
+                  package_variable[i,vv] = theVar "||" theVarName "=" edit_variable[ev] "||" theVarDesc
+                  # stream edit the .conf file to save the new value
+                  # first escape the special characters to the "sed" command
+                  gsub(/[\[\]\*\&\.\^\$]/, "\\\\&" ,theVarVal);
+                  cmd="sed -i \"s~||" theVarName "=" theVarVal "||~||" theVarName "=" edit_variable[ev] "||~\" " package[i - 1]
+                  system(cmd)
+#theHTML = theHTML cmd "<br>"
+                  break;
+               } 
+            }
+          }
+        }
+        manual_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".manual_install"
+        system("rm '" manual_install_file "' 2>/dev/null" )
+        auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
+        system("rm '" auto_install_file "' 2>/dev/null" )
+        break;
+      }
+    }
+    edit_package_file=""   
   }
 
+#theHTML = theHTML edit_package_file "<br>"
   theHTML = theHTML "<fieldset style=\"margin-top:10px;\"><legend><strong>Download and Install Extra Software Packages</strong></legend>"
   theHTML = theHTML "<form>"
   theHTML = theHTML "<table width=\"100%\" border=0>"
   for ( i = 1; i <= package_count; i++ ) {
+    if ( edit_package_file != "" ) {
+        if ( edit_package_file != package_file[i] ) {
+          continue;
+        }
+    }
     theHTML = theHTML "<tr>"
     theHTML = theHTML "<td style=\"background-color:#DDDDDD\">"
     theHTML = theHTML package_name[i]
     theHTML = theHTML "</td>"
-    if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" || package_url[i] == "none" ) {
-        if ( FileExists( package_installed[i] ) == "yes" ) {
-           ver_string = PackageVersionTest( package_version_test[i] )
-
-           # if package is installed already and is the same version
-           if ( package_version_test[i] != "" && ver_string == package_version_string[i] ) { 
-
-
-             if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ".auto_install" ) == "yes" ) {
-               theHTML = theHTML "<td><font color=\"blue\">Currently Installed.<br>Will be automatically Re-Installed upon Re-Boot.</font></td>"
-               theHTML = theHTML "<td ><input type=submit name=\"no_install-"
-               theHTML = theHTML package_file[i] "\" value=\"Disable Re-Install on Re-Boot\"></td>"
-             } else {
-               theHTML = theHTML "<td><font color=\"blue\">Currently Installed.</font><br><font color=\"brown\">Will <b>"
-               theHTML = theHTML "NOT</b> be automatically Re-Installed upon Re-Boot.</font></td>"
-               theHTML = theHTML "<td ><input type=submit name=\"auto_install-"
-               theHTML = theHTML package_file[i] "\" value=\"Enable Re-Install on Re-Boot\"></td>"
-             }
-           } else { # installed, but different version
-             theHTML = theHTML "<td><font color=\"orange\">Installed, but version is different.<br>"
-             theHTML = theHTML "Current version='" ver_string "' expected '" package_version_string[i] "'</font></td>"
-             if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
-               if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
-                 theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
-               } else {
-                 theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted.)</b></font>"
-                 if ( IsHTML( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "YES" ) {
-                     theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_file[i], 20)
+     
+    if ( edit_package_file == "" ) {
+      if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" || package_url[i] == "none" ) {
+          if ( FileExists( package_installed[i] ) == "yes" ) {
+             ver_string = PackageVersionTest( package_version_test[i] )
+  
+             # if package is installed already and is the same version
+             if ( package_version_test[i] != "" && ver_string == package_version_string[i] ) { 
+  
+  
+               if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ".auto_install" ) == "yes" ) {
+                 theHTML = theHTML "<td><font color=\"blue\">Currently Installed.<br>Will be automatically Re-Installed upon Re-Boot.</font></td>"
+                 theHTML = theHTML "<td>"
+                 if ( save_edit_flag == "save" ) {
+                   if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ".manual_install" ) == "no" ) {
+                     theHTML = theHTML "<input type=submit name=\"manual_install-"
+                     theHTML = theHTML package_file[i] "\" value=\"Re-Install Now with Edited Variables\"><br>"
+                   }
                  }
-                 theHTML = theHTML "<input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
+                 theHTML = theHTML "<input type=submit name=\"no_install-"
+                 theHTML = theHTML package_file[i] "\" value=\"Disable Re-Install on Re-Boot\"></td>"
+               } else {
+                 theHTML = theHTML "<td><font color=\"blue\">Currently Installed.</font><br><font color=\"brown\">Will <b>"
+                 theHTML = theHTML "NOT</b> be automatically Re-Installed upon Re-Boot.</font></td>"
+                 theHTML = theHTML "<td>"
+                 if ( save_edit_flag == "save" ) {
+                   if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ".manual_install" ) == "no" ) {
+                     theHTML = theHTML "<input type=submit name=\"manual_install-"
+                     theHTML = theHTML package_file[i] "\" value=\"Re-Install Now with Edited Variables\"><br>"
+                   }
+                 } else {
+                   theHTML = theHTML "<input type=submit name=\"auto_install-"
+                   theHTML = theHTML package_file[i] "\" value=\"Enable Re-Install on Re-Boot\"></td>"
+                 }
                }
-             } 
-           }
-        } else {
-           # package is not installed yet, but is downloaded
-           if ( package_url[i] == "none" ) {
-             theHTML = theHTML "<td><font color=\"purple\">Package not yet installed (no download needed)</font></td>"
-           } else {
-             theHTML = theHTML "<td><font color=\"purple\">Package downloaded, but not yet installed</font></td>"
-           }
-           if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
-             theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
-           } else {
-             theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted.)</b></font>"
-             theHTML = theHTML "<input type=submit name=\"download-" package_file[i] "\" value=\"Re-Download " package_file[i] "\"</td>"
-           }
-        }
-    } else {
-       # package has not been downloaded
-        if ( FileExists( package_installed[i] ) == "yes" ) {
-           ver_string = PackageVersionTest( package_version_test[i] )
-
-           # if package is installed already and is the same version
-           if ( ver_string == package_version_string[i] ) { 
-             theHTML = theHTML "<td><font color=\"navy\">Currently installed, but not downloaded.</font></td>"
+             } else { # installed, but different version
+               theHTML = theHTML "<td><font color=\"orange\">Installed, but version is different.<br>"
+               theHTML = theHTML "Current version='" ver_string "' expected '" package_version_string[i] "'</font></td>"
+               if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
+                 if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
+                   theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
+                 } else {
+                   theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
+                   if ( IsHTML( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "YES" ) {
+                       theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_file[i], 20)
+                   }
+                   theHTML = theHTML "<input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
+                 }
+               } 
+             }
+          } else {
+             # package is not installed yet, but is downloaded
+             if ( package_url[i] == "none" ) {
+               theHTML = theHTML "<td><font color=\"purple\">Package not yet installed (no download needed)</font></td>"
+               nomd5="true"
+             } else {
+               theHTML = theHTML "<td><font color=\"purple\">Package downloaded, but not yet installed</font></td>"
+             }
+             if ( nomd5 == "true" || VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
+               theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
+               nomd5=""
+             } else {
+               theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
+               theHTML = theHTML "<input type=submit name=\"download-" package_file[i] "\" value=\"Re-Download " package_file[i] "\"</td>"
+             }
+          }
+      } else {
+         # package has not been downloaded
+          if ( FileExists( package_installed[i] ) == "yes" ) {
+             ver_string = PackageVersionTest( package_version_test[i] )
+  
+             # if package is installed already and is the same version
+             if ( ver_string == package_version_string[i] ) { 
+               theHTML = theHTML "<td><font color=\"navy\">Currently installed, but not downloaded.</font></td>"
+               theHTML = theHTML "<td><input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
+             } else {
+               theHTML = theHTML "<td><font color=\"teal\">Installed, current version='" ver_string "' but expected '" package_version_string[i] "'</font></td>"
+               theHTML = theHTML "<td><input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
+             }
+          } else {
+             theHTML = theHTML "<td>&nbsp;</td>"
              theHTML = theHTML "<td><input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
-           } else {
-             theHTML = theHTML "<td><font color=\"teal\">Installed, current version='" ver_string "' but expected '" package_version_string[i] "'</font></td>"
-             theHTML = theHTML "<td><input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
-           }
-        } else {
-           theHTML = theHTML "<td>&nbsp;</td>"
-           theHTML = theHTML "<td><input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
-        }
+          }
+      }
     }
     theHTML = theHTML "</tr>"
     if ( package_descr[i] == "" ) {
         package_descr[i] = "no description provided"
     }
     theHTML = theHTML "<tr><td colspan=\"10\"><table border=0>"
-    theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Package File:</b></td>"
-    theHTML = theHTML "<td valign=\"top\">" package_file[i] "</td></tr>"
     theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Description:</b></td>"
     theHTML = theHTML "<td valign=\"top\">" package_descr[i] "</td></tr>"
+    theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Package URL:</b></td>"
+    theHTML = theHTML "<td valign=\"top\"><a href=\"" package_url[i] "\">" package_url[i] "</a></td></tr>"
+    theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Package File:</b></td>"
+    theHTML = theHTML "<td valign=\"top\">" package_file[i] "</td></tr>"
     if ( package_md5[i] != "" ) {
       theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>md5 Checksum:</b></td>"
       theHTML = theHTML "<td valign=\"top\">" package_md5[i] 
       if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
         if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
-          theHTML = theHTML "<b> (matches checksum of downloaded file)</b>"
+          theHTML = theHTML "<b> (matches checksum of downloaded file " package_file[i] ")</b>"
         } else {
-          theHTML = theHTML "<b><font color=\"red\"> (NOT matched - download may be corrupted.)</b></font>"
+          theHTML = theHTML "<b><font color=\"red\"> (NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
           if ( IsHTML( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "YES" ) {
               theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_file[i], 20)
           }
@@ -388,17 +580,101 @@ BEGIN {
       theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>md5 Checksum:</b></td>"
       theHTML = theHTML "<td valign=\"top\"> md5 not specified in config file </td></tr>"
     }
+    for ( p = 1; p <= package_extra_url_count[i]; p++ ) {
+      theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Addl. Pkg. URL-" p ":</b></td>"
+      theHTML = theHTML "<td valign=\"top\"><a href=\"" package_extra_url[i,p] "\">" package_extra_url[i,p] "</a></td></tr>"
+      theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Addl. Pkg. File-" p ":</b></td>"
+      theHTML = theHTML "<td valign=\"top\">" package_extra_file[i,p] "</td></tr>"
+      if ( package_extra_md5[i,p] != "" ) {
+        theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Addl. md5 Checksum:</b></td>"
+        theHTML = theHTML "<td valign=\"top\">" package_extra_md5[i,p] 
+        if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" ) {
+          if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_md5[i,p] ) == "OK" ) {
+            theHTML = theHTML "<b> (matches checksum of downloaded file " package_extra_file[i,p] ")</b>"
+          } else {
+            theHTML = theHTML "<b><font color=\"red\"> (NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
+            if ( IsHTML( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_md5[i,p] ) == "YES" ) {
+                theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_extra_file[i,p], 20)
+            }
+          }
+        } 
+        theHTML = theHTML "</td></tr>"
+      } else {
+        theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Addl. md5 Checksum:</b></td>"
+        theHTML = theHTML "<td valign=\"top\"> md5 not specified in config file </td></tr>"
+      }
+    }
+
     theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Memory&nbsp;Usage:</b></td>"
     theHTML = theHTML "<td valign=\"top\">" package_mem[i] "</td></tr>"
+
     theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Dependencies:</b></td>"
     theHTML = theHTML "<td valign=\"top\">"
     for ( a = 1; a <= package_dependency_count[i]; a++ ) {
           theHTML = theHTML package_depend[i, a] "<br>"
     }
-    theHTML = theHTML "</td>"
-    theHTML = theHTML "</tr>"
+    theHTML = theHTML "</td></tr>"
+    if ( edit_package_file != "" ) {
+      config_label="Edit Configuration Variables"
+      config_instructions="<font size=\"+2\" color=blue><b>Editing Configuration Variables</font>"
+      config_instructions = config_instructions "<font size=\"+1\" color=blue>"
+      config_instructions = config_instructions "<br>Make changes as desired in the input fields provided below," 
+      config_instructions = config_instructions " then press the \"Save New Values\" button.</b></font><br>"
+    } else {
+      config_label="Configuration Variables"
+      config_instructions=""
+    }
+
+    if ( package_variable_count[i] > 0 ) {
+        theHTML = theHTML "<tr><td colspan=3>" config_instructions
+        theHTML = theHTML "<fieldset style=\"margin-top:10px;\" >"
+        theHTML = theHTML "<legend style=\"background-color:#DDDDDD\"><strong>" config_label "</strong></legend>"
+        theHTML = theHTML "<table border=0>"
+        if ( edit_package_file != "" ) {
+            edit_disable=""
+        } else {
+            edit_disable="DISABLED"
+        }
+        for ( a = 1; a <= package_variable_count[i]; a++ ) {
+            delete f;
+#theHTML = theHTML   package_variable[i,a] "<br>"
+            match ( package_variable[i,a] , /^([^\|]*)(\|\|)(.*)(\|\|)(.*)/, f);
+            if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[3,"length"] > 0 ) {
+               theVar = substr(package_variable[i,a],f[1,"start"],f[1,"length"])
+               theVarVal = substr(package_variable[i,a],f[3,"start"],f[3,"length"])
+               theVarDesc = substr(package_variable[i,a],f[5,"start"],f[5,"length"])
+
+               theHTML = theHTML   "<tr><td align=\"right\" valign=\"middle\">"
+               theHTML = theHTML   "<b>" theVar ":</b>"
+               theHTML = theHTML   "</td>"
+               theHTML = theHTML   "<td valign=\"middle\">"
+               # get the variable name and value
+               delete nv;
+               match( theVarVal , /^([^\t=]+)([\t ]*)(=)([\t ]*)(.*)/, nv)
+               theVN = substr(theVarVal,nv[1,"start"],nv[1,"length"])
+               theVV = substr(theVarVal,nv[5,"start"],nv[5,"length"])
+               theHTML = theHTML   "<input size=25 " edit_disable " name=\"var-" theVN "\" value=\"" theVV "\">"
+               theHTML = theHTML   "</td>"
+               theHTML = theHTML   "<td valign=\"middle\">"
+               theHTML = theHTML   theVarDesc
+               theHTML = theHTML   "</td></tr>"
+            }
+        }
+        theHTML = theHTML "<tr><td align=\"center\" colspan=3>"
+        if ( edit_package_file != "" ) {
+          theHTML = theHTML "<input type=submit name=\"save_edit-" package_file[i] "\" value=\"Save New Values\">"
+          theHTML = theHTML "<input type=submit name=\"cancel_edit-" package_file[i] "\" value=\"Cancel Edit\">"
+        } else {
+          theHTML = theHTML "<input type=submit name=\"edit-" package_file[i] "\" value=\"Edit Configuration Variables\">"
+        }
+        theHTML = theHTML "</td></tr>"
+        theHTML = theHTML "</table></fieldset></td></tr>"
+    }
+
     theHTML = theHTML "</table></td></tr>"
-    theHTML = theHTML "<tr><td colspan=\"10\"><hr></td></tr>"
+    theHTML = theHTML "<tr><td colspan=\"10\"><hr>"
+    theHTML = theHTML "<a name=\"" package_file[i + 1] "\"></a>"
+    theHTML = theHTML "</td></tr>"
 
   }
   if ( package_count == 0 ) {
@@ -419,6 +695,7 @@ function FileExists( fname ) {
 }
 
 function PackageVersionTest( theTest ) {
+  verString=""
   OLD_RS=RS
   RS="\n"
   theTest | getline verString 
@@ -475,7 +752,7 @@ function install_auto_install_command() {
   # check if the rc.d directoy exists
   # if not, we will append to /boot/config/go
   
-  if (system("test -d " AUTO_INSTALL_DIRECTORY )==0) {
+  if (system("test -d " AUTO_INSTALL_DIRECTORY " 2>/dev/null")==0) {
     theFilePath = AUTO_INSTALL_DIRECTORY "/" AUTO_INSTALL_FILE    
   } else {
     theFilePath = "/boot/config/go"    
@@ -486,7 +763,7 @@ function install_auto_install_command() {
   if ( system( theTest ) != 0 ) {
     OLD_ORS=ORS
     ORS="\n"
-    print AUTO_INSTALL_COMMAND >> theFilePath 
+    print "\n" AUTO_INSTALL_COMMAND >> theFilePath 
     close(theFilePath);
     ORS=OLD_ORS
   }
@@ -634,3 +911,19 @@ function save_file(the_socket, filename) {
     RS  = RS_save
     ORS = ORS_save
 }
+function unencodeHex( theValue ) {
+    decodedValue = ""
+    gsub("+"," ",theValue)
+    # desl with hex encoding of strings
+     for ( i = 1; i<=length(theValue); i++ ) {
+        if ( substr(theValue,i,1) == "%" ) {
+           chr=sprintf("%c", strtonum("0x" substr(theValue, i+1,2)))
+           decodedValue = decodedValue chr
+           i+=2
+        } else {
+           decodedValue = decodedValue substr(theValue,i,1)
+        }
+    }
+    return decodedValue
+}
+

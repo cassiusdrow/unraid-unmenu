@@ -13,7 +13,7 @@ BEGIN {
   #
   # point browser to http://tower:8080
   #
-  version = "Version 1.2 Joe L.... with modifications as suggested by bjp999 and many others"
+  version = "Version 1.3 Joe L.... with modifications as suggested by bjp999 and many others"
   
   # Plug-in scripts are expected to reside in the same directory where this program is invoked if the following
   # variable is not changed.  If you wish to speciify a different directory for the plug-in scripts, you
@@ -613,7 +613,7 @@ function GetHTTP_Header( type, refresh, header, url) {
     header = header "Content-Type: " type "\r\n"
     header = header "Transfer-Encoding: chunked" "\r\n"
     if ( refresh > 0 ) {
-        header = header "Refresh: " refresh "; URL=\"" url "\"" "\r\n"
+        header = header "Refresh: " refresh "; URL=" url "\r\n"
     }
     return header
 }
@@ -798,7 +798,11 @@ function ArrayStateHTML(theHTML, parity_status, i) {
      if(rebuilding_disk == "")
         rebuilding_disk = 0   #retrieve total size and compute % complete based on parity disk size
 
-     pct_complete = sprintf("%.1f", resync_pos/disk_size[rebuilding_disk]*100);
+     if ( disk_size[rebuilding_disk] > 0 ) {
+       pct_complete = sprintf("%.1f", resync_pos/disk_size[rebuilding_disk]*100);
+     } else {
+       pct_complete = 0;
+     }
 
      theHTML = "<fieldset style=\"margin-top:8px;\"><legend><strong>Array Status</strong></legend>"
      theHTML = theHTML "<table border=\"0\" width=\"100%\">"
@@ -2177,7 +2181,7 @@ function DiskStatusHTML(i,outstr) {
 }
 
 function GetReadWriteStats(theDevIndex,  cmd) {
-  cmd="cat /sys/block/" disk_device[theDevIndex] "/stat"
+  cmd="cat /sys/block/" disk_device[theDevIndex] "/stat 2>/dev/null"
   cmd | getline
   disk_reads[theDevIndex] = $1
   disk_writes[theDevIndex] = $5

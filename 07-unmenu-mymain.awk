@@ -7,6 +7,7 @@ BEGIN {
 #ADD_ON_CONFIG=myMain.conf
 #ADD_ON_LOCAL_CONFIG=myMain_local.conf
 #ADD_ON_VERSION 1.45 - contributed by bjp999
+#ADD_ON_VERSION 1.46 - added spindown spinup commands to use new scheme used by unRAID
 
    #-----------------
    # Initializations 
@@ -128,14 +129,32 @@ BEGIN {
       #p(cmd)
 
       if(cmd == "spindown") {
+         if ( diskparm == "parity" ) {
+           cmd="/root/mdcmd spindown 0 >/dev/null 2>&1"
+           system(cmd);
+         }
+         if (substr(diskparm,1,4) == "disk" ) {
+           cmd="/root/mdcmd spindown " substr(diskparm,5,length(diskparm)) " >/dev/null 2>&1"
+           system(cmd);
+         }
          cmd="/usr/sbin/hdparm -y /dev/" devparm " >/dev/null 2>&1"
          system(cmd);
          print "<p><b>Spindown disk " diskparm "</p><p> </p>"
       }
       else if (cmd == "spinup") {
          disk_blocks = GetRawDiskBlocks( "/dev/" devparm )
+         disk_blocks = disk_blocks - 128
          #p(disk_blocks)
          skip_blocks = 1 + int( rand() * disk_blocks );
+         if ( diskparm == "parity" ) {
+           cmd="/root/mdcmd spinup 0 >/dev/null 2>&1"
+           system(cmd);
+         }
+         if (substr(diskparm,1,4) == "disk" ) {
+           cmd="/root/mdcmd spinup " substr(diskparm,5,length(diskparm)) " >/dev/null 2>&1"
+           system(cmd);
+         }
+        
          cmd="dd if=/dev/" devparm " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
          system(cmd);
          print "<p><b>Spinup disk " diskparm "</p><p> </p>"
@@ -144,6 +163,8 @@ BEGIN {
          #GetDeviceArray();
          GetUnraidDeviceArray();
          for(i=0; i<deviceunraid["count"]; i++) {
+            cmd="/root/mdcmd spindown " i " >/dev/null 2>&1"
+            system(cmd);
             cmd="nohup /usr/sbin/hdparm -y /dev/" deviceunraid[i] " >/dev/null 2>&1 &"
             #perr("cmd-" i " = " cmd)
             system(cmd);

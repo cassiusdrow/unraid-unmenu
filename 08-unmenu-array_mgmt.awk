@@ -4,7 +4,10 @@ BEGIN {
 #ADD_ON_STATUS=YES
 #ADD_ON_TYPE=awk
 #ADD_ON_OPTIONS=-f unmenu.base.lib.awk -f utility.lib.awk
-#ADD_ON_VERSION 1.0 - Joe L.
+#ADD_ON_VERSION 1.1 - Joe L.
+#ADD_ON_VERSION 1.2 - modified spin-up/spin down to use commands available as of 4.5 unRAID  - Joe L.
+#ADD_ON_VERSION 1.2.1 - modified spin-up/spin down to use commands available as of 4.5 unRAID  - Joe L.
+#ADD_ON_VERSION 1.2.3 - fixed "Stop" button - Joe L.
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
    GetConfigValues(ScriptDirectory "/" LocalConfigFile, "");
@@ -17,6 +20,17 @@ BEGIN {
    CGI_setup();
 
    GetArrayStatus();
+
+   if ( has_spinup == "" ) {
+     has_spinup="false"
+     while (("/root/mdcmd status|strings" | getline a) > 0 ) {
+       if ( a ~ "rdevSpinupGroup" ) { 
+           has_spinup="true"; 
+           break;
+       }
+     }
+     close("/root/mdcmd status|strings")
+   }
    SetUpArrayMgmtPage()
    print ArrayMgmtPageDoc
 }
@@ -81,9 +95,17 @@ function SetUpArrayMgmtPage() {
   }
   # user pressed the "Stop server button", need to stop samba, unmount drives, then stop array.
   if ( array_state == "STARTED" && GETARG["stop_array"] == "Stop Array" ) {
+    SpinUp("All Disks")
+    system("sync")
     StopSamba();
-    UnmountDisks("All Disks");
+    system("killall shfs");
+    x=UnmountDisks("All Disks");
+#    print x
+
     StopArray();
+    system("mv /etc/samba/smb-shares.conf /etc/samba/smb-shares.old_conf >/dev/null 2>&1");
+    StartSamba();
+    ReloadPage();
     delete GETARG;
   }
 
@@ -111,20 +133,20 @@ function SetUpArrayMgmtPage() {
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "value=\"Verify Parity but do NOT Correct it.\"</td> "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "<td valign=\"top\" align=\"left\"> "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "Initiate a Parity Verify of the unRAID array but do not correct it if an error is found.  "
-        ArrayMgmtPageDoc = ArrayMgmtPageDoc "This is a new ability added to unRAID as of 4.5-beta3."
-        ArrayMgmtPageDoc = ArrayMgmtPageDoc "<br><br>In some circumstances, we suspect a specific data disk\'s to be wrong, and parity to be right.  "
+        ArrayMgmtPageDoc = ArrayMgmtPageDoc "This is a new ability added to unRAID as of 4.5beta3."
+        ArrayMgmtPageDoc = ArrayMgmtPageDoc "<br><br>In some circumstances, we suspect a specific data disk to be wrong, and parity to be right.  "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "Other times, we suspect disks are fine,"
         ArrayMgmtPageDoc = ArrayMgmtPageDoc " but memory or motherboard errors cause parity calculations to compute inconsistently"
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "<br><br>This verify allows you to investigate these issues before possibly overwriting correct parity "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "with incorrectly computed values.   "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc " This is the best choice to use when you suspect memory, cabling, or "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "motherboard issues are calusing random data errors when parity is calculated."
-        ArrayMgmtPageDoc = ArrayMgmtPageDoc " <br><br>As of the 4.5-beta6 version, when this <b>Verify Parity</b> is run, "
+        ArrayMgmtPageDoc = ArrayMgmtPageDoc " <br><br>As of the 4.5.3 version of unRAID, when this <b>Verify Parity</b> is run, "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "there is no indication of the specific disk addresses with the "
-        ArrayMgmtPageDoc = ArrayMgmtPageDoc "errors written to the syslog. This is expected to change in future releases. "
-        ArrayMgmtPageDoc = ArrayMgmtPageDoc "At that point in the future, by looking at the errors in the syslog "
+        ArrayMgmtPageDoc = ArrayMgmtPageDoc "errors written to the syslog. This is expected to change in some future release. "
+        ArrayMgmtPageDoc = ArrayMgmtPageDoc "At that point in the future, by looking at the errors in the syslog, "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "we will know exactly which bytes in parity need updating.<br><br>"
-        ArrayMgmtPageDoc = ArrayMgmtPageDoc " As of 4.5-beta6, all you will see is the parity error count reported by the web-interface"
+        ArrayMgmtPageDoc = ArrayMgmtPageDoc " As of 4.5.3 version of unRAID, all you will see is the parity error count reported by the web-interface"
         ArrayMgmtPageDoc = ArrayMgmtPageDoc " increasing as errors are detected. Also, "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "the Lime-Technology management interface still says parity check when this is run, and not verify... "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "<br><br>If an error is detected it will NOT be corrected.  If an actual error, any subsequent Verify "
@@ -138,9 +160,14 @@ function SetUpArrayMgmtPage() {
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "<br>This process assumes your data is correct and parity is not "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "whenever an error is detected.</td></tr><tr><td><hr></td><td><hr></td></tr>"
     }
+    if ( has_spinup == false ) { 
+        read_random="by reading a random block of data from each disk in turn" 
+    } else { 
+        read_random="" 
+    }
     ArrayMgmtPageDoc = ArrayMgmtPageDoc \
     "<tr><td width=\"10%\"><input type=submit name=\"spin_up\" value=\"Spin Up Drives\"</td><td align=\"left\">\
-    Spin Up All Disk Drives by reading a random block of data from each disk in turn.</td></tr><tr><td><hr></td><td><hr></td></tr>"
+    Spin Up All Disk Drives " read_random "</td></tr><tr><td><hr></td><td><hr></td></tr>"
     ArrayMgmtPageDoc = ArrayMgmtPageDoc \
     "<tr><td width=\"10%\"><input type=submit name=\"spin_down\" value=\"Spin Down Drives\"</td><td align=\"left\">\
     Spin Down All Disk Drives</td></tr><tr><td><hr></td><td><hr></td></tr>"
@@ -171,27 +198,34 @@ function SetUpArrayMgmtPage() {
 }
 
 function StopSamba( cmd) {
-   system("killall smbd nmbd")
+   system("/etc/rc.d/rc.samba stop | logger");
+   system("/etc/rc.d/rc.nfsd stop | logger");
    return "Samba Stopped"
 }
 function StartSamba( cmd) {
-    system("/usr/sbin/smbd -D")
-    system("/usr/sbin/nmbd -D")
-    return "Samba Started"
+   system("/etc/rc.d/rc.samba start | logger");
+   system("/etc/rc.d/rc.nfsd start | logger");
+   return "Samba Started"
 }
 
-function SpinUp( disk, cmd, f) {
+function  SpinUp( disk, cmd, f) {
     # Spin Up drives
-    # loop through the drives spinning them up
-    # by reading a single "random" block from each disk in turn.  
+    # loop through the drives spinning them up by using the spinup command if available or
+    # by reading a single "random" block from each /dev/md* device in turn if not.  
     srand() # important to get random numbers when unmenu is re-started.
     for ( i =0; i<numdisks; i++ ) {
-        if ( "/dev/" disk_device[i] == disk || disk == "All Disks" ) {
-            # calculate a random block between 1 and the max blocks on the device
-            skip_blocks = 1 + int( rand() * disk_size[i] );
+#print disk_name[i] ORS
+        if ( disk_name[i] == disk || disk == "All Disks" ) {
+            if ( has_spinup == "true" ) {
+               cmd="/root/mdcmd spinup " i " >/dev/null 2>&1"
+            } else {
+               # calculate a random block between 1 and the max blocks on the device
+               skip_blocks = 1 + int( rand() * disk_size[i] );
 
-            cmd="dd if=/dev/" disk_device[i] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
-        #    print cmd
+               #cmd="dd if=/dev/" disk_device[i] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
+               cmd="dd if=/dev/" disk_name[i] " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
+            }
+            #print cmd ORS
             system(cmd);
         }
     }
@@ -201,8 +235,12 @@ function SpinDown( disk, cmd, i, f) {
     # Spin Down the drives
     for ( i =0; i<numdisks; i++ ) {
         if ( "/dev/" disk_device[i] == disk || disk == "All Disks" ) {
-            cmd="/usr/sbin/hdparm -y /dev/" disk_device[i]
-        #    print cmd
+            if ( has_spinup == "true" ) {
+               cmd="/root/mdcmd spindown " i
+            } else {
+               cmd="/usr/sbin/hdparm -y /dev/" disk_device[i]
+            }
+          #    print cmd
             while (( cmd | getline f ) > 0) ;
             close(cmd);
         }
@@ -215,15 +253,40 @@ function UnmountDisks( disk ,cmd) {
     delete pids;
     pp=0
     for ( i =0; i<numdisks; i++ ) {
-    if ( disk_mounted[i] != "" && ( "/dev/" disk_device[i] == disk || disk == "All Disks" )) {
-        cmd="fuser -cu /dev/" disk_name[i] " 2>/dev/null"
-        #print cmd
-        while (( cmd | getline f ) > 0) {
-            pids[pp++] = f
-        }
-        close(cmd);
+      if ( disk_name[i] != "" ) {
+      cmd="fuser -cu /dev/" disk_name[i] " 2>/dev/null"
+      while (( cmd | getline f ) > 0) {
+          pids[pp++] = f
+      }
+      close(cmd);
+      }
     }
+    for ( i=0; i<pp;i++ ) {
+        cmd="kill -TERM " pids[i]
+        unmount_out = unmount_out cmd "<br>"
+        system(cmd)
     }
+    delete pids;
+    pp=0
+
+    # check for any loop devices holding mounted file systems open to disks
+    # un-mount them
+    cmd="mount | grep \"loop=/dev/loop[0-9])\"" 
+
+    while (( cmd | getline f ) > 0) {
+          delete c;
+          unmount_out = unmount_out "Mounted=" f "<br>"
+
+          match( f , /^(.+)( on \/)(.+)( type .*loop=\/dev\/loop[0-9]\))$/, c)
+          if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 && c[4,"length"] > 0 ) {
+              ucmd = substr(f,c[3,"start"],c[3,"length"])
+              ucmd = "umount '/" ucmd "'"
+              unmount_out = unmount_out ucmd "<br>"
+              system(ucmd)
+          }
+    }
+    
+
     cmd="fuser -cu /mnt/user /dev/loop* 2>/dev/null"
     while (( cmd | getline f ) > 0) {
         pids[pp++] = f
@@ -231,20 +294,22 @@ function UnmountDisks( disk ,cmd) {
     close(cmd);
     for ( i=0; i<pp;i++ ) {
         #print "killing " pids[i]
-        system("kill  -0 pids[i] && kill -TERM " pids[i] )
+        #system("kill  -0 pids[i] && kill -TERM " pids[i] )
+        cmd="kill -TERM " pids[i]
+        unmount_out = unmount_out cmd "<br>"
+        system(cmd)
     }
+
     # Second try, kill any processes still running on the disk(s) to be unmounted
     delete pids;
     pp=0
     for ( i =0; i<numdisks; i++ ) {
-    if ( disk_mounted[i] != "" && ( "/dev/" disk_device[i] == disk || disk == "All Disks" )) {
         cmd="fuser -cu /dev/" disk_name[i] " 2>/dev/null"
         #print cmd
         while (( cmd | getline f ) > 0) {
             pids[pp++] = f
         }
         close(cmd);
-    }
     }
     cmd="fuser -cu /mnt/user /dev/loop* 2>/dev/null"
     while (( cmd | getline f ) > 0) {
@@ -253,21 +318,22 @@ function UnmountDisks( disk ,cmd) {
     close(cmd);
     for ( i=0; i<pp;i++ ) {
         #print "killing " pids[i]
-        system("kill  -0 pids[i] && kill -TERM " pids[i] )
+        #system("kill  -0 pids[i] && kill -TERM " pids[i] )
+        cmd="kill -TERM " pids[i]
+        unmount_out = unmount_out cmd "<br>"
+        system(cmd)
     }
 
     # third try, kill off any remainders with kill -9
     delete pids;
     pp=0
     for ( i =0; i<numdisks; i++ ) {
-    if ( disk_mounted[i] != "" && ( "/dev/" disk_device[i] == disk || disk == "All Disks" )) {
         cmd="fuser -cu /dev/" disk_name[i] " 2>/dev/null"
         #print cmd
         while (( cmd | getline f ) > 0) {
             pids[pp++] = f
         }
         close(cmd);
-    }
     }
     cmd="fuser -cu /mnt/user 2>/dev/null"
     while (( cmd | getline f ) > 0) {
@@ -276,19 +342,25 @@ function UnmountDisks( disk ,cmd) {
     close(cmd);
     for ( i=0; i<pp;i++ ) {
         #print "killing " pids[i]
-        system("kill  -0 pids[i] && kill -KILL " pids[i] )
+        #system("kill  -0 pids[i] && kill -KILL " pids[i] )
+        cmd="kill -KILL " pids[i]
+        unmount_out = unmount_out cmd "<br>"
+        system(cmd)
     }
+
     
     # unmount the drives
+    system("umount /mnt/user;rmdir /mnt/user");
     for ( i =0; i<numdisks; i++ ) {
-    if ( disk_mounted[i] != "" && ( "/dev/" disk_device[i] == disk || disk == "All Disks" )) {
-        disk_unmounted[i] = disk_mounted[i]
+      if ( disk_name[i] != "" ) {
+        disk_unmounted[i] = mounted[i]
         cmd="umount /dev/" disk_name[i]
         unmount_out = unmount_out "/dev/" disk_name[i] " Unmounted<br>"
-        #print cmd
-        while (( cmd | getline f ) > 0) ;
-        close(cmd);
-    }
+        system(cmd);
+        cmd="rmdir /mnt/disk" i
+        unmount_out = unmount_out "<br>" cmd
+        system(cmd);
+     }
    }
    return unmount_out
 }
@@ -336,6 +408,12 @@ function HasParity_NOCORRECT() {
 }
 
 
+function StopArray() {
+    # stop the unRAID array
+    cmd="/root/mdcmd stop"
+    system(cmd);
+
+}
 
 function ReloadPage() {
     js = ""

@@ -9,6 +9,8 @@ function GetArrayStatus(a, d) {
     resync_pos=""
     last_parity_errs=0
     array_state="Not started"
+    has_spinup="false"
+
     while (("/root/mdcmd status|strings" | getline a) > 0 ) {
         # number of disks in the superblock
         if ( a ~ "sbNumDisks" )      { delete d; split(a,d,"="); numdisks=d[2] }
@@ -39,9 +41,11 @@ function GetArrayStatus(a, d) {
         if ( a ~ "rdevName" )        { delete d; split(a,d,"[.=]"); disk_device[d[2]]=d[3]; 
                                        if ( disk_device[d[2]] != "" ) GetReadWriteStats(d[2])
                                      }
+        if ( a ~ "rdevLastIO" )      { delete d; split(a,d,"[.=]"); rdisk_lastIO[d[2]]=d[3]; }
         #if ( a ~ "diskNumWrites" )   { delete d; split(a,d,"[.=]"); disk_writes[d[2]]=d[3]; }
         #if ( a ~ "diskNumReads" )    { delete d; split(a,d,"[.=]"); disk_reads[d[2]]=d[3]; }
         if ( a ~ "diskNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
+        if ( a ~ "rdevSpinupGroup" ) { has_spinup="true"; }
 
     }
     close("/root/mdcmd status|strings")
