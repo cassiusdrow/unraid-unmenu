@@ -378,7 +378,7 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
    #-------------------------------------------------------------------------
    if((t=constant["smartlogfolder"]) == "")
       t="smartlog"
-   cmd = "ls " t "/*.txt" #cmd to get the list of files
+   cmd = "ls " t "/*.txt 2>/dev/null" #cmd to get the list of files
 
    #-------------------------------
    # For each file, add a new row. 
