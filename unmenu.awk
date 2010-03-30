@@ -138,6 +138,7 @@ BEGIN {
     add_on_top_heading[add_on_count]="YES"  # default is to have top of page heading included
     add_on_html_tags[add_on_count]="YES"    # default is to supply <HTML><HEAD>...</HEAD><BODY>...</BODY></HTML>
     add_on_version[add_on_count]="(ADD_ON_VERSION not specified in plug-in, default version assigned) 0.1" 
+    add_on_release[add_on_count] = "Release 0"
     add_on_head_count[add_on_count] = 0
     add_on_count++;
   }
@@ -147,6 +148,11 @@ BEGIN {
   # Only ADD_ON_URL, ADD_ON_MENU and ADD_ON_TYPE are required to exist in the plug-in.
   for ( i = 0; i < add_on_count; i++ ) {
     while (( getline line < add_on[i] ) > 0 ) {
+      # Expect a string describing the release of the plug-in
+      if ( substr(line,1,15) == "#UNMENU_RELEASE" ) {
+          add_on_release[i] = substr(line,17, 16)
+          gsub("\\$","",add_on_release[i])
+      }
       if ( line ~ "ADD_ON_" ) {
           delete c;
           # expect the URL to be used on the top menu
@@ -211,12 +217,6 @@ BEGIN {
           match( line , /^(#ADD_ON_VERSION|#define\WADD_ON_VERSION)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_version[i] = substr(line,c[3,"start"],c[3,"length"])
-          }
-          # Expect a string describing the release of the plug-in
-          delete c;
-          match( line , /^(#UNMENU_RELEASE)([\t =]+)(.+)/, c)
-          if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
-              add_on_release[i] = substr(line,c[3,"start"],c[3,"length"])
           }
           delete c;
           # special lines to be included in <head> </head> of plug-in
@@ -535,7 +535,7 @@ BEGIN {
               for ( i = 0; i < add_on_count; i++ ) {
                   delete d;
                   n = split(add_on[i],d,"/")
-                  Document = Document d[n] ": " add_on_version[i] ", " add_on_release[i] ORS
+                  Document = Document d[n] ": " add_on_version[i] " - " add_on_release[i] ORS
               }
               Document = PageMenu ArrayStatusDoc Document
             }
