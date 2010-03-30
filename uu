@@ -2,6 +2,7 @@
 # version 1.1 - added remount of flash drive to eliminate access time update 
 #               when reading .conf files
 # version 1.2 - now handles restart of unMENU on user-signal
+#UNMENU_RELEASE $Revision$ $Date$
 progname=$0
 d=`dirname "${progname}"`
 # change directory to where the unmenu.awk program resides.

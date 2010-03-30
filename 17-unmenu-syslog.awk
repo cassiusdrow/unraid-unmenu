@@ -5,6 +5,7 @@ BEGIN {
 #ADD_ON_PAGE_HEADING=NO
 #ADD_ON_TYPE=awk
 #ADD_ON_VERSION= Version: .8  - modified by Joe L. to use a pattern file.
+#UNMENU_RELEASE $Revision$ $Date$
 
   if ( ScriptDirectory == "" ) {
       ScriptDirectory = ".";

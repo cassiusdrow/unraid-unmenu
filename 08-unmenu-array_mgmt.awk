@@ -8,6 +8,7 @@ BEGIN {
 #ADD_ON_VERSION 1.2 - modified spin-up/spin down to use commands available as of 4.5 unRAID  - Joe L.
 #ADD_ON_VERSION 1.2.1 - modified spin-up/spin down to use commands available as of 4.5 unRAID  - Joe L.
 #ADD_ON_VERSION 1.2.3 - fixed "Stop" button - Joe L.
+#UNMENU_RELEASE $Revision$ $Date$
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
    GetConfigValues(ScriptDirectory "/" LocalConfigFile, "");

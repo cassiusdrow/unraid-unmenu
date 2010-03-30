@@ -12,6 +12,7 @@ BEGIN {
 #ADD_ON_VERSION= Version: .7  - modified by RobJ
 #ADD_ON_VERSION= Version: .8  - modified by Joe L. to use a pattern file.
 #ADD_ON_VERSION= Version: .9  - modified by Joe L. to escape special charaters
+#UNMENU_RELEASE $Revision$ $Date$
 
   if ( ScriptDirectory == "" ) {
       ScriptDirectory = ".";

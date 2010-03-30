@@ -1,5 +1,6 @@
 #define USER_SCRIPT_LABEL Set Disk Read-Ahead  256
 #define USER_SCRIPT_DESCR Set the "md" device read-ahead buffer size using <b>blockdev --setra 256 /dev/md?</b>
+#UNMENU_RELEASE $Revision$ $Date$
 echo "<pre>"
 for i in /dev/md*
 do

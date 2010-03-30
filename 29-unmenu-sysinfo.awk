@@ -7,6 +7,7 @@ BEGIN {
 #define ADD_ON_VERSION 1.3 - modified to better deal with utilities not yet installed Joe L.
 #define ADD_ON_VERSION 1.4 - Added new buttons for free space, mounted file systems -  Joe L.
 #define ADD_ON_HEAD <STYLE type='text/css'>.db {color:red;}</STYLE>
+#UNMENU_RELEASE $Revision$ $Date$
 
   CGI_setup()
   num_commands=0;

@@ -2,6 +2,7 @@
 #define USER_SCRIPT_DESCR Disable Swap File
 #define USER_SCRIPT_RELOAD 10
 #define USER_SCRIPT_TEST /sbin/swapon -s | grep -v Filename | awk '{ print "Disable " $1 }'
+#UNMENU_RELEASE $Revision$ $Date$
 echo "<pre>"
 /sbin/swapoff -a -v
 rm /var/log/unRAID-swapfile

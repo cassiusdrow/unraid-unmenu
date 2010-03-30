@@ -1,4 +1,5 @@
 #ADD_ON_VERSION 1.0 - contributed by bjp999
+#UNMENU_RELEASE $Revision$ $Date$
 
 #---------------------------------------------------------------------------
 # Similar to same named function in unmenu.awk.  Handles numbers that start 

@@ -4,6 +4,7 @@ BEGIN {
 #define ADD_ON_STATUS  NO
 #define ADD_ON_TYPE    awk
 #define ADD_ON_VERSION 1.0 - contributed by bjp999
+#UNMENU_RELEASE $Revision$ $Date$
 
   CGI_setup()
   cmd  = GETARG["cmd"]

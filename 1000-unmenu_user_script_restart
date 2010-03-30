@@ -1,5 +1,6 @@
 #define USER_SCRIPT_LABEL Restart UnMenu
 #define USER_SCRIPT_DESCR Restart the unmenu.awk server process to allow it to re-read the set of plugins and config files.
+#UNMENU_RELEASE $Revision$ $Date$
 # The parent of this "button" is a shell, its parent is the awk process we want to kill it to re-start it.
 # We need to get the browser back to the main page first... since it will expect to be there when restarted.
 # we also need to use nohup to have another process group for the actual sleep 10 seconds/kill, otherwise 

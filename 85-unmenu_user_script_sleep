@@ -1,5 +1,6 @@
 #define USER_SCRIPT_LABEL S3 Sleep
 #define USER_SCRIPT_DESCR Put the server to S3 Sleep
+#UNMENU_RELEASE $Revision$ $Date$
 
 # by using a USER_SCRIPT_TEST this button 
 # will not show itself unless S3 is supported in /proc/acpi/sleep

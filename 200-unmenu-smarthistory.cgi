@@ -1,6 +1,7 @@
 #define ADD_ON_MENU=Smart History
 #define ADD_ON_URL=smarthistory
 #define ADD_ON_VERSION=1.1 - added tests for directory, file, and php
+#UNMENU_RELEASE $Revision$ $Date$
 SMART_HISTORY_DIR="/boot/smarthistory"
 SMART_HISTORY_PHP="smarthistory.php"
 if [ ! -d "$SMART_HISTORY_DIR" ]

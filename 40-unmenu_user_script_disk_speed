@@ -1,5 +1,6 @@
 #define USER_SCRIPT_LABEL Disk Speed Test
 #define USER_SCRIPT_DESCR Run disk transfer speed tests (using hdparm -tT)
 #define USER_SCRIPT_DESCR <br><font color=blue>&nbsp;&nbsp;Note: be patient, this will take several seconds per disk for each of the disks in your server, longer if the disks need to spin up.</font>
+#UNMENU_RELEASE $Revision$ $Date$
 echo "<pre>"
 hdparm -tT /dev/[hs]d?

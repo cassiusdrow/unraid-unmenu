@@ -1,3 +1,4 @@
+#UNMENU_RELEASE $Revision$ $Date$
 function GetArrayStatus(a, d) {
     RS="\n"
     array_numdisks=0

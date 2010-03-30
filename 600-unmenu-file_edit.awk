@@ -5,6 +5,7 @@ BEGIN {
 #define ADD_ON_TYPE   awk
 #define ADD_ON_VERSION   .1 Original version.  Joe L.
 #define ADD_ON_VERSION   .2 Updated with ideas borrowed from go-script-manager plug-in to keep backup versions of files.
+#UNMENU_RELEASE $Revision$ $Date$
 
   if ( ScriptDirectory == "" ) { 
       ScriptDirectory = "."; 

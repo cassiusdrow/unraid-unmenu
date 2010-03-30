@@ -2,5 +2,6 @@
 #define USER_SCRIPT_DESCR Enable Swap File
 #define USER_SCRIPT_RELOAD 10
 #define USER_SCRIPT_TEST test -f /boot/packages/unraid-swapfile.manual_install && test ! -f /var/log/unRAID-swapfile && echo 'Enable Swap File'
+#UNMENU_RELEASE $Revision$ $Date$
 echo "<pre>"
 /boot/packages/unraid-swapfile.manual_install

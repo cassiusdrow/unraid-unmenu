@@ -4,6 +4,7 @@ BEGIN {
 #define ADD_ON_STATUS      NO
 #define ADD_ON_TYPE        awk
 #define ADD_ON_VERSION     1.1  
+#UNMENU_RELEASE $Revision$ $Date$
 
   if ( MyHost == "" ) {
       "uname -n" | getline MyHost

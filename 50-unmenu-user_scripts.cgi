@@ -4,6 +4,7 @@
 #ADD_ON_VERSION .2 - Added unmenu_local.conf file
 #ADD_ON_VERSION .3 - Fixed to allow single quotes in button labels
 #ADD_ON_VERSION .4 - Added conditional tests to allow for dynamic button labels.
+#UNMENU_RELEASE $Revision$ $Date$
 
 function ReloadPage() {
     echo "<script language=\"JavaScript\">"

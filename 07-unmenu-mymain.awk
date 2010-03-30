@@ -8,6 +8,7 @@ BEGIN {
 #ADD_ON_LOCAL_CONFIG=myMain_local.conf
 #ADD_ON_VERSION 1.45 - contributed by bjp999
 #ADD_ON_VERSION 1.46 - added spindown spinup commands to use new scheme used by unRAID
+#UNMENU_RELEASE $Revision$ $Date$
 
    #-----------------
    # Initializations 

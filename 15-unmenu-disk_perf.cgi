@@ -1,6 +1,7 @@
 #ADD_ON_MENU Disk Performance
 #ADD_ON_URL disk_performance
 #ADD_ON_VERSION .1 - Proof of concept version Joe L.
+#UNMENU_RELEASE $Revision$ $Date$
 
 # refresh interval
 refresh=1

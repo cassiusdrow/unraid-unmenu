@@ -1,5 +1,6 @@
 #define USER_SCRIPT_LABEL Set Disk Scheduler to 'noop' queuing  mode
 #define USER_SCRIPT_DESCR Set the disk device I/O scheduler to use simple FIFO-Queuing  (noop)
+#UNMENU_RELEASE $Revision$ $Date$
 echo "<pre>"
  for i in /sys/block/[sh]d*/queue/scheduler;
  do echo -n $i " " ;

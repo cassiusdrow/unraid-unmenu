@@ -4,6 +4,7 @@ BEGIN {
 #define ADD_ON_STATUS  YES
 #define ADD_ON_TYPE    awk
 #define ADD_ON_VERSION 1.0
+#UNMENU_RELEASE $Revision$ $Date$
 
   CGI_setup();
 

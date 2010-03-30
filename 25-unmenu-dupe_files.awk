@@ -5,6 +5,7 @@ BEGIN {
 #define ADD_ON_TYPE    awk
 #define ADD_ON_VERSION 1.1
 #define ADD_ON_VERSION 1.2 deal with appostraphe in file name
+#UNMENU_RELEASE $Revision$ $Date$
 
   CGI_setup();
 

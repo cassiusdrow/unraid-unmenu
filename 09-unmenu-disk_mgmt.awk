@@ -9,6 +9,7 @@ BEGIN {
 #ADD_ON_VERSION 1.2 - print reiserfsck commands for rebuild-tree (if needed) to screen. Joe L.
 #ADD_ON_VERSION 1.3 - print more of smartctl output on long/short test requests Joe L.
 #ADD_ON_VERSION 1.4 - use spinup/spindown commands now available in 4.5 unRAID Joe L.
+#UNMENU_RELEASE $Revision$ $Date$
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
    GetConfigValues(ScriptDirectory "/" LocalConfigFile, "");

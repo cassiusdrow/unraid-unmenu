@@ -1,5 +1,6 @@
 #ADD_ON_VERSION 1.41 - contributed by bjp999
 #ADD_ON_VERSION 1.42 - changed spinup method
+#UNMENU_RELEASE $Revision$ $Date$
 
 #-----------------------------------------------------------------------
 # This function begins the creation of the drivedb[] associative array. 

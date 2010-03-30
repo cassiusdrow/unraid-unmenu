@@ -15,6 +15,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.2 Added newline prior to auto-install command, in case user did not add newline at the end of the "go" file
 #define ADD_ON_VERSION     2.2.1 Fixed bug with input variables with embedded spaces
 #define ADD_ON_VERSION     2.2.2 Fixed bug with input variables with special characters
+#UNMENU_RELEASE $Revision$ $Date$
 
 
   if ( MyHost == "" ) {

@@ -4,6 +4,7 @@ BEGIN {
 #define ADD_ON_STATUS NO
 #define ADD_ON_TYPE   awk
 #define ADD_ON_VERSION   1.1 Joe L. -- Added parse of "ps" to check for non-standard emhttp port.
+#UNMENU_RELEASE $Revision$ $Date$
 
   if ( ScriptDirectory == "" ) { 
       ScriptDirectory = "."; 

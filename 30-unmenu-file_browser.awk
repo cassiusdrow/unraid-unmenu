@@ -11,6 +11,7 @@ BEGIN {
 #define ADD_ON_VERSION     1.1.2 improved directory path validation - by Joe L.
 #define ADD_ON_VERSION     1.1.3 added unmenu_local.conf file - by Joe L.
 #define ADD_ON_VERSION     1.1.4 fixed handling of directory names with embedded spaces. Joe L.
+#UNMENU_RELEASE $Revision$ $Date$
 
   if ( MyHost == "" ) {
       "uname -n" | getline MyHost
