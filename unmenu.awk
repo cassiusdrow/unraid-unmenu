@@ -212,6 +212,12 @@ BEGIN {
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_version[i] = substr(line,c[3,"start"],c[3,"length"])
           }
+          # Expect a string describing the release of the plug-in
+          delete c;
+          match( line , /^(#UNMENU_RELEASE)([\t =]+)(.+)/, c)
+          if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+              add_on_release[i] = substr(line,c[3,"start"],c[3,"length"])
+          }
           delete c;
           # special lines to be included in <head> </head> of plug-in
           # multiple lines are allowed
@@ -529,7 +535,7 @@ BEGIN {
               for ( i = 0; i < add_on_count; i++ ) {
                   delete d;
                   n = split(add_on[i],d,"/")
-                  Document = Document d[n] ": " add_on_version[i] ORS
+                  Document = Document d[n] ": " add_on_version[i] ", " add_on_release[i] ORS
               }
               Document = PageMenu ArrayStatusDoc Document
             }
