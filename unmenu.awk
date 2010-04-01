@@ -14,7 +14,18 @@ BEGIN {
   #
   # point browser to http://tower:8080
   #
-  version = "Version 1.3 $Revision$ Joe L.... with modifications as suggested by bjp999 and many others"
+  theRevision=""
+  while (( getline line < "unmenu.awk" ) > 0 ) {
+      # Expect a string describing the release of the plug-in
+      if ( substr(line,1,15) == "#UNMENU_RELEASE" ) {
+          theRevision = substr(line,17, 16)
+          gsub("\\$","",theRevision)
+          break;
+      }
+  }
+  close("unmenu.awk")
+  
+  version = "Version 1.3 " theRevision " Joe L.... with modifications as suggested by bjp999 and many others"
   
   # Plug-in scripts are expected to reside in the same directory where this program is invoked if the following
   # variable is not changed.  If you wish to speciify a different directory for the plug-in scripts, you
