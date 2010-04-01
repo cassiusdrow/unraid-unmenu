@@ -14,7 +14,7 @@ BEGIN {
   #
   # point browser to http://tower:8080
   #
-  version = "Version 1.3 Joe L.... with modifications as suggested by bjp999 and many others"
+  version = "Version 1.3 $Revision$ Joe L.... with modifications as suggested by bjp999 and many others"
   
   # Plug-in scripts are expected to reside in the same directory where this program is invoked if the following
   # variable is not changed.  If you wish to speciify a different directory for the plug-in scripts, you
@@ -138,7 +138,7 @@ BEGIN {
     add_on_top_heading[add_on_count]="YES"  # default is to have top of page heading included
     add_on_html_tags[add_on_count]="YES"    # default is to supply <HTML><HEAD>...</HEAD><BODY>...</BODY></HTML>
     add_on_version[add_on_count]="(ADD_ON_VERSION not specified in plug-in, default version assigned) 0.1" 
-    add_on_release[add_on_count] = "Release 0"
+    add_on_release[add_on_count] = ""
     add_on_head_count[add_on_count] = 0
     add_on_count++;
   }
