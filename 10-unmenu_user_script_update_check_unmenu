@@ -1,0 +1,14 @@
+#define USER_SCRIPT_LABEL Check for UnMENU Updates
+#define USER_SCRIPT_DESCR Check for UnMENU Updates
+#UNMENU_RELEASE $Revision$ $Date$
+f=`unmenu_install -c`
+if [ -s /tmp/unmenu_new_files ]
+then
+cat <<EOF
+<form target="user_scripts">
+<input type=submit name="command" value="Install unMENU Updates">
+</form>
+EOF
+fi
+echo "<pre>"
+echo "$f"
