@@ -1,0 +1,227 @@
+#  This script is used to setup or update unmenu.
+#  $Revision$ $Date$
+
+version=1.0
+directory=""
+
+function usage() {
+  echo "Usage: $0 [ -d directory ] [-h] [-i] [-c] [-u] [-l release_list_url] [-s google_svn_archive_url] [-L]"
+  echo "   -i = install unMENU, if -d directory option not specified, it will be installed in /boot/unmenu"
+  echo "   -c = check if update needed. List files needing update."
+  echo "   -u = Update unMENU with files from release_list."
+  echo
+  echo "   -l release_list_url = use release_list at release_list_url
+  echo "   -s google_svn_archive_url = use url for google svn archive
+  echo "   -L = use release_list in /var/log/release_list"
+  echo "   -h = get this help message"
+  echo "   -v = print version of this file"
+  exit 1;
+}
+
+# If we are being invoked from within the unMENU user-script, we will see some variables defined
+if [ "$ScriptDirectory" != "" -a "$ConfigFile" != "" -a "$LocalConfigFile" != "" ]
+then
+   # we are probably in the unmenu folder. Confirm...
+   if [ -f unmenu.conf -a -f syslog_match.conf ]
+   then
+      directory=`pwd`
+   fi
+fi
+
+if [ -f ./unmenu.conf -a -f ./syslog_match.conf ]
+then
+  directory=`pwd`
+fi
+
+if [ "$directory" = "" ]
+  then
+  if [ -d /boot/unmenu ]
+  then
+     if [ -f /boot/unmenu/unmenu.conf -a -f /boot/unmenu/syslog_match.conf ]
+     then
+       directory=/boot/unmenu
+     fi
+  fi
+fi
+
+check_flag="no"
+update_flag="no"
+install_flag="no"
+
+release_list="http://unraid-unmenu.googlecode.com/svn/trunk/release_list"
+svn_archive="http://unraid-unmenu.googlecode.com/svn/trunk"
+local_list="http://localhost/log/release_list"
+
+while getopts ":d:vhcul:Ls:i" opt; do
+  case $opt in
+  d ) directory="$OPTARG" ;;
+  l ) release_list="$OPTARG" ;;
+  L ) release_list="$local_list" ;;
+  s ) svn_archive="$OPTARG" ;;
+  c ) check_flag="yes" ;;
+  i ) install_flag="yes" ;;
+  u ) update_flag="yes" ;;
+  v ) echo Version $version; exit;;
+  \?) usage >&2 ; exit ;;
+  esac
+done
+
+# If the user did not specify, we act as if they asked us to check for new versions
+if [ "$install_flag" = "no" -a "$check_flag" = "no" -a "$update_flag" = "no" ]
+then
+  check_flag="yes"
+fi
+
+if [ "$directory" = "" ]
+then
+  echo "You must specify a directory for the unmenu files. Typically this will be /boot/unmenu"
+  echo "Use -d directory on the command line to specify a directory."
+  exit 1
+fi
+
+if [ -f "$directory" ]
+then
+  echo "$directory is file, not a directory."
+  echo "You must rename or move it if you wish to install unMENU in that directory"
+  exit 2
+fi
+
+
+if [ "$install_flag" = "yes" ]
+then
+  if [ ! -d "$directory" ]
+  then
+    mkdir -p "${directory}" || {
+      echo "Error: unable to create directory ${directory}"
+      exit 2
+    }
+  else
+    if [ -f "$directory/unmenu.awk" ]
+    then
+      echo "Error: unmenu.awk already exists in ${directory}"
+      echo "       use \"-u\" option to update the existing installation."
+      exit 2
+    fi
+
+  fi
+else
+  if [ ! -d "$directory" ]
+  then
+    echo "$directory is not a directory."
+    echo "Use -d directory on the command line to specify a directory."
+    echo "Type \"mkdir '$directory'\" if you would like to create a new driectory."
+    exit
+  fi
+fi
+
+cd "${directory}" || {
+  echo "Error: unable to change directory to ${directory}"
+  exit 2
+}
+
+rm /tmp/unmenu_release_list >/dev/null 2>&1
+
+# get the most current file list
+wget -q -O /tmp/unmenu_release_list ${release_list}
+
+#For each file, if not the current version, 
+#download and install the new, while moving the old to "oldver" subdirectory
+if [ ! -f /tmp/unmenu_release_list ]
+then
+   echo "Unable to download release list from ${release_list}."
+   exit 2
+fi
+
+if [ ! -s /tmp/unmenu_release_list ]
+then
+   echo "Unable to download release list from ${release_list}"
+   exit 2
+fi
+
+# process the list of files.  for each, if the file currently exists, compare it with the release list md5 checksum.
+# Add those that are different to the new_files list.
+cp /dev/null /tmp/unmenu_new_files
+cat /tmp/unmenu_release_list | while read md5sum filename release
+do
+  if [ "${md5sum}" = "" -o "${filename}" = "" ]
+  then
+     continue
+  fi
+  case "${filename}" in
+  *-unmenu-package.conf)
+    if [ ! -f "${filename}" ]
+    then
+       if [ -f "/boot/packages/${filename}" ]
+       then
+          cp /boot/packages/${filename} .
+       fi
+    fi
+  ;;
+  esac
+  if [ ! -f "${filename}" ]
+  then
+     echo "${filename}" >>/tmp/unmenu_new_files
+  else
+     if [ "${md5sum}  ${filename}" != "`md5sum \"${filename}\"`" ]
+     then
+        echo "${filename}" >>/tmp/unmenu_new_files
+     fi
+  fi
+  
+done
+
+# if the files differ, we download to a temp directory, the downloaded version is put into place 
+# and the older versions saved to an oldver subdirectory named for the current date-time.
+
+FILES=`cat /tmp/unmenu_new_files`
+if [ "$FILES" != "" ]
+then
+  if [ "$check_flag" = "yes" ]
+  then
+    echo "Available files on current release list:"
+    echo "$FILES" | while read f
+    do
+      grep " $f " /tmp/unmenu_release_list | cut -d" " -f2-
+    done
+  fi
+else
+  echo "No updates needed. All files are up to date."
+fi
+
+if [ "$update_flag" = "yes" -o "$install_flag" = "yes" ]
+then
+  if [ "$FILES" != "" ]
+  then
+    tmpd=/tmp/unmenu_tmp
+    mkdir -p $tmpd
+    ds=`date "+%F_%H%M"`
+    backup_dir="./unmenu_old_$ds"
+    for i in $FILES
+    do
+      echo "Downloading $i"
+      wget -q -O $tmpd/$i ${svn_archive}/$i
+      md5=`grep " $i :Revision:" /tmp/unmenu_release_list | cut -d" " -f1`
+      #unfortunately, wget does not fill in the Revision normally populated by svn, so we need to do it to get the md5sum to match
+      rev=`grep " $i :Revision:" /tmp/unmenu_release_list | cut -d":" -f2- | sed -e "s/  Date:/ $ \\$Date:/" -e "s/Revision:/\\$Revision:/" -e "s/$/\$/"`
+      echo rev $rev
+      sed -i "s/^\(#UNMENU_RELEASE\)\(.*\)$/\1 $rev/" $tmpd/$i
+      dl_md5=`md5sum $tmpd/$i | cut -d" " -f1`
+      if [ "$md5" = "$dl_md5" ]
+      then 
+        #download was successful
+        # move existing file to backup directory
+        if [ -f "$i" ]
+        then
+          mkdir -p $backup_dir
+          mv "$i" "$backup_dir/$i"
+          echo "Moved current $i to $backup_dir/$i"
+        fi
+        #  copy from download tmp directory to current directory
+        cp "$tmpd/$i" "$i"
+        echo "Installed $i"
+      else
+        echo "$md5 != $dl_md5, $tmpd/$i not installed" 
+      fi
+    done
+  fi
+fi
