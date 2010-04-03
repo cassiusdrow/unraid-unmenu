@@ -162,10 +162,24 @@ do
   then
      echo "${filename}" >>/tmp/unmenu_new_files
   else
-     if [ "${md5sum}  ${filename}" != "`md5sum \"${filename}\"`" ]
-     then
-        echo "${filename}" >>/tmp/unmenu_new_files
-     fi
+     case "${filename}" in
+     *-unmenu-package.conf)
+        # Get the md5sum without the PACKAGE_VARIABLE lines that the user might change
+        # otherwise, we'll constantly be replacing a user edited version of the 
+        # .conf file with one with default values.
+        cur_md5sum=`egrep -v "^PACKAGE_VARIABLE|^#UNMENU_RELEASE" "${filename}"| md5sum - | cut -d" " -f1`
+        if [ "${md5sum}" != "${cur_md5sum}" ]
+        then
+           echo "${filename}" >>/tmp/unmenu_new_files
+        fi
+     ;;
+     *)
+       if [ "${md5sum}  ${filename}" != "`md5sum \"${filename}\"`" ]
+       then
+          echo "${filename}" >>/tmp/unmenu_new_files
+       fi
+     ;;
+     esac
   fi
   
 done
