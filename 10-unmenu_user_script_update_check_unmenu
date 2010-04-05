@@ -2,6 +2,7 @@
 #define USER_SCRIPT_DESCR Check the google.code Subversion archive for unMENU Updates
 #define USER_SCRIPT_TEST which unmenu_install >/dev/null 2>&1 && echo "Check for unMENU Updates"
 #UNMENU_RELEASE $Revision$ $Date$
+PATH=$PATH:.
 f=`unmenu_install -c`
 if [ -s /tmp/unmenu_new_files ]
 then
