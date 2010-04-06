@@ -1,7 +1,7 @@
 #  This script is used to setup or update unmenu.
 #  $Revision$ $Date$
 
-version=1.0
+version=1.1
 directory=""
 
 function usage() {
@@ -219,7 +219,8 @@ then
       rev=`grep " $i :Revision:" /tmp/unmenu_release_list | cut -d":" -f2- | sed -e "s/  Date:/ $ \\$Date:/" -e "s/Revision:/\\$Revision:/" -e "s/$/\$/"`
       echo rev $rev
       sed -i "s/^\(#UNMENU_RELEASE\)\(.*\)$/\1 $rev/" $tmpd/$i
-      dl_md5=`md5sum $tmpd/$i | cut -d" " -f1`
+      dl_md5=`egrep -v "^PACKAGE_VARIABLE|^#UNMENU_RELEASE" "$tmpd/$i"| md5sum - | cut -d" " -f1`
+      #dl_md5=`md5sum $tmpd/$i | cut -d" " -f1`
       if [ "$md5" = "$dl_md5" ]
       then 
         #download was successful
@@ -230,9 +231,22 @@ then
           mv "$i" "$backup_dir/$i"
           echo "Moved current $i to $backup_dir/$i"
         fi
+        case "$i" in
+        *local*.conf)
+          if [ ! -f "$i" ]
+          then
+            cp "$tmpd/$i" "$i"
+            echo "Installed $i"
+          else
+            echo "Local $i file exists, $tmpd/$i not installed" 
+          fi
+        ;;
+        *)
         #  copy from download tmp directory to current directory
         cp "$tmpd/$i" "$i"
         echo "Installed $i"
+        ;;
+        esac
       else
         echo "$md5 != $dl_md5, $tmpd/$i not installed" 
       fi
