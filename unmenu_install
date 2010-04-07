@@ -1,5 +1,5 @@
 #  This script is used to setup or update unmenu.
-#  $Revision$ $Date$
+#UNMENU_RELEASE  $Revision$ $Date$
 
 version=1.2
 directory=""
