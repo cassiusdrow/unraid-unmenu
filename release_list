@@ -51,7 +51,7 @@ c9d8260f24fd1920f8b363f74c5b95ac  cpio-unmenu-package.conf :Revision: 34  Date: 
 7b53ea4037af3734be1d8215ff7cf00a  htop-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 75ba1a86c236a7534aa37000579966d8  iftop-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 04c4df8951561871169b7fdb1ebfa5b4  inotify-tools-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
-229785fdaebdaad4fce255370d38b4d5  istat-unmenu-package.conf :Revision: 27  Date: 2010-04-04 20:23:01 -0400 (Sun, 04 Apr 2010) 
+2978b39ffec239cc8e1747244a847028  istat-unmenu-package.conf :Revision: 42  Date: 2010-04-07 20:07:17 -0400 (Wed, 07 Apr 2010) 
 aa0202e2a21fbfe1d6662a84236183e6  jre-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 241e15682fe019a9ae37c3a0de665853  lighttpd-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 8aacca933a11bde30725f501f50dd2dc  lsof-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
