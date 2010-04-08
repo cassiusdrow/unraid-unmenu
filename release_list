@@ -75,6 +75,7 @@ b5d2e9755e584f52b95472c27019b682  proftp-unmenu-package.conf :Revision: 7  Date:
 4ae3a84b21bca8db576be62972240dc2  rsync-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 a80ac08494a93a1bbc37815540c422c5  screen-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 b3880ded9322210355738faac49fe01d  smartctl-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
+7b6b6ebcdceabef39d56b99c9461d8d4  socat-unmenu-package.conf :Revision: 45  Date: 2010-04-08 16:05:04 -0400 (Thu, 08 Apr 2010) 
 57eb9d4bea8ff29cf5cb9936cc4abf1d  svn-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 73e3ea382fe3d6fb3cdae4409ea4e086  syslog_match.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 6f3265c88256bd39f0dbd5ce05a00a59  unmenu.awk :Revision: 11  Date: 2010-04-01 13:13:15 -0400 (Thu, 01 Apr 2010) 
