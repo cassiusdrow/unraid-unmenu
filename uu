@@ -24,7 +24,7 @@ mount -o remount,noatime,nodiratime /boot
     # create a lock file
     while true
     do 
-        awk -W re-interval -f ./unmenu.awk 2>&1 1</dev/null
+        awk -W re-interval -f ./unmenu.awk 2>&1 0</dev/null
         ret=$?
         case $ret in
         0) echo "unmenu.awk stopped"; break ;;      # normal exit
