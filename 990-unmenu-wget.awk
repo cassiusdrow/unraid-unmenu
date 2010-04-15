@@ -16,6 +16,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.2.1 Fixed bug with input variables with embedded spaces
 #define ADD_ON_VERSION     2.2.2 Fixed bug with input variables with special characters
 #define ADD_ON_VERSION     2.2.3 Fixed bug md5 sum of extra_packages.  Fixed display of returned html when URL not valid.
+#define ADD_ON_VERSION     2.2.4 Fixed bug with version compare of package with no affiliated download.
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -512,24 +513,30 @@ BEGIN {
              } else { # installed, but different version
                theHTML = theHTML "<td><font color=\"orange\">Installed, but version is different.<br>"
                theHTML = theHTML "Current version='" ver_string "' expected '" package_version_string[i] "'</font></td>"
-               if ( allPackageFilesExist(i) == "yes" ) {
-                 if (allMD5Verify( i ) == "OK" ) {
-                   theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
-                 } else {
-                   theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
-                   if ( IsHTML( PACKAGE_DIRECTORY "/" package_file[i], 30 ) == "YES" ) {
-                       theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_file[i], 20)
-                   }
-                   for ( pe = 1; pe <= package_extra_md5_count[ i ]; pe++ ) {
-                     if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_extra_file[i,pe], package_extra_md5[i,pe] ) != "OK" ) {
-                       if ( IsHTML( PACKAGE_DIRECTORY "/" package_extra_file[i,pe], 30 ) == "YES" ) {
-                           theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_extra_file[i,pe], 20)
+               if ( package_url[i] == "none" ) {
+                 theHTML = theHTML "<td><font color=\"purple\">Package not yet installed (no download needed)</font></td>"
+                 theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
+                 nomd5="true"
+               } else {
+                 if ( allPackageFilesExist(i) == "yes" ) {
+                   if (allMD5Verify( i ) == "OK" ) {
+                     theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
+                   } else {
+                     theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
+                     if ( IsHTML( PACKAGE_DIRECTORY "/" package_file[i], 30 ) == "YES" ) {
+                         theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_file[i], 20)
+                     }
+                     for ( pe = 1; pe <= package_extra_md5_count[ i ]; pe++ ) {
+                       if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_extra_file[i,pe], package_extra_md5[i,pe] ) != "OK" ) {
+                         if ( IsHTML( PACKAGE_DIRECTORY "/" package_extra_file[i,pe], 30 ) == "YES" ) {
+                             theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_extra_file[i,pe], 20)
+                         }
                        }
                      }
+                     theHTML = theHTML "<input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
                    }
-                   theHTML = theHTML "<input type=submit name=\"download-" package_file[i] "\" value=\"Download " package_file[i] "\"</td>"
-                 }
-               } 
+                 } 
+               }
              }
           } else {
              # package is not installed yet, but is downloaded
