@@ -19,4 +19,4 @@ echo "Awaking from sleep"
 
 # Do post-sleep activities, reset wake-on-lan
 ethtool -s eth0 speed 1000
-ethtool -s eth0 wol gp
+ethtool -s eth0 wol g
