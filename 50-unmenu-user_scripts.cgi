@@ -78,6 +78,9 @@ do
     #echo "imported ${label[$c]} from ${script[$c]} ${descr[$c]}<br>"
 done
 
+PATH=$PATH:.
+export PATH
+
 # Now for some HTML, draw the buttons
 echo "<hr><form method=GET><table>"
 i=1
