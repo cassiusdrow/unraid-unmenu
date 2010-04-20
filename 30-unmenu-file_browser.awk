@@ -11,6 +11,7 @@ BEGIN {
 #define ADD_ON_VERSION     1.1.2 improved directory path validation - by Joe L.
 #define ADD_ON_VERSION     1.1.3 added unmenu_local.conf file - by Joe L.
 #define ADD_ON_VERSION     1.1.4 fixed handling of directory names with embedded spaces. Joe L.
+#define ADD_ON_VERSION     1.1.5 fixed handling of time-stamps. (forced a specific format in "ls" so parse of names works consistently) Joe L.
 #UNMENU_RELEASE $Revision$ $Date$
 
   if ( MyHost == "" ) {
@@ -170,12 +171,12 @@ BEGIN {
                   # this validates that the folders in the ALLOWED_FOLDER exist. 
                   # (in case the ALLOWED_FOLDER list is not edited or run on a system with fewer drives 
                   # than max permitted)
-                  cmd = "ls -dl " ALLOWED_FOLDER[a] " 2>/dev/null "
+                  cmd = "ls --time-style='+%Y-%m-%d %I:%M%p' -dl " ALLOWED_FOLDER[a] " 2>/dev/null "
                   while (( cmd | getline ) > 0 ) {
-                     # we match on the first 8 whitespace delimited fields, and then use RLENGTH 
-                     # to substring $0 to get the 9th onward.
+                     # we match on the first 7 whitespace delimited fields, and then use RLENGTH 
+                     # to substring $0 to get the 8th onward.
                      # unfortunatly, the "ls" command is not fixed column width so we must resort to this.
-                     match( $0, /[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]*/ )
+                     match( $0, /[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]*/ )
                      theDir=substr($0,RLENGTH + 2,length($0))
                      gsub(/ /,"+",theDir)
                      out_html=out_html "<tr><td>&bull;&nbsp;<a href=\"http://" MyHost 
@@ -214,9 +215,9 @@ BEGIN {
               }
               if ( allowed_folder == "YES" ) {
               # make sure folder exists.
-              cmd = "ls -ald '" theDir "' 2>/dev/null "
+              cmd = "ls --time-style='+%Y-%m-%d %I:%M%p' -ald '" theDir "' 2>/dev/null "
               while (( cmd | getline ) > 0 ) {
-                 match( $0, /[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]*/ )
+                 match( $0, /[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]*/ )
                  theDir=substr($0,RLENGTH + 2,length($0))
                  pdir = getParentDirectory( theDir )
                  out_html = out_html "<tr><td ><b>File Name</b></td>"
@@ -371,15 +372,15 @@ function getDirectoryListing( theDir , out_html, cmd) {
 
   # deal with embedded single quotes
   gsub("'","'\\''",theDirectory)
-  cmd="ls -al --group-directories-first '" theDirectory "'" 
+  cmd="ls -al  --time-style='+%Y-%m-%d %I:%M%p' --group-directories-first '" theDirectory "'" 
 
   tdclass=""
   while (( cmd | getline ) > 0 ) {
-     # we match on the first 8 whitespace delimited fields, and then use RLENGTH to substring $0 to get the 9th onward
+     # we match on the first 7 whitespace delimited fields, and then use RLENGTH to substring $0 to get the 8th onward
      # unfortunatly, the "ls" command is not fixed column width so we must resort to this.
      delete d;
      split($0, d, " ")
-     match( $0, /[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]*/ )
+     match( $0, /[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]* *[^ ]*/ )
      theFile=substr($0,RLENGTH + 2,length($0))
      if ( theFile == "." || theFile == ".." ) continue;
      gsub("'","%27",theDir)
@@ -425,7 +426,7 @@ function getDirectoryListing( theDir , out_html, cmd) {
      out_html=out_html "<td  class=\"" tdclass "\" align=\"right\">" d[5] "</td>" 
      # file date
      gsub(" ","\\&nbsp;",d[7])
-     out_html=out_html "<td align=\"right\"  class=\"" tdclass "\">" d[6] " " d[7] " " d[8] "</td>"
+     out_html=out_html "<td align=\"right\"  class=\"" tdclass "\">" d[6] " " d[7] "</td>"
      out_html=out_html "</tr>\r\n" 
   }
   close(cmd)
