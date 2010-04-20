@@ -121,6 +121,22 @@ cd "${directory}" || {
 
 rm /tmp/unmenu_release_list >/dev/null 2>&1
 
+gc=`net lookup googlecode.com 2>/dev/null`
+if [ $? != 0 ]
+then
+  echo "Unable to connect to googlecode.com from your server."
+  echo "You must have a DNS Nameserver and Gateway defined in your unRAID setup before you can continue.."
+  echo "For most people, these are both set to the IP address of your router."
+  exit 2
+fi
+
+wg=`which wget 2>/dev/null`
+if [ $? = 1 ]
+then
+  echo "The \"wget\" command does not exist on your server.  It is needed to install unMENU."
+  exit 2
+fi
+
 # get the most current file list
 wget -q -O /tmp/unmenu_release_list ${release_list}
 
@@ -149,6 +165,8 @@ do
   fi
   case "${filename}" in
   *-unmenu-package.conf)
+    # If the package file does not exist in the unmenu directory, but does exist in /boot/packages
+    # copy it to the unmenu directory.
     if [ ! -f "${filename}" ]
     then
        if [ -f "/boot/packages/${filename}" ]
@@ -217,7 +235,7 @@ then
       echo "Downloading $i"
       wget -q -O $tmpd/$i ${svn_archive}/$i
       md5=`grep " $i :Revision:" /tmp/unmenu_release_list | cut -d" " -f1`
-      #unfortunately, wget does not fill in the Revision normally populated by svn, so we need to do it to get the md5sum to match
+      #unfortunately, wget does not fill in the Revision normally populated by svn, so we need to do it 
       rev=`grep " $i :Revision:" /tmp/unmenu_release_list | cut -d":" -f2- | sed -e "s/  Date:/ $ \\$Date:/" -e "s/Revision:/\\$Revision:/" -e "s/$/\$/"`
       echo rev $rev
       sed -i "s/^\(#UNMENU_RELEASE\)\(.*\)$/\1 $rev/" $tmpd/$i
@@ -243,16 +261,16 @@ then
           fi
         ;;
         *)
-        # move existing file to backup directory
-        if [ -f "$i" ]
-        then
-          mkdir -p $backup_dir
-          mv "$i" "$backup_dir/$i"
-          echo "Moved current $i to $backup_dir/$i"
-        fi
-        #  copy from download tmp directory to current directory
-        cp "$tmpd/$i" "$i"
-        echo "Installed $i"
+          # move existing file to backup directory
+          if [ -f "$i" ]
+          then
+            mkdir -p $backup_dir
+            mv "$i" "$backup_dir/$i"
+            echo "Moved current $i to $backup_dir/$i"
+          fi
+          #  copy from download tmp directory to current directory
+          cp "$tmpd/$i" "$i"
+          echo "Installed $i"
         ;;
         esac
       else
