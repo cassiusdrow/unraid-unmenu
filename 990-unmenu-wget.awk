@@ -243,6 +243,7 @@ BEGIN {
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
                manual_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".manual_install"
+               print "PACKAGE_DIRECTORY=" PACKAGE_DIRECTORY > manual_install_file
                print "SCRIPT_DIRECTORY=" ScriptDirectory > manual_install_file
                for ( pc=1; pc <= package_variable_count[i]; pc++ ) {
                   delete f;
@@ -301,6 +302,7 @@ BEGIN {
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
                auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
+               print "PACKAGE_DIRECTORY=" PACKAGE_DIRECTORY > manual_install_file
                print "SCRIPT_DIRECTORY=" ScriptDirectory > auto_install_file
                for ( pc=1; pc <= package_variable_count[i]; pc++ ) {
                   delete f;
