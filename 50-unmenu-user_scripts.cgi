@@ -63,6 +63,13 @@ then
     UserScriptDir=$LocUserScriptDir
 fi
 
+PACKAGE_DIRECTORY=`grep "^PACKAGE_DIRECTORY" "$ScriptDirectory/$LocalConfigFile" 2>/dev/null | sed "s/ //g" | cut -d"=" -f2`
+if [ "$PACKAGE_DIRECTORY" = "" ]
+then
+    PACKAGE_DIRECTORY=`grep "^PACKAGE_DIRECTORY" "$ScriptDirectory/$ConfigFile" | sed "s/ //g" | cut -d"=" -f2`
+fi
+export PACKAGE_DIRECTORY
+
 #echo "Importing user-scripts from ${UserScriptDir}/" >&2
 c=0
 scripts=`ls "$UserScriptDir"/[0-9]*unmenu_user_script* 2>/dev/null`
