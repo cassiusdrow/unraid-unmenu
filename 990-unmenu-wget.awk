@@ -1,6 +1,6 @@
 BEGIN {
-#define ADD_ON_URL         package_manager
-#define ADD_ON_MENU        Package Manager
+#define ADD_ON_URL         pkg_manager
+#define ADD_ON_MENU        Pkg Manager
 #define ADD_ON_STATUS      NO
 #define ADD_ON_TYPE        awk
 #define ADD_ON_VERSION     1.0 BubbaQ
@@ -17,6 +17,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.2.2 Fixed bug with input variables with special characters
 #define ADD_ON_VERSION     2.2.3 Fixed bug md5 sum of extra_packages.  Fixed display of returned html when URL not valid.
 #define ADD_ON_VERSION     2.2.4 Fixed bug with version compare of package with no affiliated download.
+#define ADD_ON_VERSION     2.3   Modified to select package and then only show selected package.
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -224,6 +225,7 @@ BEGIN {
   MyPrefix    = "http://" MyHost ":" MyPort
 
   theHTML = "" 
+  select_package_file=""
   edit_package_file=""
   save_edit_flag=""
   delete edit_variable;
@@ -242,6 +244,7 @@ BEGIN {
           theHTML = theHTML "<font color=\"blue\"><b>" the_package " installation:</b></font><br><pre>"
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
+               select_package_file = the_package
                manual_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".manual_install"
                print "PACKAGE_DIRECTORY=" PACKAGE_DIRECTORY > manual_install_file
                print "SCRIPT_DIRECTORY=" ScriptDirectory > manual_install_file
@@ -301,6 +304,7 @@ BEGIN {
           theHTML = theHTML "<font color=\"blue\"><b>" the_package " Will be Re-Installed each time the server is re-booted</b></font><br>"
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
+               select_package_file = the_package
                auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
                print "PACKAGE_DIRECTORY=" PACKAGE_DIRECTORY > auto_install_file
                print "SCRIPT_DIRECTORY=" ScriptDirectory > auto_install_file
@@ -334,6 +338,7 @@ BEGIN {
           theHTML = theHTML "<font color=\"blue\"><b>" the_package " Will be no longer be Re-Installed each time the server is re-booted</b></font><br>"
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
+               select_package_file = the_package
                auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
                system("rm '" auto_install_file "' 2>/dev/null" )
                break;
@@ -352,6 +357,7 @@ BEGIN {
           theHTML = theHTML "<br>" 
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
+               select_package_file = the_package
                match( package_url[i] , /^(http:\/\/)([^\/]*)(.*)/, c)
                if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
                  theServer = substr(package_url[i],c[2,"start"],c[2,"length"])
@@ -390,6 +396,13 @@ BEGIN {
           ORS = OLD_ORS
           break;
       }
+      if ( PARAM[a] ~ "select-" ) {
+          delete f;
+          match ( PARAM[a], /^select-([^=]*)(=)(.*)/, f);
+          if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[3,"length"] > 0 ) {
+            select_package_file = substr(PARAM[a],f[1,"start"],f[1,"length"])
+          }
+      }
       if ( PARAM[a] ~ "edit-" ) {
           delete f;
           match ( PARAM[a], /^edit-([^=]*)(=)(.*)/, f);
@@ -402,6 +415,7 @@ BEGIN {
           match ( PARAM[a], /^save_edit-([^=]*)(=)(.*)/, f);
           if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[3,"length"] > 0 ) {
             edit_package_file = substr(PARAM[a],f[1,"start"],f[1,"length"])
+            select_package_file=edit_package_file
           }
           save_edit_flag="save"
       }
@@ -467,10 +481,60 @@ BEGIN {
   theHTML = theHTML "<fieldset style=\"margin-top:10px;\"><legend><strong>Download and Install Extra Software Packages</strong></legend>"
   theHTML = theHTML "<form>"
   theHTML = theHTML "<table width=\"100%\" border=0>"
+  if ( edit_package_file != "" || select_package_file != "" ) {
+      theHTML = theHTML "<tr><td colspan=\"10\"><input type=submit name=\"\" value=\"View All Avaliable Packages\"><hr></td></tr>"
+  }
   for ( i = 1; i <= package_count; i++ ) {
     if ( edit_package_file != "" ) {
         if ( edit_package_file != package_file[i] ) {
           continue;
+        }
+    } else {
+        if ( select_package_file != "" ) {
+            if ( select_package_file != package_file[i] ) {
+              continue;
+            }
+        } else {
+            theHTML = theHTML "<tr>"
+            theHTML = theHTML "<td style=\"background-color:#DDDDDD\">"
+            theHTML = theHTML "<input type=submit name=\"select-"
+            theHTML = theHTML package_file[i] "\" value=\"Select " package_file[i] "\"></td>"
+            theHTML = theHTML "<td width=\"80%\" style=\"background-color:#DDDDDD\">"
+            theHTML = theHTML package_name[i]
+            if ( allPackageFilesExist(i) == "yes" ) {
+                if ( FileExists( package_installed[i] ) == "yes" ) {
+                   ver_string = PackageVersionTest( package_version_test[i] )
+                   if ( package_version_test[i] != "" && ver_string == package_version_string[i] ) { 
+                     if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ".auto_install" ) == "yes" ) {
+                       theHTML = theHTML "<br><font color=\"blue\">Currently Installed. "
+                       theHTML = theHTML "Will be automatically Re-Installed upon Re-Boot.</font>"
+                     } else {
+                       theHTML = theHTML "<br><font color=\"blue\">Currently Installed.</font> <font color=\"brown\">Will <b>"
+                       theHTML = theHTML "NOT</b> be automatically Re-Installed upon Re-Boot.</font>"
+                     }
+                   } else {
+                     # different version found
+                     theHTML = theHTML "<br><font color=\"maroon\">Installed, but version is different. "
+                     theHTML = theHTML "Current version='" ver_string "' expected '" package_version_string[i] "'</font>"
+                   }
+                } else {
+                   # not installed
+                   theHTML = theHTML "<br><font color=\"brown\">Not Installed</font>"
+                }
+            } else {
+                # not downloaded
+                if ( FileExists( package_installed[i] ) == "yes" ) {
+                   theHTML = theHTML "<br><font color=\"navy\">Installed, Not Downloaded</font>"
+                } else {
+                   theHTML = theHTML "<br><font color=\"brown\">Not Downloaded</font>"
+                }
+            }
+            theHTML = theHTML "</td>"
+            theHTML = theHTML "</tr>"
+            theHTML = theHTML "<tr><td colspan=\"10\"><table border=0>"
+            theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Description:</b></td>"
+            theHTML = theHTML "<td valign=\"top\">" package_descr[i] "</td></tr></table></td></tr>"
+	    continue;
         }
     }
     theHTML = theHTML "<tr>"
