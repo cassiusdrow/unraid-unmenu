@@ -47,6 +47,7 @@ b5c1e2000be4abd9d8df7528ed704284  apcupsd3-unmenu-package.conf :Revision: 25  Da
 7204cd32f55d2629142f64d84611c066  compiler-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 c9d8260f24fd1920f8b363f74c5b95ac  cpio-unmenu-package.conf :Revision: 34  Date: 2010-04-06 11:05:22 -0400 (Tue, 06 Apr 2010) 
 66dca93fd3a66a28daf11bab18e642f8  cxxlibs-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
+b65dd6b709d9825da2abbc4642f7c7dc  dmidecode-unmenu-package.conf :Revision: 83  Date: 2010-04-29 09:46:38 -0400 (Thu, 29 Apr 2010) 
 9bda2b3d97ccb2488285f7cb9fe50bb7  drivedb.lib.awk :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 69f3ac9bcad5e82079be36e474a93a91  ds_store_cleanup-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 5aa7caa68ac306ab717b342079fc4787  file-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
