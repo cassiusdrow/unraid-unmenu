@@ -59,7 +59,7 @@ aa0202e2a21fbfe1d6662a84236183e6  jre-unmenu-package.conf :Revision: 7  Date: 20
 241e15682fe019a9ae37c3a0de665853  lighttpd-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 8aacca933a11bde30725f501f50dd2dc  lsof-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 ed0ab1d6521336a3ada6105d1aab20c6  mail-ssmtp-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
-812da1276fc788671448d11310fd9223  mail_status-unmenu-package.conf :Revision: 53  Date: 2010-04-15 18:02:29 -0400 (Thu, 15 Apr 2010) 
+ba559d3b99ed3372ddb90a99be04e13f  mail_status-unmenu-package.conf :Revision: 85  Date: 2010-04-29 20:06:58 -0400 (Thu, 29 Apr 2010) 
 fa04c0016a69c9d89d186576d010b41f  md5deep-unmenu-package.conf :Revision: 22  Date: 2010-04-03 00:42:45 -0400 (Sat, 03 Apr 2010) 
 2a7d181b44083ae3de01f3614d5a23d9  monthly-parity-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 0bd82268637a8fdeeef6e3d30f3786d8  myMain.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
