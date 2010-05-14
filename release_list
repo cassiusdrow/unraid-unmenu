@@ -78,6 +78,7 @@ d79ea40aee1e38304d6ac1583935d25d  perl-unmenu-package.conf :Revision: 54  Date: 
 1a15806a0fc6244f8ce2a0e923d10043  powerdown_ctlaltdel-unmenu-package.conf :Revision: 50  Date: 2010-04-13 14:21:51 -0400 (Tue, 13 Apr 2010) 
 b5d2e9755e584f52b95472c27019b682  proftp-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 4ae3a84b21bca8db576be62972240dc2  rsync-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
+5bd8f3f283610db9a8a3ffe1ae95b454  ruby-unmenu-package.conf :Revision: 93  Date: 2010-05-13 22:50:01 -0400 (Thu, 13 May 2010) 
 a80ac08494a93a1bbc37815540c422c5  screen-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 b3880ded9322210355738faac49fe01d  smartctl-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 7b6b6ebcdceabef39d56b99c9461d8d4  socat-unmenu-package.conf :Revision: 45  Date: 2010-04-08 16:05:04 -0400 (Thu, 08 Apr 2010) 
