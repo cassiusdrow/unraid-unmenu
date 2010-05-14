@@ -255,7 +255,6 @@ BEGIN {
                     theVar = substr(package_variable[i,pc],f[3,"start"],f[3,"length"])
                     theVal = substr(package_variable[i,pc],f[5,"start"],f[5,"length"])
                     
-                    #print theVar > manual_install_file
                     print theVar "=\"" theVal "\"" > manual_install_file
                   }
                } 
@@ -310,10 +309,12 @@ BEGIN {
                print "SCRIPT_DIRECTORY=" ScriptDirectory > auto_install_file
                for ( pc=1; pc <= package_variable_count[i]; pc++ ) {
                   delete f;
-                  match ( package_variable[i,pc] , /^([^\|]*)(\|\|)(.*)(\|\|)(.*)/, f);
-                  if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[3,"length"] > 0 ) {
+                  match ( package_variable[i,pc] , /^([^\|]*)(\|\|)([^=]*)(=)(.*)(\|\|)(.*)/, f);
+                  if ( f[1,"length"] > 0 && f[2,"length"] > 0 && f[4,"length"] > 0 ) {
                     theVar = substr(package_variable[i,pc],f[3,"start"],f[3,"length"])
-                    print theVar > auto_install_file
+                    theVal = substr(package_variable[i,pc],f[5,"start"],f[5,"length"])
+                    
+                    print theVar "=\"" theVal "\"" > auto_install_file
                   }
                } 
                for ( pc=1; pc <= package_install_count[i]; pc++ ) {
