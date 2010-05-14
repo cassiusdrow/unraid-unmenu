@@ -39,7 +39,7 @@ b0d1c25f35e2fdc5bdc4f2c293578f3b  80-unmenu_user_script_swapfile_off :Revision: 
 2b68d01899ac64dbaf3ef63cd62fcb31  85-unmenu_user_script_sleep :Revision: 58  Date: 2010-04-17 09:13:05 -0400 (Sat, 17 Apr 2010) 
 35c7456450a4023545d65169b8052d6d  95-unmenu_user_script_test_email :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 d5b0b1f1ac6cc562399197f8b7f20445  99-unmenu-utility.awk :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
-a6e07d17609bf4f0e2b76c188dbbccc4  990-unmenu-wget.awk :Revision: 81  Date: 2010-04-29 01:45:52 -0400 (Thu, 29 Apr 2010) 
+433d6b787db98acd8c03138bec74e2e1  990-unmenu-wget.awk :Revision: 95  Date: 2010-05-14 09:51:10 -0400 (Fri, 14 May 2010) 
 5ac07002256704da128a8191b92ffc1f  999-unmenu-unraid_main.awk :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 7541e673bea72ba9d702b2d7f5efb751  apcupsd-unmenu-package.conf :Revision: 29  Date: 2010-04-05 05:03:42 -0400 (Mon, 05 Apr 2010) 
 b5c1e2000be4abd9d8df7528ed704284  apcupsd3-unmenu-package.conf :Revision: 25  Date: 2010-04-04 20:11:14 -0400 (Sun, 04 Apr 2010) 
