@@ -857,6 +857,7 @@ function GetDiskTemps(smart_already_run, cmd, a, ix, ix2, lst, t, dev) {
     else 
        for(ix=0; ix<drivedb["count"]; ix++)
           if(drivedb[ix, "disk"] != "flash") {
+             GetDiskSpinState( "/dev/drivedb[ix, "dev"] )
              if((drivedb[ix, "spinind"] == 0) && (drivedb[ix, "smart_nospinup"] != "1")) # not spinning
                 drivedb[ix, "tempc"]="*";
              else {                          # is spinning

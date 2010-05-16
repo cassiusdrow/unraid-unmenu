@@ -1314,7 +1314,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_short"] == "Short+Smart+Test" ) {
     DiskCommandOutput = "Smart Short Test of " d[1] " will take from several minutes to an hour or more."
     #smartctl -t short /dev/$disk_device    
-    cmd="smartctl -t short " d[1]
+    cmd="smartctl -d ata -t short " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0) ;
     close(cmd);
@@ -1323,7 +1323,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_long"] == "Long+Smart+Test" ) {
     DiskCommandOutput = "Smart Long Test of " d[1] " could take several hours or more."
     #smartctl -t long /dev/$disk_device    
-    cmd="smartctl -t long " d[1]
+    cmd="smartctl -d ata -t long " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0) ;
     close(cmd);
@@ -1410,7 +1410,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Short Test of /dev/" d[2] " will take from several minutes to an hour or more.<pre>"
-          cmd="smartctl -t short /dev/" d[2] " 2>&1"
+          cmd="smartctl -d ata -t short /dev/" d[2] " 2>&1"
           RS="\n"
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
@@ -1422,7 +1422,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Long Test of " d[2] " could take several hours or more.<pre>"
-          cmd="smartctl -t long /dev/" d[2] " 2>&1"
+          cmd="smartctl -d ata -t long /dev/" d[2] " 2>&1"
           RS="\n"
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS

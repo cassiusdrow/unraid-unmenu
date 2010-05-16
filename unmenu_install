@@ -265,12 +265,14 @@ then
           if [ -f "$i" ]
           then
             mkdir -p $backup_dir
+            # determine if there is an AUTO_UPDATE line in the file
+            # if AUTO_UPDATE = NO, just print needed command to move it into place
+            # if AUTO_UPDATE = YES, update and alert user edited version was updated
+            # else, no AUTO_UPDATE line, just back it up and copy new into place.
+            auto_update=`grep "^#AUTO_UPDATE" $i | tr -d " \t" | tr "[a-z]" "[A-Z]" | cut -d"=" -f2`
+          else
+            auto_update=""
           fi
-          # determine if there is an AUTO_UPDATE line in the file
-          # if AUTO_UPDATE = NO, just print needed command to move it into place
-          # if AUTO_UPDATE = YES, update and alert user edited version was updated
-          # else, no AUTO_UPDATE line, just back it up and copy new into place.
-          auto_update=`grep "^#AUTO_UPDATE" $i | tr -d " \t" | tr "[a-z]" "[A-Z]" | cut -d"=" -f2`
           case "$auto_update" in
           NO)
             echo "#--------------------------------------------------------#"
@@ -297,9 +299,12 @@ then
             echo "#--------------------------------------------------------#"
           ;;
           *)
-            #  copy from download tmp directory to current directory
-            mv "$i" "$backup_dir/$i"
-            echo "Moved current $i to $backup_dir/$i"
+            if [ -f "$i" ]
+            then
+              #  copy from download tmp directory to current directory
+              mv "$i" "$backup_dir/$i"
+              echo "Moved current $i to $backup_dir/$i"
+            fi
             cp "$tmpd/$i" "$i"
             echo "Installed $i"
           ;;
