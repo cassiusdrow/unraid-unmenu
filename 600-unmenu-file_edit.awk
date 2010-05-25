@@ -382,7 +382,7 @@ function GetBackupCopyList(fn, fd,  line) {
     delete BACKUP_COPIES
     backup_copies=0
     cmd = "ls --file-type " fd "/" fn "-20[0-9][0-9]-[0-9][0-9]-[0-9][0-9]-*.bak 2>/dev/null" 
-print cmd >/dev/stderr
+#print cmd >/dev/stderr
     while (( cmd | getline line ) > 0 ) {
        backup_copies++;
        BACKUP_COPIES[backup_copies] = line
