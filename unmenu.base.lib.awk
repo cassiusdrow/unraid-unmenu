@@ -67,6 +67,8 @@ function GetDiskData(cmd, a, d, line, s, i) {
         device[num_partitions] = d[4]
         assigned[num_partitions] = ""
         mounted[num_partitions] = ""
+        fs_type[num_partitions] = ""
+        mount_mode[num_partitions] = ""
         model_serial[num_partitions] = ""
     }
     close(cmd)
@@ -82,7 +84,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
     close(cmd);
 
     # match the device to the volume labeled UNRAID
-    for( a = 0; a < num_partitions; a++ ) {
+    for( a = 0; a <= num_partitions; a++ ) {
         if ( device[a] == unraid_volume ) {
              assigned[a] = "UNRAID"
         }     
@@ -94,7 +96,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
        delete d;
        split(line,d," ");    
        sub("../../","",d[11])
-       for( a = 0; a < num_partitions; a++ ) {
+       for( a = 0; a <= num_partitions; a++ ) {
            if ( d[11] == ( device[a] ) ) {
                if(model_serial[a] != "")  # bjp999 - don't overwrite "ata-" flavor with "scsi-" flavor
                   break;                  # bjp999
@@ -114,9 +116,11 @@ function GetDiskData(cmd, a, d, line, s, i) {
     while ((cmd | getline line) > 0 ) {
        delete s;
        split(line,s," ");
-       for( a = 0; a < num_partitions; a++ ) {
+       for( a = 0; a <= num_partitions; a++ ) {
            if ( s[1] == ( "/dev/" device[a] ) ) {
                mounted[a]=s[3]
+               fs_type[a]=s[5]
+               mount_mode[a]=substr(s[6],2,2)
                break;
            }
        }

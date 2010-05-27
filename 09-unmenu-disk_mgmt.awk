@@ -347,6 +347,38 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           DiskCommandOutput = DiskCommandOutput "</pre>"
           break;
       }
+      if ( PARAM[i] ~ "readonly-" ) {
+          delete d
+          split(PARAM[i],d,"[=-]")
+          mountpoint= "/mnt/disk/" d[2]
+          MountOptions = "-o remount,ro"
+          cmd="mount " MountOptions " " mountpoint " 2>&1"
+          DiskCommandOutput = "<b><u><font size=\"+1\">/dev/" d[2] " re-mounted as read-only on " mountpoint "</font></u></b><br>"
+          DiskCommandOutput = DiskCommandOutput "Using command: <b>" cmd "</b><br><pre>"
+          RS="\n"
+          while (( cmd | getline f ) > 0)  {
+              DiskCommandOutput = DiskCommandOutput f ORS
+          }
+          close(cmd);
+          DiskCommandOutput = DiskCommandOutput "</pre>"
+          break;
+      }
+      if ( PARAM[i] ~ "writable-" ) {
+          delete d
+          split(PARAM[i],d,"[=-]")
+          mountpoint= "/mnt/disk/" d[2]
+          MountOptions = "-o remount,rw"
+          cmd="mount " MountOptions " " mountpoint " 2>&1"
+          DiskCommandOutput = "<b><u><font size=\"+1\">/dev/" d[2] " re-mounted as writable on " mountpoint "</font></u></b><br>"
+          DiskCommandOutput = DiskCommandOutput "Using command: <b>" cmd "</b><br><pre>"
+          RS="\n"
+          while (( cmd | getline f ) > 0)  {
+              DiskCommandOutput = DiskCommandOutput f ORS
+          }
+          close(cmd);
+          DiskCommandOutput = DiskCommandOutput "</pre>"
+          break;
+      }
       if ( PARAM[i] ~ "unshare-" ) {
           delete d
           split(PARAM[i],d,"[=-]")
@@ -566,6 +598,8 @@ function DiskManagement(select_value, i, outstr ) {
             }
             fs = GetDiskFileSystem("/dev/" device[a] );
             mp = mounted[a]
+            fstype = fs_type[a]
+            mm = mount_mode[a]
             GetDiskFreeSpace("/dev/" device[a] , numdisks + 3);
             if ( device[a] !~ /[0-9]/ ) {
                 disk_size[ numdisks + 3] = GetRawDiskSize( "/dev/" device[a] )
@@ -599,6 +633,18 @@ function DiskManagement(select_value, i, outstr ) {
                             # if the partition is shared
                             unassigned_drive = unassigned_drive "<td ><input type=submit name=\"unshare-"
                             unassigned_drive = unassigned_drive device[a] "\" value=\"Stop Share of /dev/" device[a] "\"</td>"
+                            if ( fstype != "" && fstype != "ntfs" ) {
+                               if ( mm == "ro" ) {
+                                 unassigned_drive = unassigned_drive "</tr><td colspan=1>&nbsp;</td><td colspan=5 align=right>"
+                                 unassigned_drive = unassigned_drive "<font color=blue>Drive is currently mounted as read-only</font></td><td ><input type=submit name=\"writable-"
+                                 unassigned_drive = unassigned_drive device[a] "\" value=\"Re-Mount as Writable /dev/" device[a] "\"</td>"
+                               }
+                               if ( mm == "rw" ) {
+                                 unassigned_drive = unassigned_drive "</tr><td colspan=1>&nbsp;</td><td colspan=5 align=right>"
+                                 unassigned_drive = unassigned_drive "<font color=red><b>Drive is currently mounted as writable</b></font></td><td ><input type=submit name=\"readonly-"
+                                 unassigned_drive = unassigned_drive device[a] "\" value=\"Re-Mount as Read Only /dev/" device[a] "\"</td>"
+                               }
+                            }
                         } else {
                             # if the partition is not yet shared
                             if ( mp != "/mnt/cache" ) {
@@ -606,6 +652,18 @@ function DiskManagement(select_value, i, outstr ) {
                                 unassigned_drive = unassigned_drive device[a] "\" value=\"Un-Mount /dev/" device[a] "\"</td>"
                                 unassigned_drive = unassigned_drive "<td ><input type=submit name=\"share-"
                                 unassigned_drive = unassigned_drive device[a] "\" value=\"Share /dev/" device[a] "\"</td>"
+                                if ( fstype != "" && fstype != "ntfs" ) {
+                                   if ( mm == "ro" ) {
+                                     unassigned_drive = unassigned_drive "</tr><td colspan=1>&nbsp;</td><td colspan=5 align=right>"
+                                     unassigned_drive = unassigned_drive "<font color=blue>Drive is currently mounted as read-only</font></td><td ><input type=submit name=\"writable-"
+                                     unassigned_drive = unassigned_drive device[a] "\" value=\"Re-Mount as Writable /dev/" device[a] "\"</td>"
+                                   }
+                                   if ( mm == "rw" ) {
+                                     unassigned_drive = unassigned_drive "</tr><td colspan=1>&nbsp;</td><td colspan=5 align=right>"
+                                     unassigned_drive = unassigned_drive "<font color=red><b>Drive is currently mounted as writable</b></font></td><td ><input type=submit name=\"readonly-"
+                                     unassigned_drive = unassigned_drive device[a] "\" value=\"Re-Mount as Read Only /dev/" device[a] "\"</td>"
+                                   }
+                                }
                             } else {
                                 unassigned_drive = unassigned_drive "<td width=\"15%\">unRAID Cache Drive</td>"
                                 unassigned_drive = unassigned_drive "<td width=\"15%\"></td>"
