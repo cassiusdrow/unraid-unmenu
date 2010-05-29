@@ -18,6 +18,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.2.3 Fixed bug md5 sum of extra_packages.  Fixed display of returned html when URL not valid.
 #define ADD_ON_VERSION     2.2.4 Fixed bug with version compare of package with no affiliated download.
 #define ADD_ON_VERSION     2.3   Modified to select package and then only show selected package.
+#define ADD_ON_VERSION     2.4   Fixed bug when dealing with multiple packages defined in a single file (depricated usage)
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -96,6 +97,7 @@ BEGIN {
       match( line , /^(PACKAGE_NAME)([\t =]+)(.+)/, c)
       if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
           package_count++;
+          package_config_file[package_count] = package[i]
 	  package_name[package_count]   = substr(line,c[3,"start"],c[3,"length"])
           package_descr[package_count]  = ""
           package_url[package_count]    = ""
@@ -436,12 +438,13 @@ BEGIN {
   if ( save_edit_flag == "save" ) {
     # need to replace the value in the package_variable array with the new value
     # match the package in the package array
+#theHTML = theHTML edit_package_file "<br>"
     for ( i = 1; i <= package_count; i++ ) {
       if (package_file[i] == edit_package_file ) {
 
         # save a copy of the old .conf file, 
-        old_conf=package[i - 1] strftime("-%Y-%m-%d-%H%M%S.bak")
-        system("cp '" package[i - 1] "' '" old_conf "'")
+        old_conf=package_config_file[i] strftime("-%Y-%m-%d-%H%M%S.bak")
+        system("cp '" package_config_file[i] "' '" old_conf "'")
 
         # and lastly re-write the .conf file, then remove .manual_install and .auto_install files if present.
         for (ev in edit_variable) {
@@ -460,7 +463,7 @@ BEGIN {
                   # stream edit the .conf file to save the new value
                   # first escape the special characters to the "sed" command
                   gsub(/[\[\]\*\&\.\^\$]/, "\\\\&" ,theVarVal);
-                  cmd="sed -i \"s~||" theVarName "=" theVarVal "||~||" theVarName "=" edit_variable[ev] "||~\" " package[i - 1]
+                  cmd="sed -i \"s~||" theVarName "=" theVarVal "||~||" theVarName "=" edit_variable[ev] "||~\" " package_config_file[i]
                   system(cmd)
 #theHTML = theHTML cmd "<br>"
                   break;
@@ -667,8 +670,10 @@ BEGIN {
       } 
       theHTML = theHTML "</td></tr>"
     } else {
-      theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>md5 Checksum:</b></td>"
-      theHTML = theHTML "<td valign=\"top\"> md5 not specified in config file </td></tr>"
+      if ( package_url[i] != "none" ) {
+        theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>md5 Checksum:</b></td>"
+        theHTML = theHTML "<td valign=\"top\"> md5 not specified in config file </td></tr>"
+      }
     }
     for ( p = 1; p <= package_extra_url_count[i]; p++ ) {
       theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Addl. Pkg. URL-" p ":</b></td>"
