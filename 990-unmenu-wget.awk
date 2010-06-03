@@ -19,6 +19,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.2.4 Fixed bug with version compare of package with no affiliated download.
 #define ADD_ON_VERSION     2.3   Modified to select package and then only show selected package.
 #define ADD_ON_VERSION     2.4   Fixed bug when dealing with multiple packages defined in a single file (depricated usage)
+#define ADD_ON_VERSION     2.5   Fixed bug when URL is re-directed when downloading from a server. Enhanced error messages when download fails. Added logic to not download if file already exists with correct checksum.
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -361,30 +362,40 @@ BEGIN {
           for ( i = 1; i <= package_count; i++ ) {
             if ( the_package == package_file[i] ) {
                select_package_file = the_package
-               match( package_url[i] , /^(http:\/\/)([^\/]*)(.*)/, c)
-               if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
-                 theServer = substr(package_url[i],c[2,"start"],c[2,"length"])
-                 #theURL    = "/" substr(package_url[i],c[3,"start"],c[3,"length"])
-                 port   = "/80"
-                 download_package(package_name[i], PACKAGE_DIRECTORY "/" package_file[i],  theServer, port, package_url[i] )
-               }
-               if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
-                 theHTML = theHTML "<font color=\"blue\"><b>" the_package " has been downloaded</b></font><br>"
+               if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" && VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
+                  theHTML = theHTML "<b>" package_file[i] " download not necessary, file already exists with correct MD5 checksum<br></b>"
                } else {
-                 theHTML = theHTML "<font color=\"red\"><b>" the_package " not successfully downloaded</b></font><br>"
+                  match( package_url[i] , /^(http:\/\/)([^\/]*)(.*)/, c)
+                  if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+                    theServer = substr(package_url[i],c[2,"start"],c[2,"length"])
+                    #theURL    = "/" substr(package_url[i],c[3,"start"],c[3,"length"])
+                    port   = "/80"
+                    dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_file[i],  theServer, port, package_url[i] )
+                    theHTML = theHTML "<br>" dl_out "<br>"
+                  }
+                  if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
+                    theHTML = theHTML "<font color=\"blue\"><b>" the_package " has been downloaded</b></font><br>"
+                  } else {
+                    theHTML = theHTML "<font color=\"red\"><b>" the_package " not successfully downloaded</b></font><br>"
+                  }
                }
                for ( p = 1; p <= package_extra_url_count[i]; p++ ) {
-                 match( package_extra_url[i,p] , /^(http:\/\/)([^\/]*)(.*)/, c)
-                 if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
-                   theServer = substr(package_extra_url[i,p],c[2,"start"],c[2,"length"])
-                   #theURL    = "/" substr(package_extra_url[i,p],c[3,"start"],c[3,"length"])
-                   port   = "/80"
-                   download_package(package_name[i], PACKAGE_DIRECTORY "/" package_extra_file[i,p],  theServer, port, package_extra_url[i,p] )
-                 }
-                 if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" ) {
-                   theHTML = theHTML "<font color=\"blue\"><b>" package_extra_file[i,p] " has been downloaded</b></font><br>"
+                 if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" && VerifyMD5( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_md5[i,p] ) == "OK" ) {
+                    theHTML = theHTML "<b>" package_extra_file[i,p] " download not necessary, file already exists with correct MD5 checksum.<br></b>"
                  } else {
-                   theHTML = theHTML "<font color=\"red\"><b>" package_extra_file[i,p] " not successfully downloaded</b></font><br>"
+                    match( package_extra_url[i,p] , /^(http:\/\/)([^\/]*)(.*)/, c)
+                    if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+                      theServer = substr(package_extra_url[i,p],c[2,"start"],c[2,"length"])
+                      #theURL    = "/" substr(package_extra_url[i,p],c[3,"start"],c[3,"length"])
+                      port   = "/80"
+                      dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_extra_file[i,p],  theServer, port, package_extra_url[i,p] )
+                      theHTML = theHTML "<br>" dl_out "<br>"
+                    }
+                    if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" ) {
+                      theHTML = theHTML "<font color=\"blue\"><b>" package_extra_file[i,p] " has been downloaded</b></font><br>"
+                    } else {
+                      theHTML = theHTML "<font color=\"red\"><b>" package_extra_file[i,p] " not successfully downloaded</b></font><br>"
+                    }
                  }
                }
                if ( allPackageFilesExist(i) != "yes" ) {
@@ -952,52 +963,99 @@ function download_package(title, filename, server, port, url) {
 
     my_socket = "/inet/tcp/0/" server port
 
+    # delete the http:// or ftp:// prefix and the server name on the url.
+    protoreg=".*://" server ;
+    sub(protoreg, "", url)
+
+#print "=============" > "/dev/stderr"
+#print server > "/dev/stderr"
+#print url > "/dev/stderr"
+#print "=============" > "/dev/stderr"
+
+
     request = "GET " url  " HTTP/1.1\r\nHost: " server "\r\nAccept: */*\r\nConnection: close\r\n\r\n"
 
-    outHTML = ""
+    outHTML = "Download of '" filename "' started.<br>"
+    outHTML = outHTML "&nbsp;&nbsp;&nbsp;Connecting to " server ".<br>"
 
     # check for redirects, up to 5 levels
     loop_count = 0 
     do {
-        outHTML = outHTML get_headers(my_socket, request, HEADERS)
+        head_out = get_headers(my_socket, request, HEADERS)
+        if ( head_out ~ "Error:" ) {
+          outHTML = outHTML "<font color=red><b>" head_out "<b></font><br>"
+          return outHTML
+        }
         if ("Location" in HEADERS) { 
             close(my_socket)
             parse_location(HEADERS["Location"], params)
             my_socket = params["my_socket"]
             if (my_socket == "") {
-                outHTML = outHTML "Downloading of package '" title "' failed:  "
+                outHTML = outHTML "<font color=red><b>Downloading of package '" title "' failed:  "
                 outHTML = outHTML "Headers corrupted or not available."
-                outHTML = outHTML " Are you sure your unRAID server can connect to the Internet?"
+                outHTML = outHTML " Are you sure your unRAID server can connect to the Internet?</b></font>"
                 return outHTML
             }
-#            request  = "GET " params["request"] " HTTP/1.1\r\nHost: " params["Host"] "\r\n\r\n"
-            request =  "GET " params["request"] " HTTP/1.1\r\nHost: " params["Host"] "\r\nAccept: */*\r\nConnection: close\r\n\r\n"
+            url = params["request"]
+            request =  "GET " url " HTTP/1.1\r\nHost: " params["Host"] "\r\nAccept: */*\r\nConnection: close\r\n\r\n"
+            outHTML = outHTML "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Re-Directed to " params["Host"] "<br>"
         }
         loop_count++
     } while (("Location" in HEADERS) && loop_count < 5)
 
     if (loop_count == 5) {
-        outHTML = "Downloading of package '" title "' failed, due to a redirect loop."
+        outHTML = "<font color=red><b>Downloading of package '" title "' failed, due to a redirect loop.</b></font>"
         return outHTML
     } else {
-      outHTML = outHTML "Headers retrieved...<br>"
+      outHTML = outHTML "&nbsp;&nbsp;&nbsp;Headers retrieved for " url " ...<br>"
     }
     
-    outHTML = outHTML "Saving package to file '" filename "' (size: " HEADERS["Content-Length"] ")... please be patient...<br>"
-    
+    if ( "Status" in HEADERS ) {
+      if ( HEADERS["Status"] != "200" ) {
+        outHTML = outHTML "<font color=red><b>Error: GET of '" url "' returned Status of " HEADERS["Status"] "</b></font><br>"
+      }
+    }
+    if ( HEADERS["Content-Length"] != "0" ) {
+      outHTML = outHTML "&nbsp;&nbsp;&nbsp;Saving package to file '" filename "' (size: " HEADERS["Content-Length"] ")<br>"
+    }
     save_file(my_socket, filename)
+    if ( HEADERS["Content-Length"] != "0" ) {
+      outHTML = outHTML "Download of '" filename "' complete."
+    }
 
     close(my_socket)
-
-    outHTML = outHTML "Successfully downloaded package'" title "'."
     return outHTML
 }
+
+#
+# function parse_location
+#
+# given a Location HTTP header value the function constructs a special
+# inet file and the request storing them in FOO
+#
+function parse_location(location, FOO) {
+    # location might look like http://cache.googlevideo.com/get_video?video_id=ID
+    if (match(location, /http:\/\/([^\/]+)(\/.+)/, matches)) {
+        FOO["my_socket"] = "/inet/tcp/0/" matches[1] "/80"
+        FOO["Host"]     = matches[1]
+        FOO["request"]  = matches[2]
+    }
+    else {
+        FOO["my_socket"] = ""
+        FOO["Host"]     = ""
+        FOO["request"]  = ""
+    }
+}
+
 
 function get_headers(the_socket, request,    HEADERS) {
 
     out = ""
+    delete HEADERS;
 
     print request |& the_socket
+
+#print request > "/dev/stderr"
 
     # get the http status response
     if (the_socket |& getline > 0) {
@@ -1005,7 +1063,7 @@ function get_headers(the_socket, request,    HEADERS) {
 #print HEADERS["_status"] > "/dev/stderr"
     }
     else {
-        out = "Download failed:  Headers not available.  Are you sure your unRAID server can connect to the Internet?"
+        out = "Error: Download failed:  Headers not available.  Are you sure your unRAID server can connect to the Internet?"
         return out
     }
 
