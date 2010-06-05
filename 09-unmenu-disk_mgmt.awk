@@ -9,6 +9,7 @@ BEGIN {
 #ADD_ON_VERSION 1.2 - print reiserfsck commands for rebuild-tree (if needed) to screen. Joe L.
 #ADD_ON_VERSION 1.3 - print more of smartctl output on long/short test requests Joe L.
 #ADD_ON_VERSION 1.4 - use spinup/spindown commands now available in 4.5 unRAID Joe L.
+#ADD_ON_VERSION 1.5 - added call to srand() to seed random number generator used when spinning up disks not assigned to the array.
 #UNMENU_RELEASE $Revision$ $Date$
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
@@ -253,6 +254,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Spin-Up " d[2] "<pre>"
+          srand() # important to get random numbers 
           # calculate a random block between 1 and the max blocks on the device
           disk_blocks = GetRawDiskBlocks( "/dev/" d[2] )
           skip_blocks = 1 + int( rand() * disk_blocks );
