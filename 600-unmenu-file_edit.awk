@@ -5,6 +5,7 @@ BEGIN {
 #define ADD_ON_TYPE   awk
 #define ADD_ON_VERSION   .1 Original version.  Joe L.
 #define ADD_ON_VERSION   .2 Updated with ideas borrowed from go-script-manager plug-in to keep backup versions of files.
+#define ADD_ON_VERSION   .2.1 Fixed error out of "ls" when directory does not exist.  Joe L.
 #UNMENU_RELEASE $Revision$ $Date$
 
   if ( ScriptDirectory == "" ) { 
@@ -40,12 +41,13 @@ BEGIN {
 
   # now, scan some directories for "possible" editable files.
   editable_files = GetEditableFiles(editable_files, "/boot/config", "*.cfg" )
+  editable_files = GetEditableFiles(editable_files, "/boot/config", "*.conf" )
   editable_files = GetEditableFiles(editable_files, "/boot", "*.cfg" )
   editable_files = GetEditableFiles(editable_files, ScriptDirectory, "*.conf" )
   editable_files = GetEditableFiles(editable_files, CONFIG["PACKAGE_DIRECTORY"], "*.conf" )
   editable_files = GetEditableFiles(editable_files, CONFIG["PACKAGE_DIRECTORY"], "*.manual_install" )
   editable_files = GetEditableFiles(editable_files, CONFIG["PACKAGE_DIRECTORY"], "*.auto_install" )
-  editable_files = GetEditableFiles(editable_files, CONFIG["AUTO_INSTALL_DIRECTORY"], "* | grep -v '*.zip'" )
+  editable_files = GetEditableFiles(editable_files, CONFIG["AUTO_INSTALL_DIRECTORY"], "* 2>/dev/null | grep -v '*.zip'" )
   editable_files = GetEditableFiles(editable_files, "/boot", "*.sh" )
   editable_files = GetEditableFiles(editable_files, "/boot/custom/bin", "*.sh" )
 
@@ -288,6 +290,7 @@ function GetEditableFiles(idx, cdir, cfile   ,cmd) {
        additional_files++;
        EDITABLE_FILE[additional_files] = line
     }
+
     close(cmd);
     return additional_files
 }
