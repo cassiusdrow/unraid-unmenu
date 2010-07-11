@@ -1,8 +1,15 @@
 #define USER_SCRIPT_LABEL Set SAMBA File Permissions
 #define USER_SCRIPT_DESCR Sets SAMBA file creation permissions to 0644 and directory creation permissions to 0755
+#define USER_SCRIPT_DESCR <br>This does not reset any existing file or directory permissions.
 #UNMENU_RELEASE $Revision$ $Date$
 echo "<pre>"
 set -xv
-sed -i -e "s/create mask = 0711/create mask = 0644/" /etc/samba/smb.shares
-sed -i -e "s/directory mask = 0711/directory mask = 0755/" /etc/samba/smb.shares
+if [ -f /etc/samba/smb-names.conf ]; then
+  sed -i -e "s/create mask = 0711/create mask = 0644/" /etc/samba/smb-names.conf
+  sed -i -e "s/directory mask = 0711/directory mask = 0755/" /etc/samba/smb-names.conf
+else
+  sed -i -e "s/create mask = 0711/create mask = 0644/" /etc/samba/smb.shares
+  sed -i -e "s/directory mask = 0711/directory mask = 0755/" /etc/samba/smb.shares
+fi
 smbcontrol smbd reload-config
+
