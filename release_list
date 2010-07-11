@@ -33,7 +33,7 @@ e73a996f4bc8329f7bd7bde98985fce0  45-unmenu_user_script_scheduler__current_value
 a4335679fe85909bbd60477e47b9a265  50-unmenu-user_scripts.cgi :Revision: 75  Date: 2010-04-25 22:20:22 -0400 (Sun, 25 Apr 2010) 
 30622e8b4234b8b49a0c47a757bf6a77  50-unmenu_user_script_smarthist-graph :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 e0abc6a482c64320ee5b669497c3769e  600-unmenu-file_edit.awk :Revision: 119  Date: 2010-07-01 02:39:08 -0400 (Thu, 01 Jul 2010) 
-53b88e7e79eaf97a8680093c35f64253  70-unmenu_user_script_samba_mask :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
+e8d204f5a7f66227153d3c5b1fde872f  70-unmenu_user_script_samba_mask :Revision: 122  Date: 2010-07-11 06:39:24 -0400 (Sun, 11 Jul 2010) 
 b0d1c25f35e2fdc5bdc4f2c293578f3b  80-unmenu_user_script_swapfile_off :Revision: 70  Date: 2010-04-25 17:12:40 -0400 (Sun, 25 Apr 2010) 
 8ff8ad70f936fa25e871d1aa867cfbcb  80-unmenu_user_script_swapfile_on :Revision: 70  Date: 2010-04-25 17:12:40 -0400 (Sun, 25 Apr 2010) 
 2b68d01899ac64dbaf3ef63cd62fcb31  85-unmenu_user_script_sleep :Revision: 58  Date: 2010-04-17 09:13:05 -0400 (Sat, 17 Apr 2010) 
