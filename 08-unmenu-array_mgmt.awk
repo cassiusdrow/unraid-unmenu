@@ -124,7 +124,7 @@ function SetUpArrayMgmtPage() {
     "<tr><td width=\"10%\"><input type=submit name=\"stop_array\" value=\"Stop Array\"</td><td align=\"left\">\
     Stop the unRAID array.  Note: you must use the Lime-Technology supplied unRAID management web-page to Start the array.</td></tr>" \
         "<tr><td><hr></td><td><hr></td></tr>"
-    if ( resync_finish != "" ) {
+    if ( resync_finish != "" && resync_finish != "0" ) {
         ArrayMgmtPageDoc = ArrayMgmtPageDoc \
         "<tr><td width=\"10%\"><input type=submit name=\"nocheck_parity\" value=\"Cancel Parity Check\"</td><td align=\"left\">\
         Cancel the Parity Check of the unRAID array</td></tr><tr><td><hr></td><td><hr></td></tr>"

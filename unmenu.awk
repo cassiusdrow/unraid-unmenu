@@ -803,7 +803,7 @@ function ArrayStateHTML(theHTML, parity_status, i) {
     parity_valid="Parity disk not configured."
   }
 
-  if ( resync_finish != "" ) {
+  if ( resync_finish != "" && resync_finish != "0" ) {
      if(rebuilding_disk != "") {
         oper = rebuilding_disk == "0" ? "Rebuilding Parity" :  "Rebuilding disk" rebuilding_disk;
      } else {
