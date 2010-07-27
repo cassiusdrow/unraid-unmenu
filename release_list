@@ -41,7 +41,7 @@ b0d1c25f35e2fdc5bdc4f2c293578f3b  80-unmenu_user_script_swapfile_off :Revision: 
 d5b0b1f1ac6cc562399197f8b7f20445  99-unmenu-utility.awk :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 e6a4031d14535553dfe4d6ca856db82c  990-unmenu-wget.awk :Revision: 114  Date: 2010-06-03 00:34:09 -0400 (Thu, 03 Jun 2010) 
 5ac07002256704da128a8191b92ffc1f  999-unmenu-unraid_main.awk :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
-7541e673bea72ba9d702b2d7f5efb751  apcupsd-unmenu-package.conf :Revision: 29  Date: 2010-04-05 05:03:42 -0400 (Mon, 05 Apr 2010) 
+419d097cf08789d5d5839142b28f474d  apcupsd-unmenu-package.conf :Revision: 29  Date: 2010-04-05 05:03:42 -0400 (Mon, 05 Apr 2010) 
 88f6f6101fae69a069de00589a6985b3  apcupsd3-unmenu-package.conf :Revision: 118  Date: 2010-06-06 21:23:34 -0400 (Sun, 06 Jun 2010) 
 9009097a45c006023ecc9440ab886970  bwm-ng-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 7204cd32f55d2629142f64d84611c066  compiler-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
