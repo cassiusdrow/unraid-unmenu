@@ -1676,6 +1676,7 @@ function GetArrayStatus(a) {
         if ( a ~ "diskNumWrites" )   { delete d; split(a,d,"[.=]"); disk_writes[d[2]]=d[3]; }
         if ( a ~ "diskNumReads" )    { delete d; split(a,d,"[.=]"); disk_reads[d[2]]=d[3]; }
         if ( a ~ "diskNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
+        if ( a ~ "rdevLastIO" )   { delete d; split(a,d,"[.=]"); disk_lastIO[d[2]]=d[3]; }
     }
     close("/root/mdcmd status|strings")
 }
@@ -2283,20 +2284,40 @@ function IsSambaStarted( cmd) {
     return samba_online
 }
 
-function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping) {
+function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping, i) {
 
     if ( theDisk == "/dev/" ) {
        return "";
     }
+
+    is_sleeping = ""
+    # We might be able to determine spinning status by the output of the the mdcmd status.
+    # If we can, no need for the hdparm -C command
+    theDiskDevice=substr(theDisk,6,length(theDisk))
+    for ( i =0; i<numdisks; i++ ) {
+        if ( disk_device[i] == "" ) { continue; }
+        if ( disk_device[i] == theDiskDevice ) {
+           if ( disk_lastIO[i] == "0" ) {
+              is_sleeping = "y"
+           } else {
+              is_sleeping = "n"
+           }
+           break;
+        }
+    }
+    
+    if ( is_sleeping == "" ) {
+       is_sleeping = "n"
+       cmd = "hdparm -C " theDisk " 2>/dev/null" 
+       while ((cmd | getline a) > 0 ) {
+          if ( a ~ "standby" ) {
+              is_sleeping = "y"
+          }
+       }
+       close(cmd);
+    }
+
     the_temp="*"
-    is_sleeping = "n"
-    cmd = "hdparm -C " theDisk " 2>/dev/null" 
-    while ((cmd | getline a) > 0 ) {
-    if ( a ~ "standby" ) {
-        is_sleeping = "y"
-    }
-    }
-    close(cmd);
     if ( is_sleeping == "n" ) {
         cmd = "smartctl -d ata -A " theDisk "| grep -i temperature" 
         while ((cmd | getline a) > 0 ) {
@@ -2319,7 +2340,7 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping) {
         }
         close(cmd);
     }
-    return the_temp
+    return extra the_temp
 }
 
 function GetDiskFreeSpace(theDisk, theArrayIndex, a) {
