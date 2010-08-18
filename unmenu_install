@@ -1,5 +1,5 @@
 #  This script is used to setup or update unmenu.
-#UNMENU_RELEASE  $Revision$ $Date$
+#UNMENU_RELEASE $Revision$ $Date$
 
 version=1.3
 directory=""
@@ -269,7 +269,7 @@ then
             # if AUTO_UPDATE = NO, just print needed command to move it into place
             # if AUTO_UPDATE = YES, update and alert user edited version was updated
             # else, no AUTO_UPDATE line, just back it up and copy new into place.
-            auto_update=`grep "^#AUTO_UPDATE" $i | tr -d " \t" | tr "[a-z]" "[A-Z]" | cut -d"=" -f2`
+            auto_update=`grep "^#AUTO_UPDATE" $i | tr -d " \t\r\n" | tr "[a-z]" "[A-Z]" | cut -d"=" -f2`
           else
             auto_update=""
           fi
