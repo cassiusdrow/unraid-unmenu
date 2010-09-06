@@ -18,6 +18,42 @@ function usage() {
   exit 1;
 }
 
+function migrate_variables() {
+  # for each of the configurable variables in the package, copy the "value" to the new script from the old.
+  new_script="$2"
+  old_script="$1"
+
+  grep "^PACKAGE_VARIABLE" "$new_script" | while read package_variable
+  do
+      # get the package_variable from the new script
+      var=`echo "$package_variable" | sed "s/\(.*\)||\(.*\)||\(.*\)/\2/"`
+      #echo $var
+      # get the variable name from the new script
+      theVarName=`echo "$var" | cut -d "=" -f1`
+      # get the variable value from the new script
+      theVarValue=`echo "$var" | cut -d "=" -f2`
+#   echo "name:  $theVarName"
+#   echo " value: $theVarValue"
+      # if the variable is in the old script, substitute it for the deployed value
+      old_var_line=`grep "^PACKAGE_VARIABLE" "$old_script" | grep "||${theVarName}="`
+#   echo " old PACKAGE_VARIABLE line: $old_var_line"
+      if [ "$old_var_line" != "" ]
+      then
+        # get the variable value from the old script. escape some special characters "[]\.~^&"
+        theEditedVarValue=`echo "$old_var_line" | sed "s/\(.*\)||\(.*\)||\(.*\)/\2/" | \
+                                             cut -d "=" -f2 | sed -e 's/\\\/\\\\\\\/' \
+                                                              -e "s/\[/\\\[/g" -e "s/\]/\\\]/g" \
+                                                              -e 's/*/\\*/' -e 's/~/\\\~/' \
+                                                              -e 's/\./\\\./' -e 's/\^/\\\^/' \
+                                                              -e 's/\&/\\\&/'`
+#   echo sed -i "s~||${theVarName}=${theVarValue}||~||${theVarName}=${theEditedVarValue}||~" "$new_script"
+        sed -i "s~||${theVarName}=${theVarValue}||~||${theVarName}=${theEditedVarValue}||~" "$new_script"
+#   grep "^PACKAGE_VARIABLE" "$new_script" | grep "||${theVarName}="
+      fi
+  done
+  
+}
+
 # If we are being invoked from within the unMENU user-script, we will see some variables defined
 if [ "$ScriptDirectory" != "" -a "$ConfigFile" != "" -a "$LocalConfigFile" != "" ]
 then
@@ -297,6 +333,7 @@ then
             echo "### To see differences type:"
             echo diff "$i" "$backup_dir/$i"
             echo "#--------------------------------------------------------#"
+            migrate_variables "$backup_dir/$i" "$i"
           ;;
           *)
             if [ -f "$i" ]
@@ -307,6 +344,10 @@ then
             fi
             cp "$tmpd/$i" "$i"
             echo "Installed $i"
+            if [ -f "$backup_dir/$i" ]
+            then
+              migrate_variables "$backup_dir/$i" "$i"
+            fi
           ;;
           esac
         ;;
