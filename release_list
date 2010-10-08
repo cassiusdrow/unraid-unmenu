@@ -61,7 +61,7 @@ aa0202e2a21fbfe1d6662a84236183e6  jre-unmenu-package.conf :Revision: 7  Date: 20
 8aacca933a11bde30725f501f50dd2dc  lsof-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 33cb7a22e4e2e3c692446a80a2efe0ad  mail-ssmtp-unmenu-package.conf :Revision: 152  Date: 2010-08-30 13:14:06 -0400 (Mon, 30 Aug 2010) 
 cfcf52790a68bd7216675fdbbc5640df  mail_status-unmenu-package.conf :Revision: 129  Date: 2010-07-21 12:07:03 -0400 (Wed, 21 Jul 2010) 
-60ae854486f04b592ef7a45ae48f42a7  md5deep-unmenu-package.conf :Revision: 22  Date: 2010-04-03 00:42:45 -0400 (Sat, 03 Apr 2010) 
+d06a2cf910a40c1a24cdf8a72bd71ad3  md5deep-unmenu-package.conf :Revision: 161  Date: 2010-10-08 06:26:14 -0400 (Fri, 08 Oct 2010) 
 47088b46fb31be5de54036b473569bfe  midnight_commander-unmenu-package.conf :Revision: 91  Date: 2010-05-12 09:57:05 -0400 (Wed, 12 May 2010) 
 2a7d181b44083ae3de01f3614d5a23d9  monthly-parity-unmenu-package.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
 0bd82268637a8fdeeef6e3d30f3786d8  myMain.conf :Revision: 7  Date: 2010-03-29 23:12:23 -0400 (Mon, 29 Mar 2010) 
