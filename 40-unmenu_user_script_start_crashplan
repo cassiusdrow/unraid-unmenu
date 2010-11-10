@@ -1,0 +1,6 @@
+#UNMENU_RELEASE $Revision$ $Date$
+#define USER_SCRIPT_LABEL Start CrashPlan Engine
+#define USER_SCRIPT_DESCR This button can be used to restart Crashplan after you have restarted the array
+#define USER_SCRIPT_TEST test -x /usr/local/crashplan/bin/CrashPlanEngine && echo "Start CrashPlan Engine"
+echo "<pre>"
+/usr/local/crashplan/bin/CrashPlanEngine start

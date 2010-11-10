@@ -548,7 +548,7 @@ BEGIN {
             theHTML = theHTML "</tr>"
             theHTML = theHTML "<tr><td colspan=\"10\"><table border=0>"
             theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Description:</b></td>"
-            theHTML = theHTML "<td valign=\"top\">" package_descr[i] "</td></tr></table></td></tr>"
+            theHTML = theHTML "<td valign=\"top\">" SubstituteVariables( package_descr[i], i ) "</td></tr></table></td></tr>"
 	    continue;
         }
     }
@@ -660,7 +660,7 @@ BEGIN {
     }
     theHTML = theHTML "<tr><td colspan=\"10\"><table border=0>"
     theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Description:</b></td>"
-    theHTML = theHTML "<td valign=\"top\">" package_descr[i] "</td></tr>"
+    theHTML = theHTML "<td valign=\"top\">" SubstituteVariables( package_descr[i] ,i ) "</td></tr>"
     theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Package URL:</b></td>"
     theHTML = theHTML "<td valign=\"top\"><a href=\"" package_url[i] "\">" package_url[i] "</a></td></tr>"
     theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Package File:</b></td>"
@@ -791,6 +791,22 @@ BEGIN {
   theHTML = theHTML "</fieldset>"
 
   print theHTML
+}
+
+function SubstituteVariables( theString , k) {
+  new_string=theString
+  gsub("%%MyHost%%", MyHost, new_string)
+  for ( sc=1; sc <= package_variable_count[k]; sc++ ) {
+     delete ff;
+     match ( package_variable[k,sc] , /^([^\|]*)(\|\|)([^=]*)(=)(.*)(\|\|)(.*)/, ff);
+     if ( ff[1,"length"] > 0 && ff[2,"length"] > 0 && ff[4,"length"] > 0 ) {
+        theSubVar = substr(package_variable[k,sc],ff[3,"start"],ff[3,"length"])
+        theSubVal = substr(package_variable[k,sc],ff[5,"start"],ff[5,"length"])
+        thePattern = "%%" theSubVar "%%"
+        gsub(thePattern, theSubVal, new_string)
+     }
+  } 
+  return new_string
 }
 
 function allPackageFilesExist( package_index , p) {

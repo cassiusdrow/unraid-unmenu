@@ -96,7 +96,7 @@ do
     if [ "${conditional_test[$i]}" != "" ]
     then
        new_label=`sh -c "${conditional_test[$i]}" 2>&1`
-    #   echo "${label[$i]} = x${new_label}x" "<br>"
+       #echo "x${conditional_test[$i]}x ${label[$i]} = x${new_label}x" "<br>"
        label[$i]="$new_label"
     fi
     if [ "${label[$i]}" != "" -a "${label[$i]}" != " " -a "${descr[$i]}" != "" ]

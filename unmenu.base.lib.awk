@@ -30,7 +30,7 @@ function GetArrayStatus(a, d) {
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
         # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id.
         if ( a ~ "diskName" )        { delete d; split(a,d,"[.=]"); disk_name[d[2]]=d[3]; }
-        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1; 
+        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1;
                                                  disk_id[d[2]]=substr(d[3],offset); }
         if ( a ~ "diskSerial" )      { delete d; split(a,d,"[.=]"); disk_serial[d[2]]=d[3]; }
         if ( a ~ "diskSize" )        { delete d; split(a,d,"[.=]"); disk_size[d[2]]=d[3]; }
@@ -39,7 +39,7 @@ function GetArrayStatus(a, d) {
         if ( a ~ "diskModel" )       { delete d; split(a,d,"[.=]"); disk_model[d[2]]=d[3]; }
         if ( a ~ "rdevModel" )       { delete d; split(a,d,"[.=]"); rdisk_model[d[2]]=d[3]; }
         if ( a ~ "rdevStatus" )      { delete d; split(a,d,"[.=]"); disk_status[d[2]]=d[3]; }
-        if ( a ~ "rdevName" )        { delete d; split(a,d,"[.=]"); disk_device[d[2]]=d[3]; 
+        if ( a ~ "rdevName" )        { delete d; split(a,d,"[.=]"); disk_device[d[2]]=d[3];
                                        if ( disk_device[d[2]] != "" ) GetReadWriteStats(d[2])
                                      }
         if ( a ~ "rdevLastIO" )      { delete d; split(a,d,"[.=]"); rdisk_lastIO[d[2]]=d[3]; }
@@ -60,7 +60,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
     while ((cmd | getline a) > 0 ) {
         num_partitions++
         delete d;
-        split(a,d," ");    
+        split(a,d," ");
         major[num_partitions] = d[1]
         minor[num_partitions] = d[2]
         blocks[num_partitions] = d[3]
@@ -77,7 +77,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
     cmd="ls -l /dev/disk/by-label | grep 'UNRAID'"
     while ((cmd | getline a) > 0 ) {
         delete d;
-        split(a,d," ");    
+        split(a,d," ");
         sub("../../","",d[11])
         unraid_volume=d[11]
     }
@@ -87,14 +87,14 @@ function GetDiskData(cmd, a, d, line, s, i) {
     for( a = 0; a <= num_partitions; a++ ) {
         if ( device[a] == unraid_volume ) {
              assigned[a] = "UNRAID"
-        }     
+        }
     }
 
     # Now, get the model/serial numbers. They should be available in /dev/disk/id-label
     cmd="ls -l /dev/disk/by-id"
     while ((cmd | getline line) > 0 ) {
        delete d;
-       split(line,d," ");    
+       split(line,d," ");
        sub("../../","",d[11])
        for( a = 0; a <= num_partitions; a++ ) {
            if ( d[11] == ( device[a] ) ) {
@@ -104,6 +104,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
                model_serial[a]=d[9]
                sub("-part1","", model_serial[a])
                sub("ata-","", model_serial[a])
+               sub("scsi-SATA_","", model_serial[a]) #bjp999 - needed to SAS controller
                break;
            }
        }
@@ -175,7 +176,7 @@ function CGI_setup( uri, version, i, j) {
   gsub("%5C", "\\", ARGV[3])
   n=gsub("%A0", amp "nbsp;", ARGV[3])
 
-  GETARG["Status"] = ARGV[1]; GETARG["Method"] = ARGV[2]; GETARG["URI"] = ARGV[3]; 
+  GETARG["Status"] = ARGV[1]; GETARG["Method"] = ARGV[2]; GETARG["URI"] = ARGV[3];
   i = index(ARGV[3], "?")
   if (i > 0) {             # is there a "?" indicating a CGI request?
     split(substr(ARGV[3], 1, i-1), MENU, "[/:]")
@@ -218,9 +219,9 @@ function GetReadWriteStats(theDevIndex, cmd) {
 }
 
 function GetReadWriteStatsOther(theDevIndex, theDevice, cmd) { #bjp999
-  cmd="cat /sys/block/" theDevice "/stat"                      #bjp999 
-  cmd | getline                                                #bjp999 
-  other_reads[theDevIndex] = $1                                #bjp999 
-  other_writes[theDevIndex] = $5                               #bjp999 
-  close(cmd)                                                   #bjp999 
-}                                                              #bjp999 
+  cmd="cat /sys/block/" theDevice "/stat"                      #bjp999
+  cmd | getline                                                #bjp999
+  other_reads[theDevIndex] = $1                                #bjp999
+  other_writes[theDevIndex] = $5                               #bjp999
+  close(cmd)                                                   #bjp999
+}                                                              #bjp999

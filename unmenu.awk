@@ -215,13 +215,19 @@ BEGIN {
           match( line , /^(#ADD_ON_CONFIG|#define\WADD_ON_CONFIG)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_config[i] = substr(line,c[3,"start"],c[3,"length"])
+              if ( DebugMode == "yes" ) { 
+                  print "defined plug-in config:" add_on_config[i] 
+              }
           }
-          # Expect the name of an configuration for for this add-on.
+          # Expect the name of a local configuration for for this add-on.
           # in it, we will look for specific definitions... at this time AUTO_REFRESH
           delete c;
           match( line , /^(#ADD_ON_LOCAL_CONFIG|#define\WADD_ON_LOCAL_CONFIG)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_local_config[i] = substr(line,c[3,"start"],c[3,"length"])
+              if ( DebugMode == "yes" ) { 
+                  print "defined plug-in local config:" add_on_local_config[i] 
+              }
           }
           # Expect a string describing the version of the plug-in
           delete c;
@@ -235,7 +241,7 @@ BEGIN {
           match( line , /^(#ADD_ON_HEAD|#define\WADD_ON_HEAD)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_head_count[i]++
-	      add_on_head[i, add_on_head_count[i]] = substr(line,c[3,"start"],c[3,"length"])
+              add_on_head[i, add_on_head_count[i]] = substr(line,c[3,"start"],c[3,"length"])
           }
           # Expect a string describing additional options to supply for a plug-in
           delete c;
@@ -250,9 +256,15 @@ BEGIN {
   for ( i = 0; i < add_on_count; i++ ) {
     if ( add_on_config[i] != "" ) {
       GetConfigValues(ScriptDirectory "/" add_on_config[i], "pi-" i );
+      if ( DebugMode == "yes" ) { 
+          print "importing plug-in config values:" add_on_config[i] 
+      }
     }
     if ( add_on_local_config[i] != "" ) {
       GetConfigValues(ScriptDirectory "/" add_on_local_config[i], "pi-" i );
+      if ( DebugMode == "yes" ) { 
+          print "importing local plug-in config values:" add_on_local_config[i] 
+      }
     }
   }
   # for debugging, print the plug-in scripts found and imported.
