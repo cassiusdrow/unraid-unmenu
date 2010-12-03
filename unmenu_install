@@ -1,7 +1,7 @@
 #  This script is used to setup or update unmenu.
 #UNMENU_RELEASE $Revision$ $Date$
 
-version=1.3
+version=1.3.7
 directory=""
 
 function usage() {
@@ -233,7 +233,14 @@ do
        cur_md5sum=`egrep -v "^#UNMENU_RELEASE|^#AUTO_UPDATE" "${filename}"| md5sum - | cut -d" " -f1`
        if [ "${md5sum}" != "${cur_md5sum}" ]
        then
-          echo "${filename}" >>/tmp/unmenu_new_files
+          # it might be a binary file, so test without the egrep before considering it a new version
+          cur_md5sum=`md5sum "${filename}" | cut -d" " -f1`
+          if [ "${md5sum}" = "${cur_md5sum}" ]
+          then
+            echo "${filename} matched md5sum"
+          else
+            echo "${filename}" >>/tmp/unmenu_new_files
+          fi
        fi
      ;;
      esac
@@ -269,6 +276,11 @@ then
     for i in $FILES
     do
       echo "Downloading $i"
+      target_dir=`dirname $i`
+      if [ "$target_dir" != "." ]
+      then
+        mkdir -p "$tmpd/$target_dir"
+      fi
       wget -q -O $tmpd/$i ${svn_archive}/$i
       md5=`grep " $i :Revision:" /tmp/unmenu_release_list | cut -d" " -f1`
       #unfortunately, wget does not fill in the Revision normally populated by svn, so we need to do it 
@@ -284,77 +296,86 @@ then
         ;;
       esac
       #download was successful
-      if [ "$md5" = "$dl_md5" ]
+      if [ "$md5" != "$dl_md5" ]
       then 
-        case "$i" in
-        *local*.conf)
-          if [ ! -f "$i" ]
+        # it might be a binary file, so test without the egrep before considering it a new version
+        bdl_md5=`md5sum "${tmpd}/${i}" | cut -d" " -f1`
+        if [ "${md5}" != "${bdl_md5}" ]
+        then
+          echo "$md5 != $dl_md5 or $bdl_md5,  $tmpd/$i not installed" 
+          continue
+        fi
+      fi
+      case "$i" in
+      *local*.conf)
+        if [ ! -f "$i" ]
+        then
+          cp "$tmpd/$i" "$i"
+          echo "Installed $i"
+        else
+          echo "Local $i file exists, $tmpd/$i not installed" 
+        fi
+      ;;
+      *)
+        # move existing file to backup directory
+        if [ -f "$i" ]
+        then
+          mkdir -p $backup_dir
+          if [ "$target_dir" != "." ]
           then
-            cp "$tmpd/$i" "$i"
-            echo "Installed $i"
-          else
-            echo "Local $i file exists, $tmpd/$i not installed" 
+            mkdir -p "$backup_dir/$target_dir"
           fi
+          # determine if there is an AUTO_UPDATE line in the file
+          # if AUTO_UPDATE = NO, just print needed command to move it into place
+          # if AUTO_UPDATE = YES, update and alert user edited version was updated
+          # else, no AUTO_UPDATE line, just back it up and copy new into place.
+          auto_update=`grep "^#AUTO_UPDATE" $i | tr -d " \t\r\n" | tr "[a-z]" "[A-Z]" | cut -d"=" -f2`
+        else
+          auto_update=""
+        fi
+        case "$auto_update" in
+        NO)
+          echo "#--------------------------------------------------------#"
+          echo "### #AUTO_UPDATE = NO in $i."
+          echo "### Copied current $i to $backup_dir/$i"
+          cp "$i" "$backup_dir/$i"
+          echo "### New version NOT installed."
+          echo "### New version is in $tmpd/$i"
+          echo "### To see differences type:"
+          echo diff "$tmpd/$i" "$i"
+          echo "### To install new version of $i type:"
+          echo cp "$tmpd/$i" "$i"
+          echo "#--------------------------------------------------------#"
+        ;;
+        YES)
+          echo "#--------------------------------------------------------#"
+          echo "### #AUTO_UPDATE = YES in $i."
+          mv "$i" "$backup_dir/$i"
+          echo "### Moved current $i to $backup_dir/$i"
+          cp "$tmpd/$i" "$i"
+          echo "### New version of $i installed"
+          echo "### To see differences type:"
+          echo diff "$i" "$backup_dir/$i"
+          echo "#--------------------------------------------------------#"
+          migrate_variables "$backup_dir/$i" "$i"
         ;;
         *)
-          # move existing file to backup directory
           if [ -f "$i" ]
           then
-            mkdir -p $backup_dir
-            # determine if there is an AUTO_UPDATE line in the file
-            # if AUTO_UPDATE = NO, just print needed command to move it into place
-            # if AUTO_UPDATE = YES, update and alert user edited version was updated
-            # else, no AUTO_UPDATE line, just back it up and copy new into place.
-            auto_update=`grep "^#AUTO_UPDATE" $i | tr -d " \t\r\n" | tr "[a-z]" "[A-Z]" | cut -d"=" -f2`
-          else
-            auto_update=""
-          fi
-          case "$auto_update" in
-          NO)
-            echo "#--------------------------------------------------------#"
-            echo "### #AUTO_UPDATE = NO in $i."
-            echo "### Copied current $i to $backup_dir/$i"
-            cp "$i" "$backup_dir/$i"
-            echo "### New version NOT installed."
-            echo "### New version is in $tmpd/$i"
-            echo "### To see differences type:"
-            echo diff "$tmpd/$i" "$i"
-            echo "### To install new version of $i type:"
-            echo cp "$tmpd/$i" "$i"
-            echo "#--------------------------------------------------------#"
-          ;;
-          YES)
-            echo "#--------------------------------------------------------#"
-            echo "### #AUTO_UPDATE = YES in $i."
+            #  copy from download tmp directory to current directory
             mv "$i" "$backup_dir/$i"
-            echo "### Moved current $i to $backup_dir/$i"
-            cp "$tmpd/$i" "$i"
-            echo "### New version of $i installed"
-            echo "### To see differences type:"
-            echo diff "$i" "$backup_dir/$i"
-            echo "#--------------------------------------------------------#"
-            migrate_variables "$backup_dir/$i" "$i"
-          ;;
-          *)
-            if [ -f "$i" ]
-            then
-              #  copy from download tmp directory to current directory
-              mv "$i" "$backup_dir/$i"
-              echo "Moved current $i to $backup_dir/$i"
-            fi
-            cp "$tmpd/$i" "$i"
-            echo "Installed $i"
-            if [ -f "$backup_dir/$i" ]
-            then
-              migrate_variables "$backup_dir/$i" "$i"
-            fi
-          ;;
-          esac
+            echo "Moved current $i to $backup_dir/$i"
+          fi
+          cp "$tmpd/$i" "$i"
+          echo "Installed $i"
+          if [ -f "$backup_dir/$i" ]
+          then
+             migrate_variables "$backup_dir/$i" "$i"
+          fi
         ;;
         esac
-      else
-        echo "$md5 != $dl_md5, $tmpd/$i not installed" 
-      fi
+      ;;
+      esac
     done
   fi
 fi

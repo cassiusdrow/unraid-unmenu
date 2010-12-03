@@ -3,89 +3,123 @@ BEGIN {
 #define ADD_ON_MENU
 #define ADD_ON_STATUS  NO
 #define ADD_ON_TYPE    awk
+#ADD_ON_HTTP_HEADER=NO
+#ADD_ON_OPTIONS=-f unmenu.base.lib.awk -f utility.lib.awk
 #define ADD_ON_VERSION 1.0 - contributed by bjp999
 #UNMENU_RELEASE $Revision$ $Date$
 
-  CGI_setup()
-  cmd  = GETARG["cmd"]
-  dev  = GETARG["dev"]
-  disk = GETARG["disk"]
-  #print "<p> cmd='" cmd "'</p>"
-  #print "<p> parm1='" parm1 "'</p>"
-  #print "<p> parm2='" parm2 "'</p>"
-  #print "<p> parm3='" parm3 "'</p>"
+   CGI_setup()
+   cmd  = GETARG["cmd"]
+   dev  = GETARG["dev"]
+   disk = GETARG["disk"]
+   #print "<p> cmd='" cmd "'</p>"
+   #print "<p> parm1='" parm1 "'</p>"
+   #print "<p> parm2='" parm2 "'</p>"
+   #print "<p> parm3='" parm3 "'</p>"
 
-  if(cmd == "smartctl") { 
-     if(GETARG["file"] == "")
-        print RunCommand(sprintf("smartctl -a -d ata /dev/%s", dev), disk);
-     else
-        print RunCommand("fromdos<" GETARG["file"], GETARG["file"], "smartctl " GETARG["file"]);
-  }
-  else if (cmd == "hdparm") {
-     print RunCommand(sprintf("hdparm -I /dev/%s", dev), disk);
-  }
-  else if (cmd == "test") {
-     RunTest();
-  }
-  else if(cmd == "spinup") { 
-     disk_blocks = GetRawDiskBlocks( "/dev/" dev )
-     skip_blocks = 1 + int( rand() * disk_blocks );
-     cmd="dd if=/dev/" dev " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
-     system(cmd);
-     print "<p>Done</p>"
-  }
-  else if (cmd == "spindown") {
-     cmd="/usr/sbin/hdparm -y /dev/" dev " >/dev/null 2>&1"
-     system(cmd);
-     print "<p>Done</p>"
-  }
-  else if (cmd == "syslogx") {
-     syslog=GETARG["syslog"]
-     if (syslog=="") {
-        syslog="/var/log/syslog"
-     }
-     FilterSyslogx(syslog,dev,disk)
-     print "<p>Done</p>"
-  }
-  else if (cmd == "syslogRobJ") {
-     syslog=GETARG["syslog"]
-     if (syslog=="") {
-        syslog="/var/log/syslog"
-     }
-     FilterSyslogRobJ(syslog,dev,disk)
-     print "<p>Done</p>"
-  }
-  else if (cmd == "smarthistory") {
-     cmd = "cd /boot/smarthistory; ./smarthistory -wake ON -output HTML -graph IMAGE -report ALL -devices /dev/" dev;
-     print "<p> </p><strong>" cmd "   (" disk ")</strong><br><br>"
+   amp="AMP3RS4ND"
+   nbsp=amp "nbsp;"
 
-     while (( cmd | getline f ) > 0) {
-        print f
-     }
+   vv[0, "from"] = "what"
+   vv[1, "from"] = "stuff"
+   vv[2, "from"] = "ImageURL"
+   vv[2, "to"] = "http://" MyHost "/log/images";
+   vv[3, "from"] = "legend"
+   vv[3, "to"] = ""
 
-     close(cmd);
-  }
+   if(cmd == "smartctl") {
+      if(GETARG["file"] == "")
+         RunCommand(sprintf("smartctl -a -d ata /dev/%s", dev), disk);
+      else
+         RunCommand("fromdos<" GETARG["file"], GETARG["file"], "smartctl " GETARG["file"]);
+   }
+   else if (cmd == "hdparm") {
+      RunCommand(sprintf("hdparm -I /dev/%s", dev), disk);
+   }
+   else if (cmd == "samba") {
+      RunCommand("testparm -s", "", "Samba Configuration");
+   }
+   else if (cmd == "test") {
+      vv[0, "to"] = "RunTest";
+      vv[1, "to"] = RunTest();
+   }
+   else if(cmd == "spinup") {
+      disk_blocks = GetRawDiskBlocks( "/dev/" dev )
+      skip_blocks = 1 + int( rand() * disk_blocks );
+      cmd="dd if=/dev/" dev " of=/dev/null count=1 bs=1k skip=" skip_blocks " >/dev/null 2>&1"
+      system(cmd);
+      vv[0, "to"] = "Spinup " dev;
+      vv[0, "to"] = "Done"
+   }
+   else if(cmd == "syslog") {
+      SyslogHtml(GETARG["syslog"], GETARG["style"], (1==0));
+   }
+   else if (cmd == "spindown") {
+      cmd="/usr/sbin/hdparm -y /dev/" dev " >/dev/null 2>&1"
+      system(cmd);
+      vv[0, "to"] = "Spindown " dev;
+      vv[1, "to"] = "Done"
+   }
+   else if (cmd == "syslogx") {
+      syslog=GETARG["syslog"]
+      if (syslog=="") {
+         syslog="/var/log/syslog"
+      }
+      #vv[0, "to"] = "Filtered syslog (disk=\"" disk ", dev=\"" dev ")"
+      FilterSyslogx(syslog,dev,disk)
+   }
+   else if (cmd == "syslogRobJ") {
+      syslog=GETARG["syslog"]
+      if (syslog=="") {
+         syslog="/var/log/syslog"
+      }
+      #fn="/tmp/temp"
+      vv[0, "to"] = "Filtered syslog (disk=\"" disk ", dev=\"" dev ")"
+      FilterSyslogRobJ(syslog,dev,disk) > fn
+      #close(fn);
+      #vv[1, "to"] = GetSysLog(0, "/tmp/temp");
+   }
+   else if (cmd == "smarthistory") {
+      RunCommand("cd /boot/smarthistory; ./smarthistory -wake ON -output HTML -graph IMAGE -report ALL -devices /dev/" dev);
+   }
 
-  #print RunCommand(cmdarg, parm1arg);
+   fn="UtilityShell.html"
+
+   htmlLoadFile(fn, html)
+
+   #for(i=0; i<html["count"]; i++) {
+   #   perr(i "  " html[i, "type"] " --> " html[i]);
+   #}
+
+   if(OptionToLoadSyslog)
+      htmlExpandGroup(html, "A");
+
+   htmlExpandGroup(html, "H"); #include html "head" section
+
+   ss = htmlSerialize(html, 0, vv);
+   #perr(ss);
+   gsub(amp, "\\&", ss);
+   print ss;
 }
 
 function RunCommand(cmd, disk, output) {
     RS="\n"
     if(output == "")
-       output = "<p> </p><strong>" cmd "   (" disk ")</strong><br><pre>"
+       vv[0, "to"] = cmd "   (" disk ")"
     else
-       output = "<p> </p><strong>" output "</strong><br><pre>"
+       vv[0, "to"] = output
 
+    output = ""
+    while (( cmd | getline f ) > 0)
+      output = output f  "<br>"
 
-    while (( cmd | getline f ) > 0) {
-     output = output f  "<br>"
-    }
-    output = output "</pre><br>"
+    vv[1, "to"]   = output
+    #perr(output);
+
     close(cmd)
-    return output
 }
 
-function FilterSyslogRobJ(syslog, dev, disk)
+function FilterSyslogRobJ(syslog, dev, disk, cmd, f)
 {
    if ( substr(dev,1,2) == "hd" ) {   # IDE devices
       if ( disk == "parity" )
@@ -115,7 +149,24 @@ function FilterSyslogRobJ(syslog, dev, disk)
    }
    cmd = "cat " syslog "|egrep \"(" dev cmd ")\""
    #p(cmd)
-   print RunCommand(cmd, "Filtered syslog for " disk (substr(disk,1,4) != "disk" ? " drive" : "") )
+   first=(1==1)
+   fn="/tmp/temp"
+    while (( cmd | getline f ) > 0)
+      if(first)
+         print f>fn
+      else
+         print f>>fn
+
+    #perr(output);
+
+    close(cmd)
+    close(fn)
+
+    t = GETARG["style"]
+    if(length(t) > 1)
+       t = substr(t, 2, 1)
+
+    vv[1, "to"] = GetSysLog(0, "/tmp/temp", t+0);
 }
 
 function FilterSyslogx(syslog, dev, disk)
@@ -133,40 +184,7 @@ function FilterSyslogx(syslog, dev, disk)
    #p(dev ", " disk ", " atanum);
    cmd = "cat " syslog "|egrep \"(" dev "|" disk "[^0-9]|md" substr(disk, 5) "[^0-9]|ata[ ]*" atanum "[^0-9])\"";
    #p(cmd)
-   print RunCommand(cmd, "Filtered syslog for "disk)
-}
-
-function CGI_setup( uri, version, i) {
-  delete GETARG;         delete MENU;        delete PARAM
-  GETARG["Status"] = ARGV[1]; GETARG["Method"] = ARGV[2]; GETARG["URI"] = ARGV[3]; 
-  i = index(ARGV[3], "?")
-  if (i > 0) {             # is there a "?" indicating a CGI request?
-    split(substr(ARGV[3], 1, i-1), MENU, "[/:]")
-    split(substr(ARGV[3], i+1), PARAM, "&")
-    for (i in PARAM) {
-      j = index(PARAM[i], "=")
-      GETARG[substr(PARAM[i], 1, j-1)] = substr(PARAM[i], j+1)
-    }
-  } else {             # there is no "?", no need for splitting PARAMs
-    split(ARGV[3], MENU, "[/:]")
-  }
-}
-
-
-function GetRawDiskBlocks( theDisk, partition, a, s) {
-    d_size = ""
-    cmd = "fdisk -l " theDisk
-    RS="\n"
-    while ((cmd | getline a) > 0 ) {
-        if ( a ~ theDisk ) {
-            delete s;
-            split(a,s," ");
-            d_size=s[5]
-            break;
-        }
-    }
-    close(cmd);
-    return ( d_size / 1024 )
+   RunCommand(cmd, "Filtered syslog for "disk)
 }
 
 function RunTest()
@@ -175,17 +193,16 @@ function RunTest()
    t1=t
    gsub("1.*2", "", t1)
    gsub("3", "", t1);
-   p(t)
-   p(t1)
+   return t "<br>" t1 "<br>"
 }
 
 #-------------------------------------------
-# Utility function to perform debug prints. 
+# Utility function to perform debug prints.
 #-------------------------------------------
-function p(printme)
-{
-   gsub("<", "\\&lt;", printme);
-   gsub(">", "\\&gt;", printme);
-   print "<p>"printme"</p>"
-}
+#function p(printme)
+#{
+#   gsub("<", "\\&lt;", printme);
+#   gsub(">", "\\&gt;", printme);
+#   print "<p>"printme"</p>"
+#}
 

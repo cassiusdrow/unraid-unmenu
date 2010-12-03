@@ -1,0 +1,67 @@
+<!--0-->	<html xmlns="http://www.w3.org/1999/xhtml">
+<!--H-->	<head>
+<!--H-->		<meta HTTP-EQUIV="Pragma" content="no-cache">
+<!--H-->		<meta HTTP-EQUIV="Expires]" content="-1">
+<!--H-->		<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<!--H-->		<title>myMain Utility - $what$</title>
+<!--H-->	</head>
+<!--1-->	<body>
+<!--1-->	<SCRIPT LANGUAGE="JavaScript">
+<!--1-->	<!-- Begin
+<!--1-->	function changeBox(cbox) {
+<!--1-->	box = eval(cbox);
+<!--1-->	box.checked = !box.checked;
+<!--1-->	}
+<!--1-->	function checkAll(f)
+<!--1-->	{
+<!--1-->	f.cb_normal.checked = true;
+<!--1-->	f.cb_red.checked = true;
+<!--1-->	f.cb_orange.checked = true;
+<!--1-->	f.cb_lime.checked = true;
+<!--1-->	f.cb_green.checked = true;
+<!--1-->	f.cb_blue.checked = true;
+<!--1-->	f.cb_teal.checked = true;
+<!--1-->	f.cb_purple.checked = true;
+<!--1-->	f.cb_olive.checked = true;
+<!--1-->	f.cb_brown.checked = true;
+<!--1-->	f.cb_navy.checked = true;
+<!--1-->	f.cb_gray.checked = true;
+<!--1-->	f.cb_normal.checked = true;
+<!--1-->	}
+<!--1-->	function uncheckAll(f)
+<!--1-->	{
+<!--1-->	f.cb_normal.checked = false;
+<!--1-->	f.cb_red.checked = false;
+<!--1-->	f.cb_orange.checked = false;
+<!--1-->	f.cb_lime.checked = false;
+<!--1-->	f.cb_green.checked = false;
+<!--1-->	f.cb_blue.checked = false;
+<!--1-->	f.cb_teal.checked = false;
+<!--1-->	f.cb_purple.checked = false;
+<!--1-->	f.cb_olive.checked = false;
+<!--1-->	f.cb_brown.checked = false;
+<!--1-->	f.cb_navy.checked = false;
+<!--1-->	f.cb_gray.checked = false;
+<!--1-->	f.cb_normal.checked = false;
+<!--1-->	}
+<!--1-->	//  End -->
+<!--1-->	</script>
+<!--1-->	<fieldset style="margin-top:1px;"><legend><img src="$ImageURL$/stock/myMainLogo.jpg" border='0' width='150' title='myMain Plugin - Enjoy!  &copy;bjp999, 2010.' /></legend>
+<!--A-->	<form method="POST" name="myForm">
+<!--A-->    <table border="0" cellspacing="0" cellpadding="0">
+<!--A-->      <tr>
+<!--A-->        <td width=10%>Syslog File</td>
+<!--A-->        <td width=90%><input name="syslog" type="text"  size="50" value="$syslog_file$" >
+<!--A-->        / <input name="maxlines" title="Maximum Lines to Process" type="text"  size="4" value="$maxlines$" >
+<!--A-->		<input type="button" name="Filter" value="Load & Filter" onClick="Javascript: myForm.Action.value = 'load+filter'; myForm.submit();" >&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp&nbsp;&nbsp;&nbsp<input name="Enable" type="button" value="Enable All" onClick="Javascript: checkAll(document.myForm)"> <input name="ClearAll" type="button" value="Clear All" onClick="Javascript: uncheckAll(document.myForm)">
+<!--A-->	  </tr><tr><td colspan="2">
+<!--A-->	<font size="-6"><br><br></font>$legend$ <input name="cb_normal" type="checkbox" $ch_normal$><span id="label1" style="cursor:hand; background-color:white; color: black" onClick="changeBox('document.myForm.cb_normal')">Unhighlighted</span><input name="Action" type="hidden" value="" ><input name="dummy" type="hidden" value="xyz" />
+<!--A-->	</td></tr></table><hr>
+<!--A-->	</form>
+<!--1-->	<strong>$what$</strong>
+<!--1-->	<pre>
+<!--1-->$stuff$
+<!--1-->	</pre>
+<!--1-->	</fieldset>
+<!--1-->	</body>
+<!--1-->	</html>

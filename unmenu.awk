@@ -2,10 +2,10 @@
 BEGIN {
   # Copyright Joe L. 2008.
   #
-  # This web-server is not guaranteed to be able to do anything, 
+  # This web-server is not guaranteed to be able to do anything,
   # but it does not have a "Restore" button, therefore, it is an improvement to many.
   # It does offer a lot of features not available in the stock unRAID web-server and
-  # since it supports plug-in modules, can be extended to just about any need. 
+  # since it supports plug-in modules, can be extended to just about any need.
   #
   # invoke as:
   #     awk -W re-interval -f unmenu.awk
@@ -24,17 +24,28 @@ BEGIN {
       }
   }
   close("unmenu.awk")
-  
+
   version = "Version 1.3 " theRevision " Joe L.... with modifications as suggested by bjp999 and many others"
-  
+
   # Plug-in scripts are expected to reside in the same directory where this program is invoked if the following
   # variable is not changed.  If you wish to speciify a different directory for the plug-in scripts, you
   # can change this accordingly.
   ScriptDirectory=""
 
-  if ( ScriptDirectory == "" ) { 
-      ScriptDirectory = "."; 
+  if ( ScriptDirectory == "" ) {
+      ScriptDirectory = ".";
   }
+
+  #-----------------------------------------------------------------------------
+  # Create symbolic link to images directory.  If a user has a different images
+  # directory, they can create the symbolic link in their "go" file.
+  #-----------------------------------------------------------------------------
+  cmd="cd " ScriptDirectory "; pwd"
+  cmd | getline ScriptDirectory
+  close(cmd)
+
+  system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
+  
   if ( ConfigFile == "" ) {
       ConfigFile = "unmenu.conf";
   }
@@ -49,15 +60,20 @@ BEGIN {
   GetConfigValues(ScriptDirectory "/" ConfigFile, "");
   GetConfigValues(ScriptDirectory "/" LocalConfigFile, "");
 
+  #------------------------------------------------------------------------------------
+  # save the process ID of the awk program in /var/run/unmenu.pid.
+  #------------------------------------------------------------------------------------
+  print PROCINFO["pid"] > "/var/run/unmenu.pid"
+  close("/var/run/unmenu.pid")
 
   #####################################################################################
-  # Some site specific variables are defined below here.  
+  # Some site specific variables are defined below here.
   # You may change them as you desire in the unmenu_local.conf file.
   # PLEASE DO NOT CHANGE THEM IN THIS FILE.  If you do, they will get overwrittten
   # when a new version of unmenu.awk is released.
   #####################################################################################
 
-  # Main page "auto" refresh interval in seconds is set here. Other pages are NOT auto refreshed. 
+  # Main page "auto" refresh interval in seconds is set here. Other pages are NOT auto refreshed.
   # If you wish a different refresh interval, set the corresponding value in unmenu.conf
   # Note, auto refresh occurs ONLY when array state = STARTED
   REFRESH_INTERVAL = CONFIG["REFRESH_INTERVAL"] ? CONFIG["REFRESH_INTERVAL"] : 60
@@ -83,15 +99,15 @@ BEGIN {
   # If desired, set iframes with used defined content at bottom of main page.
   main_page_user_content = CONFIG["main_page_user_content"] ? CONFIG["main_page_user_content"] : ""
 
-  # You can override the host name from the command line so all references willl be 
+  # You can override the host name from the command line so all references willl be
   # by IP adddress rather than by Server Name
   # like this:  awk -v MyHost=192.168.2.100 -W re-interval -f unmenu.awk
   # the server name can also be set in the unmenu.conf file as MyHost = Hostname.
   if ( MyHost == "" ) {
     MyHost = CONFIG["MyHost"] ? CONFIG["MyHost"] : getHost()
-  } 
+  }
 
-  # You can override the default port (8080) from the command line too. 
+  # You can override the default port (8080) from the command line too.
   # (use an additional -v variableName=replacementValue for each variable to be set)
   # like this:  awk -v MyHost=192.168.2.100 -v MyPort=90 -W re-interval -f unmenu.awk
   # the port can also be set in the unmenu.conf file as MyPort = NN.
@@ -99,23 +115,23 @@ BEGIN {
     MyPort = CONFIG["MyPort"] ? CONFIG["MyPort"] : 8080
   }
 
-  if ( DebugPlugInCommand == "" ) { 
-      DebugPlugInCommand = "no"; 
+  if ( DebugPlugInCommand == "" ) {
+      DebugPlugInCommand = "no";
   }
-  if ( DebugMode == "" ) { 
-      DebugMode = "no"; 
+  if ( DebugMode == "" ) {
+      DebugMode = "no";
   }
   DebugMode = CONFIG["DebugMode"] ? CONFIG["DebugMode"] : DebugMode
   DebugMode = tolower(DebugMode)
   #####################################################################################
-  # End of site specific variables.  
+  # End of site specific variables.
   #
   # You will not need to make any changes below this point in the file unless
-  # you have a desire to tinker with the built in pages. 
+  # you have a desire to tinker with the built in pages.
   # (and you really don't need to make any above here in most cases)
   #
   # If you make improvements, please share them.  It you find a bug, let me know and
-  # I'll fix it in my version too. If you write a really neat plug-in, share it too. 
+  # I'll fix it in my version too. If you write a really neat plug-in, share it too.
   # Hopefully, the comments in the code will make your task easier.
   #
   # Joe L.
@@ -132,14 +148,14 @@ BEGIN {
   # we multiply by -1 since we need to know GMT's offset from local, not local's offset from GMT
   tz_offset = ( strftime("%z", systime()) / 100 ) * 60 * 60 * -1
 
-  # open unmenu "plug-in" script directory, 
+  # open unmenu "plug-in" script directory,
   # look for any "NN-unmenu-*.awk" scripts and any "NN-unmenu-*.cgi" scripts.
   # for each script, open it to read the desired menu entry for the top menu
   # also, read the "url" it will appear to be to the end-user
   # and get the flag that will determine if the standard top-of-screen status box should not be used
-  # later, if the "url" is matched, it will be invoked and the output, expected in html, 
+  # later, if the "url" is matched, it will be invoked and the output, expected in html,
   # will be sent to the user's browser.
-  # When a plug-in is invoked, the array status, METHOD, and querrystring parameters are passed 
+  # When a plug-in is invoked, the array status, METHOD, and querrystring parameters are passed
   cmd="ls " ScriptDirectory "/[0-9]*-unmenu-*.awk " ScriptDirectory "/[0-9]*-unmenu-*.cgi 2>/dev/null"
   add_on_count=0
   while (( cmd | getline add_on_awk_script ) > 0) {
@@ -148,13 +164,13 @@ BEGIN {
     add_on_http_header[add_on_count]="YES"  # default is to have HTTP header included
     add_on_top_heading[add_on_count]="YES"  # default is to have top of page heading included
     add_on_html_tags[add_on_count]="YES"    # default is to supply <HTML><HEAD>...</HEAD><BODY>...</BODY></HTML>
-    add_on_version[add_on_count]="(ADD_ON_VERSION not specified in plug-in, default version assigned) 0.1" 
+    add_on_version[add_on_count]="(ADD_ON_VERSION not specified in plug-in, default version assigned) 0.1"
     add_on_release[add_on_count] = ""
     add_on_head_count[add_on_count] = 0
     add_on_count++;
   }
   close(cmd);
-  # now, process each script in turn.  Open them, scan for their url, menu label, type, 
+  # now, process each script in turn.  Open them, scan for their url, menu label, type,
   # and other parameters as described below.
   # Only ADD_ON_URL, ADD_ON_MENU and ADD_ON_TYPE are required to exist in the plug-in.
   for ( i = 0; i < add_on_count; i++ ) {
@@ -189,7 +205,7 @@ BEGIN {
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_type[i] = substr(line,c[3,"start"],c[3,"length"])
           }
-          # expect YES or NO... YES = include <HTML><HEAD><TITLE></TITLE></HEAD><BODY> ... </BODY></HTML> 
+          # expect YES or NO... YES = include <HTML><HEAD><TITLE></TITLE></HEAD><BODY> ... </BODY></HTML>
           # NO = let plug in supply
           delete c;
           match( line , /^(#ADD_ON_HTML_TAGS|#define\WADD_ON_HTML_TAGS)([\t =]+)(.+)/, c)
@@ -202,7 +218,7 @@ BEGIN {
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_top_heading[i] = substr(line,c[3,"start"],c[3,"length"])
           }
-          # expect YES or NO... default=YES include HTTP header, 
+          # expect YES or NO... default=YES include HTTP header,
           # NO = plug-in will supply HTTP header lines and ALL subsequent content on page
           delete c;
           match( line , /^(#ADD_ON_HTTP_HEADER|#define\WADD_ON_HTTP_HEADER)([\t =]+)(.+)/, c)
@@ -241,7 +257,7 @@ BEGIN {
           match( line , /^(#ADD_ON_HEAD|#define\WADD_ON_HEAD)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_head_count[i]++
-              add_on_head[i, add_on_head_count[i]] = substr(line,c[3,"start"],c[3,"length"])
+	      add_on_head[i, add_on_head_count[i]] = substr(line,c[3,"start"],c[3,"length"])
           }
           # Expect a string describing additional options to supply for a plug-in
           delete c;
@@ -256,35 +272,39 @@ BEGIN {
   for ( i = 0; i < add_on_count; i++ ) {
     if ( add_on_config[i] != "" ) {
       GetConfigValues(ScriptDirectory "/" add_on_config[i], "pi-" i );
-      if ( DebugMode == "yes" ) { 
-          print "importing plug-in config values:" add_on_config[i] 
-      }
     }
     if ( add_on_local_config[i] != "" ) {
       GetConfigValues(ScriptDirectory "/" add_on_local_config[i], "pi-" i );
       if ( DebugMode == "yes" ) { 
           print "importing local plug-in config values:" add_on_local_config[i] 
       }
+      if("pi-"i"ADD_ON_URL" in CONFIG)                    # bjp999 10/17/2010 - Allow local config file to override
+         add_on_url[i] = CONFIG["pi-"i"ADD_ON_URL"];      # bjp999 10/17/2010   some of the "add on" values for the
+      else if("pi-"i"ADD_ON_MENU" in CONFIG)              # bjp999 10/17/2010   plugin.  This allows a degree of
+         add_on_menu[i] = CONFIG["pi-"i"ADD_ON_MENU"];    # bjp999 10/17/2010   customization of these values
+      else if("pi-"i"ADD_ON_STATUS" in CONFIG)            # bjp999 10/17/2010   without editing the plugin source
+         add_on_menu[i] = CONFIG["pi-"i"ADD_ON_STATUS"];  # bjp999 10/17/2010   file itself.
     }
   }
+
   # for debugging, print the plug-in scripts found and imported.
-  if ( DebugMode == "yes" ) { 
+  if ( DebugMode == "yes" ) {
      for ( i = 0; i < add_on_count; i++ ) {
        print "importing:" add_on_url[i] " as \"" add_on_menu[i] "\" from " add_on[i]
-     } 
+     }
   }
 
   Footer      = "</BODY></HTML>"
-  
+
   while ("3.14159" != "PI") {
-      if ( DebugMode == "yes" ) { 
+      if ( DebugMode == "yes" ) {
          print "opening port to listen for requests"
       }
 
       # We block here waiting for a new request from the browser
       HttpService |& getline                 # wait for new client request
 
-      if ( DebugMode == "yes" ) { 
+      if ( DebugMode == "yes" ) {
          print strftime(), $0                        # do some logging
       }
 
@@ -292,7 +312,7 @@ BEGIN {
       arg2=$2
 
       CGI_setup($1, $2, $3)                  # read request parameters
-      if ((GETARG["Method"] == "GET") || (GETARG["Method"] == "POST")) { 
+      if ((GETARG["Method"] == "GET") || (GETARG["Method"] == "POST")) {
 
          #Thanks to  bjp999 we can now also handle POST as well as GET requests.
          # one tiny limitation, the last character of the last field on the form
@@ -316,7 +336,7 @@ BEGIN {
             # we must read one character less than available, so we will not block and can send a
             # response back to the client's browser.
             RS = ".{" len-1 "}"
-            HttpService |& getline li 
+            HttpService |& getline li
             form_field_string = arg2 "?" RT
             #perr("form_field_string='" form_field_string "'")
 
@@ -335,13 +355,14 @@ BEGIN {
                   plug_in_matched="y"   # we'll handle the request with a plug-in.
                   GetArrayStatus()
 
-                  # newer modules will be able to tell the difference between their initial GET 
+                  # newer modules will be able to tell the difference between their initial GET
                   # and a subsequent POST of their form as the METHOD is passed as arg1..
 
                   plugin_options = add_on_options[i] != "" ? add_on_options[i] : ""
                   # set up the command to invoke the add-on
                   if ( add_on_type[i] == "awk" ) {
-                      cmd="gawk -v ConfigFile=" ConfigFile " -v MyHost=" MyHost " -v ScriptDirectory=" ScriptDirectory 
+                      cmd="gawk -v ConfigFile=" ConfigFile " -v MyHost=" MyHost " -v ScriptDirectory=" ScriptDirectory
+		      cmd = cmd " -v AWK_PID=" AWK_PID
                       if ( LocalConfigFile != "" ) {
                           cmd = cmd " -v LocalConfigFile=" LocalConfigFile
                       }
@@ -399,7 +420,7 @@ BEGIN {
                               }
                               # We supply a HTTP header before the first chunk
                               # note, we handle everything here as text/html.
-                              http_headers = GetHTTP_Header("text/html", plug_in_refresh_interval, add_on_url[i] ) 
+                              http_headers = GetHTTP_Header("text/html", plug_in_refresh_interval, add_on_url[i] )
                               response = http_headers ORS
                               if ( add_on_html_tags[i]=="YES" ) {
                                   doc_length = sprintf("%x", length(Header));
@@ -420,21 +441,21 @@ BEGIN {
                           }
                           doc_length = sprintf("%x", length(RT));
                           response = response doc_length ORS RT ORS
-                      } else { 
-                          # if add_on_http_header = "NO", EVERYTHING IS DONE IN THE PLUG-IN. 
-                          # All we do here is read it in and then send to the waiting browser. 
+                      } else {
+                          # if add_on_http_header = "NO", EVERYTHING IS DONE IN THE PLUG-IN.
+                          # All we do here is read it in and then send to the waiting browser.
                           # In other words, the plug-in supplies the HTTP header and text.
-                          #  
-                          # Note: this code concatenates the 128 byte chunks of the output and 
-                          # will use all of memory if you attempt to send an object from the plug-in 
-                          # that uses more memory than can be allocated. 
+                          #
+                          # Note: this code concatenates the 128 byte chunks of the output and
+                          # will use all of memory if you attempt to send an object from the plug-in
+                          # that uses more memory than can be allocated.
                           # (using more memory than available would crash the server as it kills processes
                           # as it attempts to free memory for reallocation)
-                          # I tried incrementally sending the output to HttpServe in "chunks", but the 
-                          # IE browser closes the connection after sending it a few chunks and then we fail. 
-                          # Apparently, it establishes a new connection and the old connection has 
+                          # I tried incrementally sending the output to HttpServe in "chunks", but the
+                          # IE browser closes the connection after sending it a few chunks and then we fail.
+                          # Apparently, it establishes a new connection and the old connection has
                           # nobody listening.  (Firefox works as expected, but most use IE)
-                          
+
                           response = response RT
                       }
                   }
@@ -444,14 +465,14 @@ BEGIN {
                   }
                   if ( add_on_http_header[i] == "YES" ) {
                       # Send the final zero length "chunk"
-                      response = response "0" ORS 
+                      response = response "0" ORS
                   }
                   print response |& HttpService
                   close(cmd)
                   RS = OLD_RS
                   ORS = OLD_ORS
 
-                  if ( DebugMode == "yes" ) { 
+                  if ( DebugMode == "yes" ) {
                       # debugging lines to output entire page to a file.
                       print response >"http_out"
                       close("http_out")
@@ -466,15 +487,15 @@ BEGIN {
         #
         # or, you can write a "plug-in" paqe in its own file in the ScriptDirectory and make
         # no changes here at all. This is the easiest solution, as almost anything can be done
-        # in a plug-in. 
+        # in a plug-in.
         #
-        # The only pages that are better put in this main script are those that need to access 
+        # The only pages that are better put in this main script are those that need to access
         # a lot of the globally available data arrays collected on main status page
-    
+
         # if not handled by a plug-in-script, use a built-in
         if ( plug_in_matched != "y" ) {
 
-          if ( DebugMode == "yes" ) { 
+          if ( DebugMode == "yes" ) {
              print "Plug-in not matched " MENU[2]
           }
 
@@ -507,12 +528,12 @@ BEGIN {
                }
 
                #close(HttpService)                     # End the upload of this file
-      
+
               close (log_fname)
               RS="\r\n"
               MENU[2] = "";
               special_matched="y"
-        
+
             }
 
             # If no specific page is requested, show the home status page
@@ -537,10 +558,10 @@ BEGIN {
               Document = PageMenu DiskMgmtPageDoc
             }
 
-            # This built-in "syslog" page is not used if the syslog plug-in is put into place. 
+            # This built-in "syslog" page is not used if the syslog plug-in is put into place.
             # The built-in command does not do color coding of syslog lines. The plug-in does.
             # I left this here mostly to show that a built-in can be replced with a plug-in easily
-            # with no changes to this code at all.  
+            # with no changes to this code at all.
             # Just write and/or install a plug-in with the same "url" as the built-in
             if (MENU[2] == "system_log") {
               built_in_matched="y"
@@ -583,28 +604,28 @@ BEGIN {
               Document = PageMenu ArrayStatusDoc Document
             }
 
-            if ( built_in_matched != "y" && special_matched != "y" ) { 
-              if ( DebugMode == "yes" ) { 
+            if ( built_in_matched != "y" && special_matched != "y" ) {
+              if ( DebugMode == "yes" ) {
                  print "special/built-in page not matched '" MENU[2] "'"
               }
               Document = "<HR><H1>404 Page Not Found</H1>We were unable to find the requested page '" MENU[2] "'<HR>"
               Document = Document "<a href=\"/\">Click here to return to the unMENU main page</a>"
             }
-    
-            
-            if ( special_matched == "n" ) { 
+
+
+            if ( special_matched == "n" ) {
               # now add the HTTP header and send the page to the browser.
               RS = ORS    = "\r\n"          # header lines are terminated this way
               Header = GetPageHEAD(-1);
               WebPage = Header Document Footer
-      
+
               # If on the main page and the array id started, let it auto-refresh.
               if (MENU[2] == "" && array_state == "STARTED") {
                   refresh_interval = REFRESH_INTERVAL
               } else {
                   refresh_interval = 0
               }
-              http_headers = GetHTTP_Header("text/html", refresh_interval, "/" ) 
+              http_headers = GetHTTP_Header("text/html", refresh_interval, "/" )
               doc_length = sprintf("%x", length(WebPage));
               print http_headers ORS doc_length ORS WebPage ORS "0" ORS |& HttpService
 
@@ -614,12 +635,12 @@ BEGIN {
             }
         }
     } else if (GETARG["Method"] == "HEAD")    {
-            http_headers = GetHTTP_Header("text/html", 0, "/" ) 
+            http_headers = GetHTTP_Header("text/html", 0, "/" )
             print http_headers ORS |& HttpService
-    } else if (GETARG["Method"] != "") { print "bad method -" GETARG["Method"] "-"
+    } else if (GETARG["Method"] != "") { print "bad method - " $0  GETARG["Method"] "-"
     }
 
-    if ( DebugMode == "yes" ) { 
+    if ( DebugMode == "yes" ) {
        print "closing port listening for requests"
     }
     close(HttpService)  # stop talking to this request from the web client
@@ -638,7 +659,7 @@ function GetHTTP_Header( type, refresh, header, url) {
     header = header "Pragma: no-cache" "\r\n"
     header = header "Cache-Control: private, max-age=0" "\r\n"
     header = header strftime("Date: %a, %d %b %Y %H:%M:%S GMT", (systime() + (tz_offset))) "\r\n"
-#    print strftime("Date: %a, %d %b %Y %H:%M:%S GMT", (systime() + (tz_offset))) 
+#    print strftime("Date: %a, %d %b %Y %H:%M:%S GMT", (systime() + (tz_offset)))
     header = header "Expires: -1\r\n"
     header = header "Content-Type: " type "\r\n"
     header = header "Transfer-Encoding: chunked" "\r\n"
@@ -662,7 +683,7 @@ function CGI_setup(   method, uri, version, i) {
   } else {             # there is no "?", no need for splitting PARAMs
     split($2, MENU, "[/:]")
   }
-  if ( DebugMode == "yes" ) { 
+  if ( DebugMode == "yes" ) {
     for ( i in MENU ) {
         print "MENU[" i "] '" MENU[i] "'"
     }
@@ -677,9 +698,9 @@ function CGI_setup(   method, uri, version, i) {
 
 # We pass in the one URL we do NOT want included as a link, but only as a label.
 # The other possible pages are made into links. The entire top of form is a three column table.
-# To add a new built-in web-page, the two arrays below need to have an additional member defined 
+# To add a new built-in web-page, the two arrays below need to have an additional member defined
 # and the set of "if ( MENU[2] == ...)" statements above appended
-# most pages can be external as a plug-in, so unless you need access to global data here, 
+# most pages can be external as a plug-in, so unless you need access to global data here,
 # make your addition a plug-in module. They automatically add their menu entries when processed.
 
 function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
@@ -697,7 +718,7 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
   menu[idx]="";           url[idx]="disk_repair";     idx++;
   menu[idx]="Syslog";     url[idx]="system_log";      idx++;
 
-  # merge and/or append the plug-in modules. 
+  # merge and/or append the plug-in modules.
   # (if the URL exists, it is merged, replacing the original, otherwise, it is appended to the menu items)
   for ( i = 0; i < add_on_count; i++ ) {
     add_on_index = MenuIndex(add_on_url[i], idx);
@@ -706,7 +727,7 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
     if ( add_on_index == idx ) {
         idx++;
     }
-  } 
+  }
 
   # these two menu entries always are on the end of the list
   menu[idx]="About";     url[idx]="about";      idx++;
@@ -719,21 +740,21 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
     if ( url[a]  != "syslog" && menu[a] != "" ) {
         top_menu = top_menu url[a] "|" menu[a] "|"
         if ( url[a] == urlName ) {
-            theMenu = theMenu " <nobr>" menu[a] "</nobr> " 
+            theMenu = theMenu " <nobr>" menu[a] "</nobr> "
         } else {
             theMenu = theMenu " <nobr><A HREF=" MyPrefix "/" url[a] ">" menu[a] "</A></nobr> "
         }
         theMenu = theMenu "|"
     }
   }
-  # just in case the user embedded a single quote in a menu label. 
+  # just in case the user embedded a single quote in a menu label.
   gsub("'","'\\''",top_menu)
 
   "date" | getline DateTime
   close("date")
 
-  theMenu = substr(theMenu,1, length(theMenu)-1); 
-  theMenu = theMenu "</font></td><td align=center width=\"20%\"><font size=\"4\"><b>" MyHost 
+  theMenu = substr(theMenu,1, length(theMenu)-1);
+  theMenu = theMenu "</font></td><td align=center width=\"20%\"><font size=\"4\"><b>" MyHost
   theMenu = theMenu " unRAID Server</b></font></td>\
     <td align=\"right\" width=\"40%\">" DateTime "</td></tr>\
     </table>\
@@ -741,7 +762,7 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
   return theMenu
 }
 
-# If a menu item already exists with the same "url", return its index to use to replace it with the plug-in entry, 
+# If a menu item already exists with the same "url", return its index to use to replace it with the plug-in entry,
 # otherwise, return an index to add a new entry on the end of the array
 function MenuIndex(theurl, mindex, found_url, a) {
     found_url=0
@@ -823,7 +844,7 @@ function ArrayStateHTML(theHTML, parity_status, i) {
      }
 
 
-     parity_status= state_font array_state "; " arraydisks " disks in array." SambaStatus "<br><br><font color=\"red\"><b> "  oper "</font>" 
+     parity_status= state_font array_state "; " arraydisks " disks in array." SambaStatus "<br><br><font color=\"red\"><b> "  oper "</font>"
 
      if(rebuilding_disk == "")
         rebuilding_disk = 0   #retrieve total size and compute % complete based on parity disk size
@@ -884,14 +905,14 @@ function ArrayStateHTML(theHTML, parity_status, i) {
         ParityCheckMsg = sprintf("%d", daysSinceLastParity) " days ago"
      else if(secsSinceLastParity < (60*60*24*61))
         ParityCheckMsg = "<b>" sprintf("%d", daysSinceLastParity) "</b> days ago"
-     else if(secsSinceLastParity < (60*60*24*90))  
+     else if(secsSinceLastParity < (60*60*24*90))
         ParityCheckMsg = "<font style=\"background-color:yellow\"><b>&nbsp;" sprintf("%d", daysSinceLastParity) "&nbsp;</b></font>&nbsp;days ago"
      else
         ParityCheckMsg = "<font style=\"background-color:red;color:white\"><b>&nbsp;" sprintf("%d", daysSinceLastParity) "&nbsp;</b></font>&nbsp;days ago"
 
      if(last_parity_errs == 0)
         SyncErrorMsg = "with no sync errors."
-     else if(last_parity_errs < 20) 
+     else if(last_parity_errs < 20)
         SyncErrorMsg = ".&nbsp;&nbsp;&nbsp;Parity updated <b> " last_parity_errs " </b>times to address sync errors."
      else if(last_parity_errs < 100)
         SyncErrorMsg = ".&nbsp;&nbsp;&nbsp;Parity updated&nbsp;<font style=\"background-color:yellow\"><b>&nbsp;" last_parity_errs " </b></font>&nbsp;times to address sync errors."
@@ -899,19 +920,19 @@ function ArrayStateHTML(theHTML, parity_status, i) {
         SyncErrorMsg = ".&nbsp;&nbsp;&nbsp;Parity updated&nbsp;<font style=\"background-color:red;color:white\"><b>&nbsp;" last_parity_errs " </b></font>&nbsp;times to address sync errors."
 
     if ( parity_valid!="" && parity_valid!="Parity disk not configured." ) {
-      parity_status= "; " parity_valid 
+      parity_status= "; " parity_valid
       if ( parity_valid=="Parity is Valid:" ) {
           parity_status = parity_status ".&nbsp;&nbsp;&nbsp;Last parity check&nbsp;" ParityCheckMsg " " SyncErrorMsg "&nbsp;&nbsp;&nbsp;";
       }
     } else {
-      parity_status= "; <b>Array is not protected by a parity disk: " parity_valid "</b>" 
+      parity_status= "; <b>Array is not protected by a parity disk: " parity_valid "</b>"
     }
-     
+
     #parity_status= "; " parity_valid " Last parity check: " strftime("%a %b %d %H:%M:%S %Z %Y",last_parity_sync) " \
     # finding " last_parity_errs " errors. ";
 
      theHTML = "<fieldset style=\"margin-top:10px;\"><legend><strong>Array Status</strong></legend>\
-     " state_font array_state "</font>, " array_status_text arraydisks " disks in array.&nbsp;&nbsp;&nbsp" parity_status  SambaStatus "</fieldset>" 
+     " state_font array_state "</font>, " array_status_text arraydisks " disks in array.&nbsp;&nbsp;&nbsp" parity_status  SambaStatus "</fieldset>"
   }
 
   return theHTML;
@@ -930,7 +951,7 @@ function SetUpHomePage() {
   if ( main_page_user_content ) {
       gsub("%MyHost%",MyHost,main_page_user_content)
       gsub("%MyPort%",MyPort,main_page_user_content)
-      
+
       PageDoc = PageDoc "<iframe width=\"100%\" "  main_page_user_content "\">"
       PageDoc = PageDoc "Sorry: your browser does not seem to support inline frames"
       PageDoc = PageDoc "</iframe>"
@@ -993,7 +1014,7 @@ function SetUpArrayMgmtPage() {
   samba_active=IsSambaStarted();
   ArrayMgmtPageDoc = ArrayStateHTML();
   ArrayMgmtPageDoc = ArrayMgmtPageDoc "<form method=\"GET\" ><table width=\"100%\">"
-    
+
   # show appropriate buttons based on current status.
   if ( array_state == "STARTED" ) {
     ArrayMgmtPageDoc = ArrayMgmtPageDoc \
@@ -1055,7 +1076,7 @@ function StartSamba( cmd) {
 function SpinUp( disk, cmd, f) {
     # Spin Up drives
     # loop through the drives spinning them up
-    # by reading a single "random" block from each disk in turn.  
+    # by reading a single "random" block from each disk in turn.
     srand() # important to get random numbers when unmenu is re-started.
     for ( i =0; i<numdisks; i++ ) {
         if ( "/dev/" disk_device[i] == disk || disk == "All Disks" ) {
@@ -1150,7 +1171,7 @@ function UnmountDisks( disk ,cmd) {
         #print "killing " pids[i]
         system("kill  -0 pids[i] && kill -KILL " pids[i] )
     }
-    
+
     # unmount the drives
     for ( i =0; i<numdisks; i++ ) {
     if ( disk_mounted[i] != "" && ( "/dev/" disk_device[i] == disk || disk == "All Disks" )) {
@@ -1239,7 +1260,7 @@ function SetUpSyslogPage(syslog) {
 
   # Set the number of syslog lines you wish returned here.
   syslog = GetSysLog(nl, log_fname);
-    
+
   SyslogPageDoc = SyslogPageDoc  syslog
 }
 
@@ -1301,7 +1322,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   # user pressed the "HDParm Infobutton"
   if ( GETARG["disk_device"] != "" && GETARG["hdparm"] == "HDParm+Info" ) {
     DiskCommandOutput = "<b><u><font size=\"+1\">HDParm Info for " d[1] " " d[2] "</font></u></b><br><pre>"
-    #smartctl -a -d ata /dev/$disk_device    
+    #smartctl -a -d ata /dev/$disk_device
     cmd="hdparm -I " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0)  {
@@ -1313,7 +1334,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   # user pressed the "Smart Statistics button"
   if ( GETARG["disk_device"] != "" && GETARG["smart_stats"] == "Smart+Statistics" ) {
     DiskCommandOutput = "<b><u><font size=\"+1\">Statistics for " d[1] " " d[2] "</font></u></b><br><pre>"
-    #smartctl -a -d ata /dev/$disk_device    
+    #smartctl -a -d ata /dev/$disk_device
     cmd="smartctl -a -d ata " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0)  {
@@ -1325,7 +1346,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   # user pressed the "Smart Short Test button"
   if ( GETARG["disk_device"] != "" && GETARG["smart_short"] == "Short+Smart+Test" ) {
     DiskCommandOutput = "Smart Short Test of " d[1] " will take from several minutes to an hour or more."
-    #smartctl -t short /dev/$disk_device    
+    #smartctl -t short /dev/$disk_device
     cmd="smartctl -d ata -t short " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0) ;
@@ -1334,7 +1355,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   # user pressed the "Smart Long Test button"
   if ( GETARG["disk_device"] != "" && GETARG["smart_long"] == "Long+Smart+Test" ) {
     DiskCommandOutput = "Smart Long Test of " d[1] " could take several hours or more."
-    #smartctl -t long /dev/$disk_device    
+    #smartctl -t long /dev/$disk_device
     cmd="smartctl -d ata -t long " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0) ;
@@ -1485,10 +1506,10 @@ function SetUpDiskMgmtPage( theMenuVal ) {
       if ( PARAM[i] ~ "mount-" ) {
           delete d
           split(PARAM[i],d,"[=-]")
-          if ( d[3] == "ntfs" ) { 
+          if ( d[3] == "ntfs" ) {
              # if we have ntfs-3g, use it.
              if (system("test -f /bin/ntfs-3g")==0) {
-                 d[3] = "ntfs-3g" 
+                 d[3] = "ntfs-3g"
              } else {
                 # load the old read-only driver, if it is not already loaded into memory.
                  system("lsmod | grep 'ntfs' >/dev/null 2>&1 || modprobe ntfs");
@@ -1611,8 +1632,8 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( MENU[2] == "disk_repair" ) {
     DiskTmp = DiskRepair(val)
   }
-  DiskMgmtPageDoc = DiskMgmtPageDoc DiskTmp DiskCommandOutput 
-  
+  DiskMgmtPageDoc = DiskMgmtPageDoc DiskTmp DiskCommandOutput
+
   DiskMgmtPageDoc = DiskMgmtPageDoc \
   "</form>"
 }
@@ -1674,7 +1695,7 @@ function GetArrayStatus(a) {
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
         # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id.
         if ( a ~ "diskName" )        { delete d; split(a,d,"[.=]"); disk_name[d[2]]=d[3]; }
-        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1; 
+        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1;
                                                  disk_id[d[2]]=substr(d[3],offset); }
         if ( a ~ "diskSerial" )      { delete d; split(a,d,"[.=]"); disk_serial[d[2]]=d[3]; }
         if ( a ~ "diskSize" )        { delete d; split(a,d,"[.=]"); disk_size[d[2]]=d[3]; }
@@ -1682,7 +1703,7 @@ function GetArrayStatus(a) {
         if ( a ~ "diskModel" )       { delete d; split(a,d,"[.=]"); disk_model[d[2]]=d[3]; }
         if ( a ~ "rdevModel" )       { delete d; split(a,d,"[.=]"); rdisk_model[d[2]]=d[3]; }
         if ( a ~ "rdevStatus" )      { delete d; split(a,d,"[.=]"); disk_status[d[2]]=d[3]; }
-        if ( a ~ "rdevName" )        { delete d; split(a,d,"[.=]"); disk_device[d[2]]=d[3]; 
+        if ( a ~ "rdevName" )        { delete d; split(a,d,"[.=]"); disk_device[d[2]]=d[3];
                                        if ( disk_device[d[2]] != "" ) GetReadWriteStats(d[2])
                                      }
         if ( a ~ "diskNumWrites" )   { delete d; split(a,d,"[.=]"); disk_writes[d[2]]=d[3]; }
@@ -1701,7 +1722,7 @@ function GetDiskData() {
     while ((cmd | getline a) > 0 ) {
         num_partitions++
         delete d;
-        split(a,d," ");    
+        split(a,d," ");
         major[num_partitions] = d[1]
         minor[num_partitions] = d[2]
         blocks[num_partitions] = d[3]
@@ -1716,7 +1737,7 @@ function GetDiskData() {
     cmd="ls -l /dev/disk/by-label | grep 'UNRAID'"
     while ((cmd | getline a) > 0 ) {
         delete d;
-        split(a,d," ");    
+        split(a,d," ");
         sub("../../","",d[11])
         unraid_volume=d[11]
     }
@@ -1726,14 +1747,14 @@ function GetDiskData() {
     for( a = 1; a <= num_partitions; a++ ) {
         if ( device[a] == unraid_volume ) {
              assigned[a] = "UNRAID"
-        }     
+        }
     }
 
     # Now, get the model/serial numbers. They should be available in /dev/disk/id-label
     cmd="ls -l /dev/disk/by-id"
     while ((cmd | getline line) > 0 ) {
        delete d;
-       split(line,d," ");    
+       split(line,d," ");
        sub("../../","",d[11])
        for( a = 1; a <= num_partitions; a++ ) {
            if ( d[11] == ( device[a] ) ) {
@@ -1817,7 +1838,7 @@ function GetOtherDisks(outstr) {
             temp= GetDiskTemperature( "/dev/" substr(device[a],1,3) );
             cachedrive = cachedrive "<td>" fs "</td><td>" temp "</td>"
             cachedrive = cachedrive "<td align=\"right\">" disk_size[numdisks + 3] "</td>"
-            cachedrive = cachedrive "<td align=\"right\">" disk_used[numdisks + 3] 
+            cachedrive = cachedrive "<td align=\"right\">" disk_used[numdisks + 3]
             cachedrive = cachedrive "</td><td align=\"right\">" disk_pctuse[numdisks + 3] "</td>"
             cachedrive = cachedrive "<td align=\"right\">" disk_avail[numdisks + 3]"</td>"
             cachedrive = cachedrive "</tr>"
@@ -1837,7 +1858,7 @@ function GetOtherDisks(outstr) {
             bootdrive = bootdrive "<tr><td>/dev/" device[a] "</td><td>" model_serial[a] "</td><td>" mp "</td>"
             bootdrive = bootdrive "<td>" fs "</td><td></td>"
             bootdrive = bootdrive "<td align=\"right\">" disk_size[numdisks + 2] "</td>"
-            bootdrive = bootdrive "<td align=\"right\">" disk_used[numdisks + 2] 
+            bootdrive = bootdrive "<td align=\"right\">" disk_used[numdisks + 2]
             bootdrive = bootdrive "</td><td align=\"right\">" disk_pctuse[numdisks + 2] "</td>"
             bootdrive = bootdrive "<td align=\"right\">" disk_avail[numdisks + 2]"</td>"
             bootdrive = bootdrive "</tr>"
@@ -1863,7 +1884,7 @@ function GetOtherDisks(outstr) {
             temp= GetDiskTemperature( "/dev/" substr(device[a],1,3) );
             unassigned_drive = unassigned_drive "<td>" fs "</td><td>" temp "</td>"
             unassigned_drive = unassigned_drive "<td align=\"right\">" disk_size[numdisks + 3] "</td>"
-            unassigned_drive = unassigned_drive "<td align=\"right\">" disk_used[numdisks + 3] 
+            unassigned_drive = unassigned_drive "<td align=\"right\">" disk_used[numdisks + 3]
             unassigned_drive = unassigned_drive "</td><td align=\"right\">" disk_pctuse[numdisks + 3] "</td>"
             unassigned_drive = unassigned_drive "<td align=\"right\">" disk_avail[numdisks + 3]"</td>"
             unassigned_drive = unassigned_drive "</tr>"
@@ -1921,7 +1942,7 @@ function DiskRepair(select_value, i, outstr) {
             unassigned_drive = unassigned_drive "<td>/dev/" device[a] "</td>"
             unassigned_drive = unassigned_drive "<td>" mp "</td>"
             unassigned_drive = unassigned_drive "<td>" fs "</td>"
-            # If this is a partition on a drive.  
+            # If this is a partition on a drive.
             if ( device[a] ~ /[0-9]/ ) {
                 # if there is file system on the partition
                 if ( fs != "" ) {
@@ -1950,7 +1971,7 @@ function DiskRepair(select_value, i, outstr) {
                         }
                     }
                 }
-            # If this is the raw drive, and not a partition.  
+            # If this is the raw drive, and not a partition.
             } else {
                 # SMART features not available on USB devices
                 if ( model_serial[a] ~ /^usb-/ ) {
@@ -2000,11 +2021,11 @@ function DiskManagement(select_value, i, outstr ) {
     outstr = outstr "<tr><td><select style=\"font-family:courier\" name=\"disk_device\"><option value=\"\"></option>"
     for ( i =0; i<numdisks; i++ ) {
         if ( disk_device[i] == "" ) { continue; }
-        option_value="/dev/" disk_device[i] "|" disk_id[i] "|" disk_name[i] 
-        if ( select_value == option_value ) { 
-            is_selected = "selected" 
-        } else { 
-            is_selected = "" 
+        option_value="/dev/" disk_device[i] "|" disk_id[i] "|" disk_name[i]
+        if ( select_value == option_value ) {
+            is_selected = "selected"
+        } else {
+            is_selected = ""
         }
         outstr = outstr "<option value=\"" option_value "\" " is_selected ">"
         outstr = outstr "/dev/" disk_device[i] " " disk_id[i] "</option>" ORS
@@ -2070,7 +2091,7 @@ function DiskManagement(select_value, i, outstr ) {
             unassigned_drive = unassigned_drive "<td>/dev/" device[a] "</td>"
             unassigned_drive = unassigned_drive "<td>" mp "</td>"
             unassigned_drive = unassigned_drive "<td>" fs "</td>"
-            # If this is a partition on a drive.  
+            # If this is a partition on a drive.
             if ( device[a] ~ /[0-9]/  || fs == "vfat" ) {
                 # if there is file system on the partition
                 if ( fs != "" ) {
@@ -2099,7 +2120,7 @@ function DiskManagement(select_value, i, outstr ) {
                         }
                     }
                 }
-            # If this is the raw drive, and not a partition.  
+            # If this is the raw drive, and not a partition.
             } else {
                 # SMART features not available on USB devices
                 if ( model_serial[a] ~ /^usb-/ ) {
@@ -2182,17 +2203,17 @@ function DiskStatusHTML(i,outstr) {
         outstr = outstr "<tr>"
         outstr = outstr "<td>" disk_status[i] "</td><td>" disk_name[i] "</td><td>" disk_mounted[i] "</td>"
         dev = disk_device[i] ? "/dev/" : ""
-        outstr = outstr "<td>" dev disk_device[i] "</td><td>" disk_id[i] 
+        outstr = outstr "<td>" dev disk_device[i] "</td><td>" disk_id[i]
         if ( disk_status[i] ~ "DISK_WRONG" ) {
             outstr = outstr " <-- was old disk in this slot<br>&nbsp;&nbsp;&nbsp;" rdisk_model[i] "_" rdisk_serial[i] " <-- current disk in this slot"
         }
         outstr = outstr "</td>"
 
         outstr = outstr "<td align=\"right\">" temp "</td>"
-        outstr = outstr "<td align=\"right\">" disk_reads[i] "</td><td align=\"right\">" 
+        outstr = outstr "<td align=\"right\">" disk_reads[i] "</td><td align=\"right\">"
         outstr = outstr disk_writes[i] "</td><td align=\"right\">" disk_errors[i] "</td>"
 
-        outstr = outstr "<td align=\"right\">" disk_size[i] "</td><td align=\"right\">" disk_used[i] 
+        outstr = outstr "<td align=\"right\">" disk_size[i] "</td><td align=\"right\">" disk_used[i]
         outstr = outstr "</td><td align=\"right\">" disk_pctuse[i] "</td>"
         outstr = outstr "<td align=\"right\">" disk_avail[i] "</td>"
         outstr = outstr "</tr>"
@@ -2203,7 +2224,7 @@ function DiskStatusHTML(i,outstr) {
     outstr = outstr "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>"
     outstr = outstr "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>"
     outstr = outstr "<td>&nbsp;</td><td>&nbsp;</td><td align=\"right\" class=\"t\">Total:</td>"
-    outstr = outstr "<td align=\"right\" class=\"t\">" disk_size[i] "</td><td align=\"right\" class=\"t\">" disk_used[i] 
+    outstr = outstr "<td align=\"right\" class=\"t\">" disk_size[i] "</td><td align=\"right\" class=\"t\">" disk_used[i]
     outstr = outstr "</td><td align=\"right\" class=\"t\">" disk_pctuse[i] "</td>"
     outstr = outstr "<td align=\"right\" class=\"t\">" disk_avail[i] "</b></td>"
     outstr = outstr "</tr>"
@@ -2317,10 +2338,10 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping, i) {
            break;
         }
     }
-    
+
     if ( is_sleeping == "" ) {
        is_sleeping = "n"
-       cmd = "hdparm -C " theDisk " 2>/dev/null" 
+       cmd = "hdparm -C " theDisk " 2>/dev/null"
        while ((cmd | getline a) > 0 ) {
           if ( a ~ "standby" ) {
               is_sleeping = "y"
@@ -2331,7 +2352,7 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping, i) {
 
     the_temp="*"
     if ( is_sleeping == "n" ) {
-        cmd = "smartctl -d ata -A " theDisk "| grep -i temperature" 
+        cmd = "smartctl -d ata -A " theDisk "| grep -i temperature"
         while ((cmd | getline a) > 0 ) {
             delete t;
             split(a,t," ")
@@ -2359,7 +2380,7 @@ function GetDiskFreeSpace(theDisk, theArrayIndex, a) {
     RS="\n"
     theDisk = theDisk " " # append a space to the disk name so we do not mistake md10 for md1
     found_flag="n"
-    
+
     cmd="df --block-size=" OneThousand
 
     while (( cmd | getline a) > 0 ) {
@@ -2428,12 +2449,14 @@ function GetConfigValues(cfile, preface) {
     RS="\n"
     while (( getline line < cfile ) > 0 ) {
           delete c;
-          match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.+)/, c)
+          match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.*)/, c)
+          #match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.+)/, c)
           #print c[1,"length"] " " c[2,"length"] " " c[3,"length"] " "  c[4, "length"] " " c[5, "length"] " " line
-          if ( c[1,"length"] > 0 && c[2,"length"] > 0 && 
-               c[3,"length"] > 0 && c[4, "length"] > 0 && c[5, "length"] > 0 ) {
+          #if ( c[1,"length"] > 0 && c[2,"length"] > 0 &&
+          #     c[3,"length"] > 0 && c[4, "length"] > 0 && c[5, "length"] > 0 ) {
+          if ( c[1,"length"] > 0 && c[3,"length"] == 1 ) {
                CONFIG[ preface substr(line,c[1,"start"],c[1,"length"])] = substr(line,c[5,"start"],c[5,"length"])
-               if ( DebugMode == "yes" ) { 
+               if ( DebugMode == "yes" ) {
                    print "importing from " cfile ": " \
                      "CONFIG[" preface substr(line,c[1,"start"],c[1,"length"]) "] = " substr(line,c[5,"start"],c[5,"length"])
                }
@@ -2478,9 +2501,13 @@ function CommaFormat(num, out)
       return(substr(out,1));
 }
 
-function perr(printme)
-{
-  if ( DebugMode == "yes" ) { 
-   print printme >/dev/stderr
-  }
-}
+#function perr(printme)
+#{
+#  if ( DebugMode == "yes" ) {
+#   print printme >/dev/stderr
+#  }
+#}
+function perr(printme)          # BJP 10/17/10 - The above version does not work if command ...
+{                               #    is run from command line vs "uu".  This version does work.
+   print printme | "cat 1>&2"   #    Feel free to edit - I just needed to display some results
+}                               #    to do some debugging.
