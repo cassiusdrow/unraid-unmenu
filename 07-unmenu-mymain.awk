@@ -543,7 +543,13 @@ BEGIN {
       }
    }
 
-   gsub("%ImageURL%", "http://" getImageHost() "/log/images", theHTML);
+   if(constant["ImageHost"] != "")
+      host = constant["ImageHost"]
+   else
+      host = getImageHost();
+
+   gsub("%ImageURL%", "http://" host "/log/images", theHTML);
+
    gsub("%MyHost%", MyHost, theHTML);
 
    gsub("%lpre%",  styleLinePre,  theHTML);

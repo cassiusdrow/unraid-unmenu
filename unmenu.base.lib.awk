@@ -68,8 +68,6 @@ function GetDiskData(cmd, a, d, line, s, i) {
         device[num_partitions] = d[4]
         assigned[num_partitions] = ""
         mounted[num_partitions] = ""
-        fs_type[num_partitions] = ""
-        mount_mode[num_partitions] = ""
         model_serial[num_partitions] = ""
     }
     close(cmd)
@@ -85,7 +83,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
     close(cmd);
 
     # match the device to the volume labeled UNRAID
-    for( a = 0; a <= num_partitions; a++ ) {
+    for( a = 1; a <= num_partitions; a++ ) {
         if ( device[a] == unraid_volume ) {
              assigned[a] = "UNRAID"
         }
@@ -97,15 +95,11 @@ function GetDiskData(cmd, a, d, line, s, i) {
        delete d;
        split(line,d," ");
        sub("../../","",d[11])
-       for( a = 0; a <= num_partitions; a++ ) {
+       for( a = 1; a <= num_partitions; a++ ) {
            if ( d[11] == ( device[a] ) ) {
-               if(model_serial[a] != "")  # bjp999 - don't overwrite "ata-" flavor with "scsi-" flavor
-                  break;                  # bjp999
-
                model_serial[a]=d[9]
                sub("-part1","", model_serial[a])
                sub("ata-","", model_serial[a])
-               sub("scsi-SATA_","", model_serial[a]) #bjp999 - needed to SAS controller
                break;
            }
        }
@@ -118,11 +112,9 @@ function GetDiskData(cmd, a, d, line, s, i) {
     while ((cmd | getline line) > 0 ) {
        delete s;
        split(line,s," ");
-       for( a = 0; a <= num_partitions; a++ ) {
+       for( a = 1; a <= num_partitions; a++ ) {
            if ( s[1] == ( "/dev/" device[a] ) ) {
                mounted[a]=s[3]
-               fs_type[a]=s[5]
-               mount_mode[a]=substr(s[6],2,2)
                break;
            }
        }
@@ -143,10 +135,9 @@ function GetDiskData(cmd, a, d, line, s, i) {
     }
     # mark the boot partitons as "in-array"
     for( a = 1; a <= num_partitions; a++ ) {
-
        if(assigned[a] != "in-array")                           #bjp999
           GetReadWriteStatsOther( a, substr(device[a],1,3) );  #bjp999
-       else                                                    #bjp999
+
        if ( substr(boot_device,1,3) == device[a] ) {
                 assigned[a] = "in-array"
        }
@@ -163,7 +154,9 @@ function GetDiskData(cmd, a, d, line, s, i) {
        }
     }
     close(cmd);
+
 }
+
 
 function CGI_setup( uri, version, i, j, t) {        #bjp999
   delete GETARG;         delete MENU;        delete PARAM

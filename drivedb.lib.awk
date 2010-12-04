@@ -744,7 +744,8 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
     cachedrive = ""
     unassigned_drive = ""
     for( a = 1; a <= num_partitions; a++ ) {
-       #p("#" a " device=" device[a] "   assigned=" assigned[a] "   mounted=" mounted[a])
+       #if(assigned[a] != "in-array")
+       #   perr("#" a " device=" device[a] "   assigned='" assigned[a] "'   mounted='" mounted[a] "'")
        if ( mounted[a] == "/mnt/cache" ) {
           i=drivedb["count"]-1;
           drivedb[i, "num"]    = i;
@@ -784,9 +785,10 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
           drivedb[drivedb[i, "autoid4"]] = i;
           drivedb[drivedb[i, "dev"]] = i; #allows indexed access to a drive by disk name
           drivedb[drivedb[i, "dev"]"1"] = i; #allows indexed access to a drive by disk name
-       } else if ( mounted[a] == "/boot" ) {
-          i=drivedb["count"]-1;
-          #p("boot drive=" i);
+       #} else if ( mounted[a] == "/boot" ) {
+       } else if ( device[a] == boot_device ) {
+          i=drivedb["count"]++;
+          #perr("boot drive=" i);
 
           if(view[activeview, "smartdata"] > 0)
              drivedb[i, "suppress"] = 1
@@ -836,6 +838,7 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
           drivedb[drivedb[i, "dev"]"1"] = i; #allows indexed access to a drive by disk name
        } else if ( (substr(device[a],1,2) != "md") && (assigned[a] == "") && (device[a] ~ "[a-z]+1" )) {
           i=drivedb["count"]-1; # should have already hit this device (without the 1)
+          #perr("i=" i " (array disk)")
           #p("part " device[a] " " i)
           #drivedb[i, "num"]    = i;
           #drivedb[i, "dev"]    = substr(device[a],1,3);
@@ -884,8 +887,9 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
           drivedb[drivedb[i, "autoid4"]] = i;
           drivedb[drivedb[i, "dev"]] = i; #allows indexed access to a drive by disk name
           drivedb[drivedb[i, "dev"]"1"] = i; #allows indexed access to a drive by disk name
-       } else if ( (substr(device[a],1,2) != "md") && (assigned[a] == "") && (device[a] ~ "[a-z]+$" )) {
+       } else if ( (substr(device[a],1,2) != "md") && (assigned[a] == "") && (device[a] ~ "[a-z]+$" ) && (device[a] != boot_device)) {
           i=drivedb["count"]++;
+          #perr("i=" i " (new disk)")
           #p("drive=" i);
           #p("raw " device[a] " " i)
           drivedb[i, "num"]    = i;
