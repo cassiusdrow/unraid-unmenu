@@ -1,7 +1,7 @@
 #  This script is used to setup or update unmenu.
 #UNMENU_RELEASE $Revision$ $Date$
 
-version=1.3.7
+version=1.3.7.1
 directory=""
 
 function usage() {
@@ -313,7 +313,7 @@ then
           cp "$tmpd/$i" "$i"
           echo "Installed $i"
         else
-          echo "Local $i file exists, $tmpd/$i not installed" 
+          echo "Local $i file exists, $tmpd/$i not installed.  You will need to delete the local file first before the new will be installed." 
         fi
       ;;
       *)
@@ -333,6 +333,15 @@ then
         else
           auto_update=""
         fi
+        # special handling of mySlots.jpg and myServer.jpg. Do not update
+        case "$i" in
+        *MySlots.jpg|*MyServer.jpg)
+           if [ -f "$i" ]
+           then
+              auto_update=NO
+           fi
+        ;;
+        esac
         case "$auto_update" in
         NO)
           echo "#--------------------------------------------------------#"
@@ -365,6 +374,10 @@ then
             #  copy from download tmp directory to current directory
             mv "$i" "$backup_dir/$i"
             echo "Moved current $i to $backup_dir/$i"
+          fi
+          if [ "$target_dir" != "." ]
+          then
+            mkdir -p "$target_dir"
           fi
           cp "$tmpd/$i" "$i"
           echo "Installed $i"
