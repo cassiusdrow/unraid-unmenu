@@ -9,6 +9,7 @@ BEGIN {
 #ADD_ON_VERSION 1.45 - contributed by bjp999
 #ADD_ON_VERSION 1.46 - added spindown spinup commands to use new scheme used by unRAID
 #ADD_ON_VERSION 1.47 - enhancement to eliminate use of hdparm -C on array disks
+#ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release, contributed by bjp999
 #UNMENU_RELEASE $Revision$ $Date$
 
    # Copyright bjp999, 2009, 2010.  This program carries no guarantee of any kind.
@@ -132,10 +133,11 @@ BEGIN {
       ColorHtml["default"]  = ";" constant["DefaultColorHtml"];
    }
 
-   #-----------------------------------------------------------------------------
+   #-----------------------------------------------------------------------------------
    # Create symbolic link to images directory.  If a user has a different images
    # directory, they can create the symbolic link in their "go" file.
-   #-----------------------------------------------------------------------------
+   # *** Now done in unmenu.awk but for when invoked through php we check here too ***
+   #-----------------------------------------------------------------------------------
    system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
 
    #-----------------------

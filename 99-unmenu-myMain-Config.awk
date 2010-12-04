@@ -7,7 +7,7 @@ BEGIN {
 #ADD_ON_OPTIONS=-f drivedb.lib.awk -f unmenu.base.lib.awk -f utility.lib.awk
 #ADD_ON_REFRESH = 0
 #ADD_ON_CONFIG=norefresh.conf
-#define ADD_ON_VERSION 0.1 - contributed by bjp999
+#define ADD_ON_VERSION 1.0 - Part of myMain 12-1-10 release, contributed by bjp999
 #UNMENU_RELEASE $Revision$ $Date$
 
    # Copyright bjp999, 2010.  This program carries no guarantee of any kind.
@@ -560,17 +560,17 @@ function DriveConfig(id,i,found, x, y)
    j=0; config_ix=0; drive_found=0; otherdisk["count"] = 0;
    y=length(values["myserial"]);
    for(i=0; i<configvalue["count"]; i++) {
-
       x = length(configvalue[i, 0]);
 
       len = (x>6) ? 6 : x;
-      if(y < len)
-         len=y;
 
       if(len < 2) #ignore if less than 2 characters (0 or 1)
          continue;
 
-      if(substr(configvalue[i, 0], x-len+1) == substr(values["myserial"], y-len+1)) {
+      if(y < len)
+         len=y;
+
+      if((values["myserial"] != "") && (substr(configvalue[i, 0], x-len+1) == substr(values["myserial"], y-len+1))) {
          DriveConfigValue[j, 0] = configvalue[i,0];   # Serial Number / ID
          DriveConfigValue[j, 1] = configvalue[i,1];   # Attribute Name
          DriveConfigValue[j, 2] = configvalue[i,2];   # Attribute Value
@@ -617,8 +617,13 @@ function DriveConfig(id,i,found, x, y)
    # related to the drive and insert the new attributes based on the myConfig screen.
    #-----------------------------------------------------------------------------------------------------
    if(GETARG["Action"]=="Save") {
-      DriveConfigSave();
+      DriveConfigSaveOrDelete("save");
       theHTML = HtmlRefresh("myConfig?mode=drive&serial=" values["myserial"])
+   }
+
+   else if(GETARG["Action"]=="Delete") {
+      DriveConfigSaveOrDelete("delete");
+      theHTML = HtmlRefresh("myConfig?mode=drive")
    }
 
    else if(GETARG["Action"]=="Load")
@@ -693,10 +698,13 @@ function DriveConfig(id,i,found, x, y)
       #---------------------------------------------------
       # Override "my" values with values passed by unmenu
       #---------------------------------------------------
-      if(value["size"] == "")
+      if((GETARG["disk_size"] != "") && (values["mysize"] == "")) {
          values["mysize"] = GETARG["disk_size"];
+         if(values["location"] == "")
+            values["location"] = "unRaid"
+      }
 
-      if(value["disk"] == "")
+      if((GETARG["disk"] != "") && (values["mount"] == ""))
          values["mount"] = GETARG["disk"];
 
       if(values["manu"] == "")
@@ -707,7 +715,15 @@ function DriveConfig(id,i,found, x, y)
          vv[i-1, "from"] = names_sub[i];
          vv[i-1, "to"]   = values[names_sub[i]];
       }
-      vv[i-1, "from"] = "what"; vv[i-1, "to"] = "Disk \"" values["id4"] "\" Configuration";
+      vv[i-1, "from"] = "what"; vv[i-1, "to"] = "Disk \"" values["autoid"] "\" Configuration";
+      perr("serial=" values["myserial"]);
+      if(values["myserial"] == "") {
+         vv[i, "from"] = "disabled"; vv[i, "to"] = "disabled=\"disabled\"";
+      }
+      else {
+         vv[i, "from"] = "disabled"; vv[i, "to"] = "";
+      }
+
 
       theHTML = htmlSerialize(html, 0, vv);
 
@@ -720,7 +736,7 @@ function DriveConfig(id,i,found, x, y)
 #-----------------------
 # Save drive attributes
 #-----------------------
-function DriveConfigSave(fn1, fn2, li, ix_fn1, ix_tgv, rc, name, value, dumpedPayload, id)
+function DriveConfigSaveOrDelete(mode, fn1, fn2, li, ix_fn1, ix_tgv, rc, name, value, dumpedPayload, id)
 {
 
    id = values["id4"] # can change to "id6" if you have duplicate last 4 chars of serial number (extrememly unlikely)
@@ -741,7 +757,10 @@ function DriveConfigSave(fn1, fn2, li, ix_fn1, ix_tgv, rc, name, value, dumpedPa
    cmd = "rm " fn2;
    system(cmd);
    #perr("rm command==>" cmd);
-   dumpedPayload = 0;
+   if(mode == "delete")
+      dumpedPayload = 1;
+   else
+      dumpedPayload = 0;
 
    #fn1 = CONFIG_FILE;
    #fn2 = "/tmp/temp.conf";

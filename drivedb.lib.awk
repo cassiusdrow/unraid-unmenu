@@ -1,5 +1,6 @@
 #ADD_ON_VERSION 1.4 - contributed by bjp999
 #ADD_ON_VERSION 1.42 - changed spinup method
+#ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release
 #UNMENU_RELEASE $Revision$ $Date$
 
    # Copyright bjp999, 2009, 2010.  This program carries no guarantee of any kind.
@@ -120,21 +121,29 @@ function LoadDriveDb(i, k, nextslot, unit, num) {
 
          # Test all of the icons
          if(1==0) {
-            ic[1] = "NP";
-            ic[2] = "OK";
-            ic[3] = "NP_MISSING";
-            ic[4] = "INVALID";
-            ic[5] = "DSBL";
-            ic[6] = "DSBL_NP";
-            ic[7] = "DSBL_NEW";
-            ic[8] = "WRONG";
-            ic[9] = "NEW";
-            ic[10] = "BT";
-            ic[11] = "MT";
-            ic[12] = "CACHE";
-            ic[13] = "RAW";
+            ic[z=0] = "OK";
+            ic[++z] = "OK";
+            ic[++z] = "OK";
+            ic[++z] = "OK";
+            ic[++z] = "NP";
+            ic[++z] = "NP_MISSING";
+            ic[++z] = "INVALID";
+            ic[++z] = "DSBL";
+            ic[++z] = "DSBL_NP";
+            ic[++z] = "DSBL_NEW";
+            ic[++z] = "WRONG";
+            ic[++z] = "NEW";
+            ic[++z] = "RAW";
+            ic[++z] = "OK";
+            ic[++z] = "OK";
+            ic[++z] = "OK";
+            ic[++z] = "OK";
+            ic[++z] = "OK";
+            ic[++z] = "OK";
 
-            drivedb[i, "status"] = ic[1 + int( rand() * 13 )];
+            drivedb[i, "status"] = ic[i];
+            #perr("i=" i "  drivedb[i, num]=" drivedb[i, "num"] "   icon=" ic[drivedb[i, "num"]])
+
          }
 
          drivedb[i, "staticon"] = constant["ICON_" drivedb[i, "status"]];

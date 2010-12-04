@@ -1,3 +1,4 @@
+#ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release
 #UNMENU_RELEASE $Revision$ $Date$
 function GetArrayStatus(a, d) {
     RS="\n"
@@ -327,13 +328,16 @@ function GetReadWriteStatsOther(theDevIndex, theDevice, cmd) { #bjp999
 
 function GetSysLog(numlines, syslogfile, style, num, syslog, f, cmd) {
 
-    if(numlines == 0) # all
-       syslog = "<strong>Syslog (full contents of "  syslogfile ")</strong>"
-    else
-       syslog = "<strong>Syslog (last " nl " lines of " syslogfile ")</strong>"
-    syslog = syslog "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<A href=" MyPrefix "/syslog?file=" syslogfile ">Click Here to Download Complete " syslog_name "</A>"
+    if(substr(syslogfile,1,4) != "/tmp") {
+       if(numlines == 0) # all
+          syslog = "<strong>Syslog (full contents of "  syslogfile ")</strong>"
+       else
+          syslog = "<strong>Syslog (last " nl " lines of " syslogfile ")</strong>"
 
-    syslog = syslog "<br>" GetColorBar(style) "<hr>"
+       syslog = syslog "AMP3RS4NDnbsp;AMP3RS4NDnbsp;AMP3RS4NDnbsp;AMP3RS4NDnbsp;AMP3RS4NDnbsp;<A href=" MyPrefix "/syslog?file=" syslogfile ">Click Here to Download Complete " syslog_name "</A><br>"
+    }
+
+    syslog = syslog GetColorBar(style) "<hr>"
 
     syslog = syslog GetSysLogRows(numlines, syslogfile)
 
@@ -494,7 +498,7 @@ function GetSysLogRows(numlines, syslogfile, filter_sw, filter, num, syslog, f, 
            }
         }
     }
-    if(numlines+0 > 100)
+    if((numlines+0 == 0) || (numlines+0 > 100)) #this is number lines requested, not # lines shown
        syslog = syslog " <br> <br><span style='background color: white'><font color='blue'>Total Lines: " linecount
 
     close(cmd)

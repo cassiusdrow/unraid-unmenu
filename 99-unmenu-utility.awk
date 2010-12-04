@@ -6,6 +6,7 @@ BEGIN {
 #ADD_ON_HTTP_HEADER=NO
 #ADD_ON_OPTIONS=-f unmenu.base.lib.awk -f utility.lib.awk
 #define ADD_ON_VERSION 1.0 - contributed by bjp999
+#define ADD_ON_VERSION 1.5 - Part of myMain 12-1-10 release, contributed by bjp999
 #UNMENU_RELEASE $Revision$ $Date$
 
    CGI_setup()
@@ -74,7 +75,7 @@ BEGIN {
          syslog="/var/log/syslog"
       }
       #fn="/tmp/temp"
-      vv[0, "to"] = "Filtered syslog (disk=\"" disk ", dev=\"" dev ")"
+      vv[0, "to"] = "Filtered syslog (disk='" disk "' , device='" dev "')"
       FilterSyslogRobJ(syslog,dev,disk) > fn
       #close(fn);
       #vv[1, "to"] = GetSysLog(0, "/tmp/temp");
