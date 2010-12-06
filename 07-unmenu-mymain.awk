@@ -133,12 +133,22 @@ BEGIN {
       ColorHtml["default"]  = ";" constant["DefaultColorHtml"];
    }
 
+
+   #-----------------------------------------------------------------------------------
+   # Link the MyServer.jpg and  MySlots.jpg files into the images folder if they do
+   # not currently exist.  This allows users to define their own images
+   # The sample files stay under version control.
+   #-----------------------------------------------------------------------------------
+   system("if [ ! -f images/MyServer.jpg ]; then cp images/stock/MyServer_sample.jpg images/MyServer.jpg; fi");
+   system("if [ ! -f images/MySlots.jpg ]; then cp images/stock/MySlots_sample.jpg images/MySlots.jpg; fi");
+
    #-----------------------------------------------------------------------------------
    # Create symbolic link to images directory.  If a user has a different images
    # directory, they can create the symbolic link in their "go" file.
    # *** Now done in unmenu.awk but for when invoked through php we check here too ***
    #-----------------------------------------------------------------------------------
    system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
+
 
    #-----------------------
    # Read from config file
