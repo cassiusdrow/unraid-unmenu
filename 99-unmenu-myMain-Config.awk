@@ -41,8 +41,13 @@ BEGIN {
    else if (mode == "view")
       ViewConfig();
 
-   gsub("%ImageURL%", "http://" MyHost "/log/images", theHTML);
-   gsub("%MyHost%", MyHost, theHTML);
+   if(constant["ImageHost"] != "")
+      host = constant["ImageHost"]
+   else
+      host = getImageHost();
+
+   gsub("%ImageURL%", "http://" host "/log/images", theHTML);
+   #gsub("%MyHost%", MyHost, theHTML);
    gsub(amp, "\\&", theHTML);
    print theHTML;
 }
@@ -77,6 +82,7 @@ function MainConfig(fn, vv)
    vv[++vv["count"], "from"] = "defmyslotswidth";    vv[vv["count"], "to"] = configDefault["myslotswidth"];
    vv[++vv["count"], "from"] = "defsysloglines";     vv[vv["count"], "to"] = configDefault["sysloglines"];
    vv[++vv["count"], "from"] = "defsyslogstyle";     vv[vv["count"], "to"] = configDefault["syslogstyle"];
+   vv[++vv["count"], "from"] = "defimagehost";       vv[vv["count"], "to"] = configDefault["imagehost"];
    #vv[++vv["count"], "from"] = "defsmartignorelist"; vv[vv["count"], "to"] = configDefault["smartignorelist"];
 
    vv[++vv["count"], "from"] = "refreshinterval";     vv[vv["count"], "to"] = configLocal["refreshinterval"];
@@ -86,6 +92,7 @@ function MainConfig(fn, vv)
    vv[++vv["count"], "from"] = "myslotswidth";        vv[vv["count"], "to"] = configLocal["myslotswidth"];
    vv[++vv["count"], "from"] = "sysloglines";         vv[vv["count"], "to"] = configLocal["sysloglines"];
    vv[++vv["count"], "from"] = "syslogstyle";         vv[vv["count"], "to"] = configLocal["syslogstyle"];
+   vv[++vv["count"], "from"] = "imagehost";           vv[vv["count"], "to"] = configLocal["imagehost"];
    #vv[++vv["count"], "from"] = "smartignorelist";     vv[vv["count"], "to"] = configLocal["smartignorelist"];
 
    #perr("config[refreshinterval, line]  = " config["refreshinterval", "line"])
@@ -104,6 +111,7 @@ function MainConfig(fn, vv)
    #perr("config[syslogstyle]            = " config["syslogstyle"])
    #perr("config[smartignorelist, line]  = " config["smartignorelist", "line"])
    #perr("config[smartignorelist]        = " config["smartignorelist"])
+   #perr("config[imagehost]              = " config["imagehost"])
 
    vv[++vv["count"], "from"] = "message";
    vv[vv["count"],   "to"]   = message;
@@ -134,8 +142,8 @@ function MainConfigSave(fn1, fn2, cmd, i, ar, temp)
    # Write new rows to new config file
    fn1 = CONFIG_FILE_BACK;
    fn2 = CONFIG_FILE;
-   cmd = "rm " fn2;
-   system(cmd);
+   #cmd = "rm " fn2;
+   #system(cmd);
    #perr("rm command==>" cmd);
 
    if(GETARG["mymaincheck"] == "on") {
@@ -149,9 +157,10 @@ function MainConfigSave(fn1, fn2, cmd, i, ar, temp)
    ar[4] = "myslotswidth";
    ar[5] = "sysloglines";
    ar[6] = "syslogstyle";
+   ar[7] = "imagehost";
    #ar[6] = "smartignorelist";
 
-   for(i=1; i<=6; i++) {
+   for(i=1; i<=7; i++) {
       #perr(ar[i] "=" GETARG[ar[i]]);
       if(trim(GETARG[ar[i]]) != "") {
          if((temp=configLocal[ar[i], "line"]) == "")
@@ -182,6 +191,9 @@ function MainConfigSave(fn1, fn2, cmd, i, ar, temp)
    close(fn2);
 
    cmd="nohup sh -c 'sleep 10;kill -USR1 `cat /var/run/unmenu.pid` '>/dev/null 2>&1 &"
+   system(cmd);
+
+   cmd="rm /tmp/mymain_seq.txt";
    system(cmd);
 }
 
@@ -716,7 +728,7 @@ function DriveConfig(id,i,found, x, y)
          vv[i-1, "to"]   = values[names_sub[i]];
       }
       vv[i-1, "from"] = "what"; vv[i-1, "to"] = "Disk \"" values["autoid"] "\" Configuration";
-      perr("serial=" values["myserial"]);
+      #perr("serial=" values["myserial"]);
       if(values["myserial"] == "") {
          vv[i, "from"] = "disabled"; vv[i, "to"] = "disabled=\"disabled\"";
       }
@@ -754,9 +766,7 @@ function DriveConfigSaveOrDelete(mode, fn1, fn2, li, ix_fn1, ix_tgv, rc, name, v
    # Write new rows to new config file
    fn1 = CONFIG_FILE_BACK;
    fn2 = CONFIG_FILE;
-   cmd = "rm " fn2;
-   system(cmd);
-   #perr("rm command==>" cmd);
+
    if(mode == "delete")
       dumpedPayload = 1;
    else

@@ -205,7 +205,7 @@ function GetDriveManufacturer(ix, dm2, dm3)
    }
    #-------------------------------------------------------------
    # Remember that you can explicity define the manufacturer for
-   # your drive in the myMain.conf file
+   # your drive in the myMain_local.conf file
    #-------------------------------------------------------------
 }
 
@@ -663,6 +663,7 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
             # Special color rules
             #---------------------
             t=drivedb[ix, "smart_attr_" d[1] "_raw"]
+
             if(ix2 ~ "temperature") {
                split(t, v)
                if(drivedb[ix, ix2 "_delta"] != "") {
@@ -696,8 +697,9 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
                if(t>0)
                   drivedb[ix, ix2 "extra"] = drivedb[ix, ix2 "extra"] ColorHtml[color="red"];
             }
+
             #else if ("reported_uncorrect high_fly_writes offline_uncorrectable udma_crc_error_count calibration_retry_count spin_retry_count" ~ d[1]) {
-            else if((",187,189,11,10,5," ~ "," d[1] ",") || (d[1]>195)) {
+            else if((",187,189,11,10,5," ~ "," d[1] ",") || (d[1]>195) || ((d[1] == 193) && (t>1000) && (t>drivedb[ix, "smart_attr_9_raw"]))) {
                #co1lor="yellow";
                if((drivedb[ix, ix2 "_ok"]>0) && (t<=drivedb[ix, ix2 "_ok"]) && !rawsmart)
                   drivedb[ix, ix2 "extra"] = drivedb[ix, ix2 "extra"] ColorHtml[color="override"];
@@ -1454,6 +1456,14 @@ function LoadConfigFile(fn, config, getconfig, li, li2, ix, l, curline)
             #perr("li=" config["smartignorelist", "line"]);
             config["smartignorelist"] = a[1];
          }
+         else if(match(li, "^SetConstant.*ImageHost[^\"]*\"([^\"]*)", a)) {
+            config[config["count"]] = "imagehost";
+            config[config["count"]++, "linenum"] = curline;
+            config["imagehost", "line"] = substr(li, 1, a[1,"start"]-1) "b@j@p@9@9@9" substr(li, a[1, "start"] + a[1, "length"])
+            #perr("li=" config["imagehost", "line"]);
+            config["imagehost"] = a[1];
+         }
+
       }
 
       gsub("\\&", amp, li);
@@ -1480,8 +1490,8 @@ function LoadConfigFile(fn, config, getconfig, li, li2, ix, l, curline)
          l = arg[1];
          gsub("MYMAINDD",   myMainLink("") amp "dev=%dev" amp "disk=%disk", l);
          gsub("MYMAIN",     myMainLink(""), l);
-         gsub("UTILITYDD",  "utility?dev=%dev" amp "disk=%disk", l);
-         gsub("UTILITY",    "utility?j=x",  l);
+         gsub("UTILITYDD",  "utility?ImageURL=%ImageURL%" amp "dev=%dev" amp "disk=%disk", l);
+         gsub("UTILITY",    "utility?ImageURL=%ImageURL%",  l);
          gsub("MYCONFIGDD", myLink("", "myConfig"), l);
          pseudocol[arg[0]] = l
          #p("pseudocol[" arg[0] "] = '" l "'")

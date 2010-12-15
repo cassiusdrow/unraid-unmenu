@@ -3,7 +3,8 @@
 #define USER_SCRIPT_TEST which unmenu_install >/dev/null 2>&1 && echo "Check for unMENU Updates"
 #UNMENU_RELEASE $Revision$ $Date$
 PATH=$PATH:.
-f=`unmenu_install -c`
+cwd=`pwd`
+f=`./unmenu_install -c -d"$cwd"`
 if [ -s /tmp/unmenu_new_files ]
 then
 cat <<EOF

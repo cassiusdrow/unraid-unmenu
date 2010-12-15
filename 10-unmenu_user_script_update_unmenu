@@ -4,4 +4,5 @@
 #UNMENU_RELEASE $Revision$ $Date$
 PATH=$PATH:.
 echo "<pre>"
-unmenu_install -u
+cwd=`pwd`
+./unmenu_install -u -d"$cwd"

@@ -60,6 +60,14 @@
 <!--1-->		<td align="center" >  <font color="red"><em>$defsyslogstyle$</em></font> </td>
 <!--1-->	    <td width="400"><p><em>First Digit - Applies to syslog displays at bottom of screens<br />Second Digit - Applies to syslog displays in fullscreen<br />Values: 1=White background/colored font, 2=Same with type of log entry in parenthsis, 3=Colored background/font (easier to see), 4=Same with type of log entry in parenthesis</em></p></td>
 <!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Image Server</strong></td>
+<!--1-->	    <td width="150"><input name="imagehost" type="text" value="$imagehost$" size="25" maxlength="250" />
+<!--1-->		<td align="center" >  <font color="red"><em>(system<br />determined)</em></font></td>
+<!--1-->	    <td width="400"><p><em>By default, myMain determines based on server name (normally &quot;tower&quot;).  However, some users are unable to use the server name and must specify an IP address.  Others may need to use lighttpd or unMENU's shell script image server.<br /><br />Examples: &quot;192.168.1.20&quot;, &quot;tower:8088&quot; <br />
+  (do not put value in quotes) </em><br />
+  </td>
+<!--1-->	  </tr>
 <!--0-->	  <tr>
 <!--0-->	    <td width="200"><strong>SMART ignore list</strong> </td>
 <!--0-->	    <td width="150"><input name="smartignorelist" type="text" value="$smartignorelist$" size="30" /></td>

@@ -71,9 +71,18 @@ BEGIN {
    if( ScriptDirectory == "" )
       ScriptDirectory = ".";
 
-   cmd="cd " ScriptDirectory "; pwd"
-   cmd | getline ScriptDirectory
-   close(cmd)
+   if(curseq == 1) {
+      cmd="cd " ScriptDirectory "; pwd"
+      cmd | getline ScriptDirectory
+      close(cmd)
+   }
+
+   #------------------------------
+   # Load the configuration files
+   #------------------------------
+   LoadConfigFile(ScriptDirectory"/myMain.conf")
+   LoadConfigFile(ScriptDirectory"/myMain_local.conf")
+   #LoadConfigFile(ScriptDirectory"/myMain_local.bjp")
 
    #------------------------
    # Get active view option
@@ -88,9 +97,11 @@ BEGIN {
       if((activesort=constant[activeview "sort"]) == "")
          activesort="num";
 
-   LoadConfigFile(ScriptDirectory"/myMain.conf")
-   LoadConfigFile(ScriptDirectory"/myMain_local.conf")
-   #LoadConfigFile(ScriptDirectory"/myMain_local.bjp")
+   #------------------------------------------------------------------------
+   # The + between sort fields gets lost by CGI_setup().  Replace the space
+   # with a plus.
+   #------------------------------------------------------------------------
+   sub(" ", "+", activesort);
 
    #-------------------------------------
    # Colors used for special conditions.
@@ -133,22 +144,54 @@ BEGIN {
       ColorHtml["default"]  = ";" constant["DefaultColorHtml"];
    }
 
+   #---------------------------
+   # ONE TIME (PER BOOT) TASKS
+   #---------------------------
+   if(curseq == 1) {
 
-   #-----------------------------------------------------------------------------------
-   # Link the MyServer.jpg and  MySlots.jpg files into the images folder if they do
-   # not currently exist.  This allows users to define their own images
-   # The sample files stay under version control.
-   #-----------------------------------------------------------------------------------
-   system("if [ ! -f images/MyServer.jpg ]; then cp images/stock/MyServer_sample.jpg images/MyServer.jpg; fi");
-   system("if [ ! -f images/MySlots.jpg ]; then cp images/stock/MySlots_sample.jpg images/MySlots.jpg; fi");
+      #-----------------------------------------------------------------------------------
+      # Link the MyServer.jpg and  MySlots.jpg files into the images folder if they do
+      # not currently exist.  This allows users to define their own images.
+      # The sample files stay under version control.
+      #-----------------------------------------------------------------------------------
+      system("if [ ! -f images/MyServer.jpg ]; then cp images/stock/MyServer_sample.jpg images/MyServer.jpg; fi");
+      system("if [ ! -f images/MySlots.jpg ]; then cp images/stock/MySlots_sample.jpg images/MySlots.jpg; fi");
 
-   #-----------------------------------------------------------------------------------
-   # Create symbolic link to images directory.  If a user has a different images
-   # directory, they can create the symbolic link in their "go" file.
-   # *** Now done in unmenu.awk but for when invoked through php we check here too ***
-   #-----------------------------------------------------------------------------------
-   system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
+      #-----------------------------------------------------------------------------------
+      # Create symbolic link to images directory.  If a user has a different images
+      # directory, they can create the symbolic link in their "go" file.
+      # *** Now done in unmenu.awk but for when invoked through php we check here too ***
+      #-----------------------------------------------------------------------------------
+      system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
 
+
+      #-------------------------------------------------------------------
+      # Try up to 10 times to access one of the images via http.  Hope to
+      # prevent issues accessing first time
+      #-------------------------------------------------------------------
+
+      if(constant["ImageHost"] != "")
+         host = constant["ImageHost"]
+      else
+         host = getImageHost();
+
+      for(i=0; i<10; i++) {
+         cmd="wget -o /tmp/wget.log -O /tmp/myMainLogo.jpg http://" host "/log/images/stock/myMainLogo.jpg"
+         system(cmd)
+         if(! system("test -f /tmp/myMainLogo.jpg")) {
+            cmd = "stat -c%s \"/tmp/myMainLogo.jpg\"";
+            cmd | getline FileSize;
+            close(cmd)
+            FileSize = FileSize + 0; #convert to number
+
+            if(FileSize > 0)
+               break;
+         }
+         system("sleep 1");
+      }
+      if(i == 10)
+         p("ERROR: Unable to access images, try setting ImageHost");
+   }
 
    #-----------------------
    # Read from config file
@@ -167,9 +210,10 @@ BEGIN {
 
    #--------------------------------------------------------------------------------------------
    # Only process the command if it was generated from the last incarnation.  This will prevent
-   # auto-refreshes from causing spinups to re-process.
+   # auto-refreshes from causing spinups to re-process.  Always process commands if no seq
+   # is on the command line (allows favorites to be set up to process commands).
    #--------------------------------------------------------------------------------------------
-   if(reqseq+1 != curseq)
+   if((reqseq != 0) && (reqseq+1 != curseq))
       cmd = "";
 
    srand(); #@@@ very important, otherwise spinup always reads the same sector and therefore does not work!
@@ -595,8 +639,8 @@ function CreateSortArray(sortcol, sortcount, i, j)
 
    sortcols["count"] = split(sortcol, sortcols, "+")
 
-   #p("Sortcol1=" sortcols[1] "/" sortcol)
-   #p("Sortcol2=" sortcols[2])
+   #perr("Sortcol1=" sortcols[1] "/" sortcol)
+   #perr("Sortcol2=" sortcols[2])
 
    for(i=0; i<sortcount; i++)
       sortarray[i] = i;

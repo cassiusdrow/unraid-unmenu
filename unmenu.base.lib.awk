@@ -190,15 +190,19 @@ function CGI_setup( uri, version, i, j, t) {        #bjp999
   i = index(ARGV[3], "?")
   if (i > 0) {             # is there a "?" indicating a CGI request?
     split(substr(ARGV[3], 1, i-1), MENU, "[/:]")
-    split(substr(ARGV[3], i+1), PARAM, "[?&]")      #bjp999
+    split(substr(ARGV[3], i+1), PARAM, "[?&]")    #bjp999
     for (i in PARAM) {
+      #perr(PARAM[i])
       j = index(PARAM[i], "=")
-      t = substr(PARAM[i], j+1)                   $bjp999
-      gsub("%3A", ":", ARGV[3])                         #bjp999
+      t = substr(PARAM[i], j+1)                   #bjp999
+      #perr(t)
+      gsub("%3A", ":", t)                         #bjp999
+      #perr(t)
       gsub("%3F", "?", t)                         #bjp999
       #gsub("%26", "\\&", t)                 #bjp999 - couldn't make & work without using substitute
       gsub("%26", "AMP3RS4ND", t)                 #bjp999
       gsub("%25", "%", t)                         #bjp999
+      #perr(substr(PARAM[i], 1, j-1))        $bjp999
       GETARG[substr(PARAM[i], 1, j-1)] = t        $bjp999
     }
   } else {             # there is no "?", no need for splitting PARAMs

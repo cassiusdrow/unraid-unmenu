@@ -24,7 +24,12 @@ BEGIN {
    vv[0, "from"] = "what"
    vv[1, "from"] = "stuff"
    vv[2, "from"] = "ImageURL"
-   vv[2, "to"] = "http://" MyHost "/log/images";
+
+   if(GETARG["ImageURL"] == "")
+      vv[2, "to"] = "http://" MyHost "/log/images";
+   else
+      vv[2, "to"] = GETARG["ImageURL"]
+
    vv[3, "from"] = "legend"
    vv[3, "to"] = ""
 
