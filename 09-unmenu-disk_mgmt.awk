@@ -322,6 +322,10 @@ function SetUpDiskMgmtPage( theMenuVal ) {
                  system("lsmod | grep 'ntfs' >/dev/null 2>&1 || modprobe ntfs");
              }
           }
+          if ( d[3] == "hfsplus" ) { 
+             system("lsmod | grep 'hfsplus' >/dev/null 2>&1 || modprobe hfsplus");
+          }
+          
           system("mkdir /mnt/disk")
           mountpoint= "/mnt/disk/" d[2]
           system("mkdir " mountpoint )
@@ -672,7 +676,7 @@ function DiskManagement(select_value, i, outstr ) {
                             }
                         }
                     } else {
-                        if ( fs == "ntfs" || fs == "reiserfs" || fs == "ext2" || fs == "vfat" || fs == "ext3" ) {
+                        if ( fs == "ntfs" || fs == "reiserfs" || fs == "ext2" || fs == "vfat" || fs == "ext3" || fs == "hfsplus" ) {
                             unassigned_drive = unassigned_drive "<td ><input type=submit name=\"mount-"
                             unassigned_drive = unassigned_drive device[a] "-" fs "\" value=\"Mount /dev/" device[a] "\"</td>"
                             unassigned_drive = unassigned_drive "<td width=\"5*\"></td>"
