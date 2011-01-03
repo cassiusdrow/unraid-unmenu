@@ -1,6 +1,7 @@
 #ADD_ON_VERSION 1.4 - contributed by bjp999
 #ADD_ON_VERSION 1.42 - changed spinup method
 #ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release
+#ADD_ON_VERSION 1.51 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update
 #UNMENU_RELEASE $Revision$ $Date$
 
    # Copyright bjp999, 2009, 2010.  This program carries no guarantee of any kind.
@@ -695,7 +696,10 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
             }
             else if(ix2 == "current_pending_sector") {
                if(t>0)
-                  drivedb[ix, ix2 "extra"] = drivedb[ix, ix2 "extra"] ColorHtml[color="red"];
+                  if((drivedb[ix, ix2 "_ok"]>0) && (t<=drivedb[ix, ix2 "_ok"]) && !rawsmart)
+                     drivedb[ix, ix2 "extra"] = drivedb[ix, ix2 "extra"] ColorHtml[color="override"];
+                  else
+                     drivedb[ix, ix2 "extra"] = drivedb[ix, ix2 "extra"] ColorHtml[color="red"];
             }
 
             #else if ("reported_uncorrect high_fly_writes offline_uncorrectable udma_crc_error_count calibration_retry_count spin_retry_count" ~ d[1]) {

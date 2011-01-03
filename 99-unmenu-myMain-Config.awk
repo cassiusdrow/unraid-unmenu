@@ -63,7 +63,6 @@ function MainConfig(fn, vv)
    #perr("Action==> " GETARG["Action"]);
 
    if(GETARG["Action"] == "Save") {
-      message = "Saving main configuration.  Wait approximately 30 seconds for unmenu to reload.";
       #perr("Saving");
       MainConfigSave();
       UnloadConfigFile();
@@ -190,10 +189,22 @@ function MainConfigSave(fn1, fn2, cmd, i, ar, temp)
    close(fn1);
    close(fn2);
 
-   cmd="nohup sh -c 'sleep 10;kill -USR1 `cat /var/run/unmenu.pid` '>/dev/null 2>&1 &"
-   system(cmd);
+   if(GETARG["mymaincheck"] == "on")
+      GETARG["mymaincheck"] = "checked";
 
-   cmd="rm /tmp/mymain_seq.txt";
+   #perr("refreshinterval=" configLocal["refreshinterval"] " / " GETARG["refreshinterval"])
+   #perr("mymaincheck    =" configLocal["mymaincheck"]     " / " GETARG["mymaincheck"])
+
+   if((configLocal["refreshinterval"] != GETARG["refreshinterval"]) ||
+      (configLocal["mymaincheck"]     != GETARG["mymaincheck"])) {
+
+      message = "Saving main configuration.  Wait approximately 30 seconds for unmenu to reload.";
+
+      cmd="nohup sh -c 'sleep 10;kill -USR1 `cat /var/run/unmenu.pid` '>/dev/null 2>&1 &"
+      system(cmd);
+   }
+
+   cmd="rm /tmp/mymain_seq.txt >/dev/null 2>&1";
    system(cmd);
 }
 
