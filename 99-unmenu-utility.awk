@@ -18,6 +18,22 @@ BEGIN {
    #print "<p> parm2='" parm2 "'</p>"
    #print "<p> parm3='" parm3 "'</p>"
 
+   if ( ScriptDirectory == "" ) { 
+       ScriptDirectory = "."; 
+   }
+   if ( ConfigFile == "" ) {
+       ConfigFile = "unmenu.conf";
+   }
+
+   # Local config file variables will never be overwritten by a distributd file.
+   # It is here where local changes should be made without worry about them being
+   # lost when a new unmenu.conf file is distributed.
+   if ( LocalConfigFile == "" ) {
+       LocalConfigFile = "unmenu_local.conf";
+   }
+   GetConfigValues(ScriptDirectory "/" ConfigFile);
+   GetConfigValues(ScriptDirectory "/" LocalConfigFile);
+
    amp="AMP3RS4ND"
    nbsp=amp "nbsp;"
 
@@ -86,7 +102,9 @@ BEGIN {
       #vv[1, "to"] = GetSysLog(0, "/tmp/temp");
    }
    else if (cmd == "smarthistory") {
-      RunCommand("cd /boot/smarthistory; ./smarthistory -wake ON -output HTML -graph IMAGE -report ALL -devices /dev/" dev);
+      SMART_HISTORY_DIR = CONFIG["SMART_HISTORY_DIR"] ? CONFIG["SMART_HISTORY_DIR"] : "/boot/smarthistory"
+      SMART_HISTORY_CMD = CONFIG["SMART_HISTORY_CMD"] ? CONFIG["SMART_HISTORY_CMD"] : "./smarthistory -wake ON -output HTML -graph IMAGE -report ALL -devices /dev/" dev
+      RunCommand("cd " SMART_HISTORY_DIR "; " SMART_HISTORY_CMD);
    }
 
    fn="UtilityShell.html"
@@ -211,4 +229,28 @@ function RunTest()
 #   gsub(">", "\\&gt;", printme);
 #   print "<p>"printme"</p>"
 #}
+
+# open and read the unmenu configuration file.  In it, look for lines with the following pattern:
+#variableName = ReplacementValue
+
+# The values found there can be used to override values of some variables in these scripts.
+# the CONFIG[] array is set with the variable.
+
+function GetConfigValues(cfile) {
+    RS="\n"
+    while (( getline line < cfile ) > 0 ) {
+          delete c;
+          match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.+)/, c)
+          #print c[1,"length"] " " c[2,"length"] " " c[3,"length"] " "  c[4, "length"] " " c[5, "length"] " " line
+          if ( c[1,"length"] > 0 && c[2,"length"] > 0 && 
+               c[3,"length"] > 0 && c[4, "length"] > 0 && c[5, "length"] > 0 ) {
+               CONFIG[substr(line,c[1,"start"],c[1,"length"])] = substr(line,c[5,"start"],c[5,"length"])
+               if ( DebugMode == "yes" ) { 
+                   print "importing from unmenu.conf: " \
+                     "CONFIG[" substr(line,c[1,"start"],c[1,"length"]) "] = " substr(line,c[5,"start"],c[5,"length"])
+               }
+          }
+    }
+    close(cfile);
+}
 
