@@ -68,6 +68,8 @@ function GetDiskData(cmd, a, d, line, s, i) {
         device[num_partitions] = d[4]
         assigned[num_partitions] = ""
         mounted[num_partitions] = ""
+        fs_type[num_partitions] = ""
+        mount_mode[num_partitions] = ""
         model_serial[num_partitions] = ""
     }
     close(cmd)
@@ -115,6 +117,8 @@ function GetDiskData(cmd, a, d, line, s, i) {
        for( a = 1; a <= num_partitions; a++ ) {
            if ( s[1] == ( "/dev/" device[a] ) ) {
                mounted[a]=s[3]
+               fs_type[a]=s[5]
+               mount_mode[a]=substr(s[6],2,2)
                break;
            }
        }

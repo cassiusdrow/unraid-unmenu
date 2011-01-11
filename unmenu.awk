@@ -1831,11 +1831,15 @@ function GetOtherDisks(outstr) {
             cachedrive = cachedrive "<td width=\"5*\" align=\"right\"><u>Used</u></td>"
             cachedrive = cachedrive "<td width=\"5*\" align=\"right\"><u><nobr>%Used</nobr></u></td>"
             cachedrive = cachedrive "<td width=\"5*\" align=\"right\"><u>Free</u></td></tr>"
-            fs = GetDiskFileSystem("/dev/" device[a] );
             mp = mounted[a]
             GetDiskFreeSpace("/dev/" device[a] , numdisks + 3);
             cachedrive = cachedrive "<tr><td>/dev/" device[a] "</td><td>" model_serial[a] "</td><td>" mp "</td>"
             temp= GetDiskTemperature( "/dev/" substr(device[a],1,3) );
+            if ( temp != "*" ) {
+              fs = GetDiskFileSystem("/dev/" device[a] );
+            } else {
+              fs = ""
+            }
             cachedrive = cachedrive "<td>" fs "</td><td>" temp "</td>"
             cachedrive = cachedrive "<td align=\"right\">" disk_size[numdisks + 3] "</td>"
             cachedrive = cachedrive "<td align=\"right\">" disk_used[numdisks + 3]
@@ -1876,12 +1880,16 @@ function GetOtherDisks(outstr) {
                 unassigned_drive = unassigned_drive "<td width=\"5*\" align=\"right\"><u><nobr>%Used</nobr></u></td>"
                 unassigned_drive = unassigned_drive "<td width=\"5*\" align=\"right\"><u>Free</u></td></tr>"
             }
-            fs = GetDiskFileSystem("/dev/" device[a] );
             mp = mounted[a]
             GetDiskFreeSpace("/dev/" device[a] , numdisks + 3);
             if ( device[a] !~ /[0-9]/ ) disk_size[ numdisks + 3] = GetRawDiskSize( "/dev/" device[a] )
             unassigned_drive = unassigned_drive "<tr><td>/dev/" device[a] "</td><td>" model_serial[a] "</td><td>" mp "</td>"
             temp= GetDiskTemperature( "/dev/" substr(device[a],1,3) );
+            if ( temp != "*" && temp != "" ) {
+              fs = GetDiskFileSystem("/dev/" device[a] );
+            } else {
+              fs = ""
+            }
             unassigned_drive = unassigned_drive "<td>" fs "</td><td>" temp "</td>"
             unassigned_drive = unassigned_drive "<td align=\"right\">" disk_size[numdisks + 3] "</td>"
             unassigned_drive = unassigned_drive "<td align=\"right\">" disk_used[numdisks + 3]
@@ -2289,20 +2297,24 @@ function GetRawDiskBlocks( theDisk, partition, a, s) {
 }
 
 function GetRawDiskSize( theDisk, partition, a, s) {
-    d_size = ""
-    cmd = "fdisk -l " theDisk " 2>/dev/null"
-    RS="\n"
-    while ((cmd | getline a) > 0 ) {
-        if ( a ~ theDisk ) {
-            delete s;
-            split(a,s," ");
-            d_size=s[3] s[4]
-            break;
-        }
-    }
-    close(cmd);
-    sub("B,","",d_size)
-    return d_size
+      # get the raw disk device
+      partition=substr(theDisk,6,length(theDisk))
+      # if the whole device
+      if ( length(partition) == 3 ) {
+         cmd = "cat /sys/block/" partition "/size"
+      } else {
+      # if a partition
+         cmd = "cat /sys/block/" substr(partition,1,3) "/" partition "/size"
+      }
+      RS="\n"
+      cmd | getline a
+      close(cmd)
+      a += 0
+      s = a * 512
+      s = s  / OneThousand
+      s = sprintf( "%10d", s )
+      s += 0
+      return human_readable_number(s)
 }
 
 function IsSambaStarted( cmd) {
