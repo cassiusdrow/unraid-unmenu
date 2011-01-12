@@ -602,7 +602,7 @@ function DiskManagement(select_value, i, outstr ) {
                 unassigned_drive = unassigned_drive "<td width=\"5*\"></td>"
                 unassigned_drive = unassigned_drive "</tr>"
             }
-            fs = GetDiskFileSystem("/dev/" device[a] );
+            #fs = GetDiskFileSystem("/dev/" device[a] );
             mp = mounted[a]
             fstype = fs_type[a]
             mm = mount_mode[a]
@@ -620,6 +620,11 @@ function DiskManagement(select_value, i, outstr ) {
               prev_disk = model_serial[a]
               unassigned_drive = unassigned_drive "<td>" model_serial[a] "</td>"
               temp= GetDiskTemperature( "/dev/" substr(device[a],1,3) );
+              if ( temp != "*" && temp != "" ) {
+                fs = GetDiskFileSystem("/dev/" device[a] );
+              } else {
+                fs = ""
+              }
               unassigned_drive = unassigned_drive "<td align=\"center\">" temp "</td>"
             } else {
               unassigned_drive = unassigned_drive "<td align=right>partition (" CommaFormat(blocks[a]) " blocks):</td><td>&nbsp;</td>"
@@ -761,20 +766,24 @@ function GetMountPoint( theDisk , mount_point, a, s ) {
 }
 
 function GetRawDiskSize( theDisk, partition, a, s) {
-    d_size = ""
-    cmd = "fdisk -l " theDisk " 2>/dev/null"
-    RS="\n"
-    while ((cmd | getline a) > 0 ) {
-        if ( a ~ theDisk ) {
-            delete s;
-            split(a,s," ");
-            d_size=s[3] s[4]
-            break;
-        }
-    }
-    close(cmd);
-    sub("B,","",d_size)
-    return d_size
+      # get the raw disk device
+      partition=substr(theDisk,6,length(theDisk))
+      # if the whole device
+      if ( length(partition) == 3 ) {
+         cmd = "cat /sys/block/" partition "/size"
+      } else {
+      # if a partition
+         cmd = "cat /sys/block/" substr(partition,1,3) "/" partition "/size"
+      }
+      RS="\n"
+      cmd | getline a
+      close(cmd)
+      a += 0
+      s = a * 512
+      s = s  / OneThousand
+      s = sprintf( "%10d", s )
+      s += 0
+      return human_readable_number(s)
 }
 
 function IsSambaStarted( cmd) {
