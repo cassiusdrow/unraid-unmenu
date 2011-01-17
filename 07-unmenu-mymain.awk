@@ -10,6 +10,8 @@ BEGIN {
 #ADD_ON_VERSION 1.46 - added spindown spinup commands to use new scheme used by unRAID
 #ADD_ON_VERSION 1.47 - enhancement to eliminate use of hdparm -C on array disks
 #ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release, contributed by bjp999
+#ADD_ON_VERSION 1.51 - changes for myMain 12-1-10 release, contributed by bjp999-minor update 1
+#ADD_ON_VERSION 1.52 - changes for myMain 12-1-10 release, contributed by bjp999-minor update 2
 #UNMENU_RELEASE $Revision$ $Date$
 
    # Copyright bjp999, 2009, 2010.  This program carries no guarantee of any kind.
@@ -34,6 +36,8 @@ BEGIN {
       curseq = a1 + 1;
    else
       curseq = 1;
+
+   close(cmd)
 
    cmd = "echo " curseq " >/tmp/mymain_seq.txt";
    system(cmd);
@@ -82,13 +86,20 @@ BEGIN {
    #------------------------------
    LoadConfigFile(ScriptDirectory"/myMain.conf")
    LoadConfigFile(ScriptDirectory"/myMain_local.conf")
-   #LoadConfigFile(ScriptDirectory"/myMain_local.bjp")
 
    #------------------------
    # Get active view option
    #------------------------
    if((activeview=GETARG["view"]) == "")
       activeview = "default";
+
+   #-------------------------------------------
+   # Set Permissive Option (for smart reports)
+   #-------------------------------------------
+   if(constant["Permissive"] == 1)
+      PERMISSIVE_OPTION = "-T permissive"
+   else
+      PERMISSIVE_OPTION = ""
 
    #-----------------
    # Get sort option
@@ -202,6 +213,26 @@ BEGIN {
    red_temp    = constant["RedTemp"];
    blue_temp   = constant["BlueTemp"];
    bullet      = constant["BulletHtml"]
+
+
+   #-------------------------------------------------------------------
+   # Process quick temperature.  Quick temperature allows temperature
+   # readings from last refresh of screen to persist to next refresh,
+   # eliminating need to call smartctl on every drive.  This speeds up
+   # refreshes considerably.
+   #-------------------------------------------------------------------
+   if(GETARG["quicktemp"] == 1) {
+
+      view[activeview, "tempdata"] = "99";
+
+      cmd="cat /tmp/mymain_quicktemp.txt 2>/dev/null"
+      while( (cmd | getline a1) > 0 ) {
+         delete options
+         split(a1, a2, ",")
+         quickTemp[a2[1]] = a2[2];
+      }
+      close(cmd)
+   }
 
    #-------------------------------------------------------------
    # Process spinup and other commands before loading the page.
@@ -416,6 +447,25 @@ BEGIN {
    if (trace) perr("Calling GetDiskTemps " strftime("%s") - tracestart " secs")
    GetDiskTemps(view[activeview, "smartdata"])
 
+   if( index(view[activeview], "partalign") > 0 ) {
+      GetPartitionAlignment()
+   }
+
+
+   #----------------------------------------------------------------------
+   # Remember quick temperature values in case user selects quick option.
+   #----------------------------------------------------------------------
+   if(view[activeview, "tempdata"] == "1") {
+      fn = "/tmp/mymain_quicktemp.txt"
+
+      for(ix=0; ix<drivedb["count"]; ix++)
+         if(ix > 0)
+            print drivedb[ix, "autoid4"] "," drivedb[ix, "tempc"]>>fn
+         else
+            print drivedb[ix, "autoid4"] "," drivedb[ix, "tempc"]>fn
+      close(fn)
+   }
+
    #--------------------------------------------------------
    # Sort the drivedb.  If the total row is going to be
    # displayed, only sort the array part.  Otherwise, sort
@@ -479,7 +529,10 @@ BEGIN {
    #else
    #   tlextra = ")"
 
-   if(view[activeview, "smartdata"] == "1")
+   if((view[activeview, "tempdata"] == "1") || (view[activeview, "tempdata"] == "99")) {
+      tlextra = "&nbsp;&nbsp;<a href=\"" myMainLink("quicktemp=1") "\">" constant["RefreshQuick"] "</a>"
+   }
+   else if(view[activeview, "smartdata"] == "1")
       #tlextra = ", <a href=\"" myMainLink("cmd=spinupsmart") "\">RefreshAll</a>)"
       tlextra = "&nbsp;&nbsp;<a href=\"" myMainLink("cmd=spinupsmart") "\">" constant["RefreshAll"] "</a>" \
                 "&nbsp;&nbsp;<a href=\"" myMainLink("rawsmart=1") "\">" constant["RefreshRaw"] "</a>" \

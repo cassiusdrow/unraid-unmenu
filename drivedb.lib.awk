@@ -1,7 +1,8 @@
 #ADD_ON_VERSION 1.4 - contributed by bjp999
 #ADD_ON_VERSION 1.42 - changed spinup method
 #ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release
-#ADD_ON_VERSION 1.51 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update
+#ADD_ON_VERSION 1.51 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update 1
+#ADD_ON_VERSION 1.52 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update 2
 #UNMENU_RELEASE $Revision$ $Date$
 
    # Copyright bjp999, 2009, 2010.  This program carries no guarantee of any kind.
@@ -525,7 +526,7 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
       # it from the smartctl command.
       #--------------------------------------------------------------------
       if(drivedb[ix, "file"] == "") {
-         cmd = "smartctl -a -T permissive -d ata /dev/" drivedb[ix, "dev"];
+         cmd = "smartctl -a " PERMISSIVE_OPTION " -d ata /dev/" drivedb[ix, "dev"];
          #perr("1 smartctl " drivedb[ix, "dev"]);
       }
       else
@@ -1006,9 +1007,14 @@ function GetDiskTemps(smart_already_run, cmd, a, ix, ix2, lst, t, dev) {
                 #-----------------------------------------------------
                 if( view[activeview, "tempdata"] == "0" ) {
                    drivedb[ix, "tempc"] = "unk"
+                   tempchk=0;
+                }
+                else if( view[activeview, "tempdata"] == "99" ) {
+                   drivedb[ix, "tempc"] = quickTemp[drivedb[ix, "autoid4"]];
+                   tempchk = substr(drivedb[ix, "tempc"], 1, length(drivedb[ix, "tempc"])-1) + 0
                 }
                 else {
-                   cmd = "smartctl -T permissive -d ata -A /dev/" drivedb[ix, "dev"] "| grep -i '^194'"
+                   cmd = "smartctl " PERMISSIVE_OPTION " -d ata -A /dev/" drivedb[ix, "dev"] "| grep -i '^194'"
                    #perr("2 smartctl " drivedb[ix, "dev"]);
                    #perr("cmd")
                    while ((cmd | getline a) > 0 ) {
@@ -1022,28 +1028,47 @@ function GetDiskTemps(smart_already_run, cmd, a, ix, ix2, lst, t, dev) {
                              drivedb[ix, ix2 "_tempextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="override"];
                        }
                        drivedb[ix, "tempc"] = t[10] "C"
+                       tempchk = t[10]
 
-                       if ( t[10] >= yellow_temp && t[10] < orange_temp )
-                          drivedb[ix, ix2 "_tempextra"] = \
-                             drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="yellow"];
-                       else if ( t[10] >= orange_temp && t[10] < red_temp )
-                          drivedb[ix, "rowextra"] = \
-                             drivedb[ix, ix2 "_tempextra"] = \
-                                drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="orange"];
-                       else if ( t[10] >= red_temp )
-                          drivedb[ix, "rowextra"] = \
-                             drivedb[ix, ix2 "_tempextra"] = \
-                                drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="red"];
-                       else if ( t[10] <= blue_temp )
-                          drivedb[ix, ix2 "_tempextra"] = \
-                             drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="blue"];
                    }
                    close(cmd);
+                }
+                if(tempchk > 0) {
+                   if ( tempchk >= yellow_temp && tempchk < orange_temp )
+                      drivedb[ix, ix2 "_tempextra"] = \
+                         drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="yellow"];
+                   else if ( tempchk >= orange_temp && tempchk < red_temp )
+                      drivedb[ix, "rowextra"] = \
+                         drivedb[ix, ix2 "_tempextra"] = \
+                            drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="orange"];
+                   else if ( tempchk >= red_temp )
+                      drivedb[ix, "rowextra"] = \
+                         drivedb[ix, ix2 "_tempextra"] = \
+                            drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="red"];
+                   else if ( tempchk <= blue_temp )
+                      drivedb[ix, ix2 "_tempextra"] = \
+                         drivedb[ix, "tempcextra"] = drivedb[ix, "tempcextra"] ColorHtml[color="blue"];
                 }
              }
           }
     #perr("stop temp")
 }
+
+function GetPartitionAlignment(ix, a1, a) {
+
+   for(ix=0; ix<drivedb["count"]; ix++)
+      if(drivedb[ix, "spinind"] != 0) { # spinning
+         cmd = "fdisk -lu /dev/" drivedb[ix, "dev"] "|grep '^/dev'"
+         # perr("cmd=" cmd);
+         if( (cmd | getline a1) > 0 ) {
+            delete a
+            split(a1, a, " ")
+            drivedb[ix, "partalign"] = a[2]+0;
+         }
+         close(cmd);
+      }
+}
+
 
 function GetDiskSpinState(lst, cmd, ix, a) {
    #
