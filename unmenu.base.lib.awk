@@ -98,7 +98,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
        split(line,d," ");
        sub("../../","",d[11])
        for( a = 1; a <= num_partitions; a++ ) {
-           if ( d[11] == ( device[a] ) ) {
+           if ( d[11] == ( device[a] ) && model_serial[a] == "" ) {
                model_serial[a]=d[9]
                sub("-part1","", model_serial[a])
                sub("ata-","", model_serial[a])

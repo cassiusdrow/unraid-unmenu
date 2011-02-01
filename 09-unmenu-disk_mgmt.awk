@@ -627,6 +627,9 @@ function DiskManagement(select_value, i, outstr ) {
               }
               unassigned_drive = unassigned_drive "<td align=\"center\">" temp "</td>"
             } else {
+              if ( temp != "*" && temp != "" ) {
+                fs = GetDiskFileSystem("/dev/" device[a] );
+              }
               unassigned_drive = unassigned_drive "<td align=right>partition (" CommaFormat(blocks[a]) " blocks):</td><td>&nbsp;</td>"
             }
             unassigned_drive = unassigned_drive "<td align=\"right\">" disk_size[numdisks + 3] "</td>"
@@ -735,18 +738,33 @@ function DiskManagement(select_value, i, outstr ) {
 }
 function GetDiskFileSystem(theDisk , thePartition, file_system, a, s) {
     # get the file system of the specified partition
-    cmd = "vol_id " theDisk thePartition " 2>/dev/null"
-#print cmd
+    #/dev/sdb1: UUID="f48885ea-1ec2-4e02-9a6c-9c569d589547" TYPE="reiserfs"
     file_system=""
     RS="\n"
-    while ((cmd | getline a) > 0 ) {
-        if ( a ~ "ID_FS_TYPE" ) {
-            delete s;
-            split(a,s,"=");
-            file_system=s[2]
+    if (system("which vol_id >/dev/null 2>&1" )==0) {
+        cmd = "vol_id " theDisk thePartition " 2>/dev/null"
+        #print cmd
+        while ((cmd | getline a) > 0 ) {
+            if ( a ~ "ID_FS_TYPE" ) {
+                delete s;
+                split(a,s,"=");
+                file_system=s[2]
+            }
         }
+        close(cmd);
+    } else {
+        cmd = "blkid " theDisk thePartition " 2>/dev/null"
+        while ((cmd | getline a) > 0 ) {
+            if ( a ~ "TYPE" ) {
+                delete s;
+                split(a,s,"=");
+                file_system=s[3]
+                gsub("\"", "", file_system)
+                gsub(" ", "", file_system)
+            }
+        }
+        close(cmd);
     }
-    close(cmd);
     return file_system
 }
 

@@ -25,7 +25,7 @@ BEGIN {
   }
   close("unmenu.awk")
 
-  version = "Version 1.3 " theRevision " Joe L.... with modifications as suggested by bjp999 and many others"
+  version = "Version 1.4 " theRevision " Joe L.... with modifications as suggested by bjp999 and many others"
 
   # Plug-in scripts are expected to reside in the same directory where this program is invoked if the following
   # variable is not changed.  If you wish to speciify a different directory for the plug-in scripts, you
@@ -1757,7 +1757,7 @@ function GetDiskData() {
        split(line,d," ");
        sub("../../","",d[11])
        for( a = 1; a <= num_partitions; a++ ) {
-           if ( d[11] == ( device[a] ) ) {
+           if ( d[11] == ( device[a] ) && model_serial[a] == "" ) {
                model_serial[a]=d[9]
                sub("-part1","", model_serial[a])
                sub("ata-","", model_serial[a])
