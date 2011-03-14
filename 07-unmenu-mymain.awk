@@ -12,9 +12,11 @@ BEGIN {
 #ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release, contributed by bjp999
 #ADD_ON_VERSION 1.51 - changes for myMain 12-1-10 release, contributed by bjp999-minor update 1
 #ADD_ON_VERSION 1.52 - changes for myMain 12-1-10 release, contributed by bjp999-minor update 2
+#ADD_ON_VERSION 1.53 - changes for myMain 3-10-11 release, contributed by bjp999 - 5.0b6 support
 #UNMENU_RELEASE $Revision$ $Date$
 
-   # Copyright bjp999, 2009, 2010.  This program carries no guarantee of any kind.
+   # (c) Copyright bjp999, 2009-2011.  All rights reserved.
+   # This program carries no warranty or guarantee of any kind.  It is used strictly at the users risk.
 
    #-----------------
    # Initializations
@@ -451,6 +453,10 @@ BEGIN {
       GetPartitionAlignment()
    }
 
+   #----------------------------------------------
+   # Check to see if there is an HPA on the drive
+   #----------------------------------------------
+   HPAcheck()
 
    #----------------------------------------------------------------------
    # Remember quick temperature values in case user selects quick option.

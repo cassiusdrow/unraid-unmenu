@@ -45,7 +45,7 @@ BEGIN {
   close(cmd)
 
   system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
-  
+
   if ( ConfigFile == "" ) {
       ConfigFile = "unmenu.conf";
   }
@@ -231,8 +231,8 @@ BEGIN {
           match( line , /^(#ADD_ON_CONFIG|#define\WADD_ON_CONFIG)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_config[i] = substr(line,c[3,"start"],c[3,"length"])
-              if ( DebugMode == "yes" ) { 
-                  print "defined plug-in config:" add_on_config[i] 
+              if ( DebugMode == "yes" ) {
+                  print "defined plug-in config:" add_on_config[i]
               }
           }
           # Expect the name of a local configuration for for this add-on.
@@ -241,8 +241,8 @@ BEGIN {
           match( line , /^(#ADD_ON_LOCAL_CONFIG|#define\WADD_ON_LOCAL_CONFIG)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_local_config[i] = substr(line,c[3,"start"],c[3,"length"])
-              if ( DebugMode == "yes" ) { 
-                  print "defined plug-in local config:" add_on_local_config[i] 
+              if ( DebugMode == "yes" ) {
+                  print "defined plug-in local config:" add_on_local_config[i]
               }
           }
           # Expect a string describing the version of the plug-in
@@ -275,8 +275,8 @@ BEGIN {
     }
     if ( add_on_local_config[i] != "" ) {
       GetConfigValues(ScriptDirectory "/" add_on_local_config[i], "pi-" i );
-      if ( DebugMode == "yes" ) { 
-          print "importing local plug-in config values:" add_on_local_config[i] 
+      if ( DebugMode == "yes" ) {
+          print "importing local plug-in config values:" add_on_local_config[i]
       }
       if("pi-"i"ADD_ON_URL" in CONFIG)                    # bjp999 10/17/2010 - Allow local config file to override
          add_on_url[i] = CONFIG["pi-"i"ADD_ON_URL"];      # bjp999 10/17/2010   some of the "add on" values for the
@@ -1691,6 +1691,9 @@ function GetArrayStatus(a) {
         if ( a ~ "mdResyncFinish" )  { delete d; split(a,d,"="); resync_finish=d[2] }
         if ( a ~ "mdResyncSpeed" )   { delete d; split(a,d,"="); resync_speed=d[2] }
         if ( a ~ "mdResyncPos" )     { delete d; split(a,d,"="); resync_pos=d[2] }
+        if ( a ~ "mdResyncDt" )      { delete d; split(a,d,"="); resync_dt=d[2] }      #bjp999 3/7/11 Change for 5.0b6
+        if ( a ~ "mdResyncDb" )      { delete d; split(a,d,"="); resync_db=d[2] }      #bjp999 3/7/11 Change for 5.0b6
+        if ( a ~ "mdResync=" )       { delete d; split(a,d,"="); mdresync=d[2] }       #bjp999 3/7/11 Change for 5.0b6
         # array status
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
         # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id.
@@ -1712,6 +1715,15 @@ function GetArrayStatus(a) {
         if ( a ~ "rdevLastIO" )   { delete d; split(a,d,"[.=]"); disk_lastIO[d[2]]=d[3]; }
     }
     close("/root/mdcmd status|strings")
+
+    # Compute values that pre-5.0 computed automatically                               #bjp999 3/7/11 Change for 5.0b6
+    if(resync_dt != "") {                                                              #bjp999 3/7/11 Change for 5.0b6
+      resync_percentage = sprintf("%.2f", resync_pos / (mdresync/1000 + 1));           #bjp999 3/7/11 Change for 5.0b6
+      resync_speed      = sprintf("%d", (resync_db+0) / (resync_dt+0));                #bjp999 3/7/11 Change for 5.0b6
+      rt = (resync_dt * ((mdresync-resync_pos) / (resync_db/100+1)))/100;              #bjp999 3/7/11 Change for 5.0b6
+      resync_finish     = sprintf("%d", rt/60 );                                       #bjp999 3/7/11 Change for 5.0b6
+    }                                                                                  #bjp999 3/7/11 Change for 5.0b6
+
 }
 
 function GetDiskData() {

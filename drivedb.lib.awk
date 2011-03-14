@@ -3,9 +3,11 @@
 #ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release
 #ADD_ON_VERSION 1.51 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update 1
 #ADD_ON_VERSION 1.52 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update 2
+#ADD_ON_VERSION 1.53 - changes for myMain 3-10-11 release, contributed by bjp999 - 5.0b6 support
 #UNMENU_RELEASE $Revision$ $Date$
 
-   # Copyright bjp999, 2009, 2010.  This program carries no guarantee of any kind.
+   # (c) Copyright bjp999, 2009-2011.  All rights reserved.
+   # This program carries no warranty or guarantee of any kind.  It is used strictly at the users risk.
 
 #-----------------------------------------------------------------------
 # This function begins the creation of the drivedb[] associative array.
@@ -526,7 +528,10 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
       # it from the smartctl command.
       #--------------------------------------------------------------------
       if(drivedb[ix, "file"] == "") {
-         cmd = "smartctl -a " PERMISSIVE_OPTION " -d ata /dev/" drivedb[ix, "dev"];
+         smartopt="-d ata"
+         if(drivedb[ix, "smartopt"] != "")
+             smartopt = drivedb[ix, "smartopt"];
+         cmd = "smartctl -a " PERMISSIVE_OPTION " " smartopt " /dev/" drivedb[ix, "dev"];
          #perr("1 smartctl " drivedb[ix, "dev"]);
       }
       else
@@ -773,6 +778,7 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
           for(m=1; m<k; m++)
              modela=modela " " ms[m]
 
+          drivedb[i, "disk_size"]    = human_readable_number(drivedb[i, "disk_size_raw"], 0, 0, 0, 1);
           drivedb[i, "serial"] = ms[k];
           drivedb[i, "autoid"] = lastchars(drivedb[i, "serial"], constant["IdLen"])
           drivedb[i, "autoid4"] = lastchars(drivedb[i, "serial"], 4)
@@ -924,7 +930,7 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
           drivedb[i, "modelnum"]  = substr(modela,2);
           GetDriveManufacturer(i)
 
-          drivedb[i, "disk_size_raw"]   = blocks[a]*1024/1000;
+          drivedb[i, "disk_size_raw"]   = blocks[a]*1024/1000 -32;
           drivedb[i, "disk_size"]    = human_readable_number(drivedb[i, "disk_size_raw"], 0, 0, 0, 1);
           gsub(".0T", "T", drivedb[i, "disk_size"])
 
@@ -1014,10 +1020,14 @@ function GetDiskTemps(smart_already_run, cmd, a, ix, ix2, lst, t, dev) {
                    tempchk = substr(drivedb[ix, "tempc"], 1, length(drivedb[ix, "tempc"])-1) + 0
                 }
                 else {
-                   cmd = "smartctl " PERMISSIVE_OPTION " -d ata -A /dev/" drivedb[ix, "dev"] "| grep -i '^194'"
+                   smartopt="-d ata -A"
+                   if(drivedb[ix, "smartopt"] != "")
+                       smartopt = drivedb[ix, "smartopt"];
+                   cmd = "smartctl " PERMISSIVE_OPTION " " smartopt " /dev/" drivedb[ix, "dev"] "| grep -i '^194'"
                    #perr("2 smartctl " drivedb[ix, "dev"]);
-                   #perr("cmd")
+                   #perr("cmd="cmd)
                    while ((cmd | getline a) > 0 ) {
+                       #perr("line=" a);
                        delete t;
                        split(a,t," ")
                        #the_temp = t[10] "&deg;C"
@@ -1068,6 +1078,32 @@ function GetPartitionAlignment(ix, a1, a) {
          close(cmd);
       }
 }
+
+function HPAcheck(ix)
+{
+
+   for(ix=0; ix<drivedb["count"]; ix++) {
+      if(drivedb[ix, "disk"] == "flash")
+         drivedb[ix, "hpa"] = "no"
+      else if(drivedb[ix, "hpa_ok"] == "1")
+         drivedb[ix, "hpa"] = "no"
+      else if(drivedb[ix, "hpa_ok"] == "0")
+         drivedb[ix, "hpa"] = "yes"
+      else if(lastchars(sprintf("%d", drivedb[ix, "disk_size_raw"]/1.024), 3) == "552")
+         drivedb[ix, "hpa"] = "no"
+      else if( index(constant["ValidPartitionSizes"], "=" sprintf("%d",drivedb[ix, "disk_size_raw"]/1.024) ",") == 0)
+            drivedb[ix, "hpa"] = "yes"
+      else
+            drivedb[ix, "hpa"] = "no"
+
+      if(drivedb[ix, "hpa"] == "yes") {
+         drivedb[ix, "displayhpa"] = constant["HpaHtml"];
+         drivedb[ix, "_statusextra"] = "vertical-align: center;" ColorHtml["orange"]
+         drivedb[ix, "_staticonextra"] = "vertical-align: center;" ColorHtml["orange"]
+      }
+   }
+}
+
 
 
 function GetDiskSpinState(lst, cmd, ix, a) {
@@ -1161,10 +1197,12 @@ function LoadDiskSpaceInfo(thousand, a, cmd, totalmult, devsplit, i, free) {
 
             if (i > 0) {
                if(i >= drivedb["uncount"]) {
-                  drivedb[i, "disk_size_raw"]    = free[2];
-                  #drivedb[i, "disk_size_raw"]   = sprintf("%.1f", free[2]/10000000) * 10000000;
-                  drivedb[i, "disk_size"]    = human_readable_number(drivedb[i, "disk_size_raw"], 0, 0, 0, 1);
-                  gsub(".0T", "T", drivedb[i, "disk_size"])
+                  if(drivedb[i, "disk_size_raw"] == 0) {
+                     drivedb[i, "disk_size_raw"]    = free[2];
+                     #drivedb[i, "disk_size_raw"]   = sprintf("%.1f", free[2]/10000000) * 10000000;
+                     drivedb[i, "disk_size"]    = human_readable_number(drivedb[i, "disk_size_raw"], 0, 0, 0, 1);
+                     gsub(".0T", "T", drivedb[i, "disk_size"])
+                  }
                }
 
                drivedb[i, "disk_used_raw"]    = free[3];
@@ -1185,6 +1223,7 @@ function LoadDiskSpaceInfo(thousand, a, cmd, totalmult, devsplit, i, free) {
                   drivedb[i, "disk_pctused"] = "Full";
                   #drivedb[i, "disk_used"]    = "Full";
                   #drivedb[i, "disk_free"]    = "Full";
+                  drivedb[i, "disk_pctusedextra"] = drivedb[i, "disk_pctusedextra"] FullColorHtml;
                   drivedb[i, "disk_pctusedextra"] = drivedb[i, "disk_pctusedextra"] FullColorHtml;
                   #drivedb[i, "disk_availextra"]   = FullColor; # #d0d0d0";
                   #drivedb[i, "disk_freeextra"]    = FullColor; # #d0d0d0";

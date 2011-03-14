@@ -1,4 +1,4 @@
-#ADD_ON_VERSION 1.5 - changes for myMain 12-1-10 release
+#ADD_ON_VERSION 1.6 - changes for myMain 3-10-11 release
 #UNMENU_RELEASE $Revision$ $Date$
 function GetArrayStatus(a, d) {
     RS="\n"
@@ -14,6 +14,7 @@ function GetArrayStatus(a, d) {
     has_spinup="false"
 
     while (("/root/mdcmd status|strings" | getline a) > 0 ) {
+
         # number of disks in the superblock
         if ( a ~ "sbNumDisks" )      { delete d; split(a,d,"="); numdisks=d[2] }
         # number of disks in the "md" array
@@ -27,12 +28,16 @@ function GetArrayStatus(a, d) {
         if ( a ~ "mdResyncFinish" )  { delete d; split(a,d,"="); resync_finish=d[2] }
         if ( a ~ "mdResyncSpeed" )   { delete d; split(a,d,"="); resync_speed=d[2] }
         if ( a ~ "mdResyncPos" )     { delete d; split(a,d,"="); resync_pos=d[2] }
+        if ( a ~ "mdResyncDt" )      { delete d; split(a,d,"="); resync_dt=d[2] }   # bjp999 3/8/11 - 5.0b6 update
+        if ( a ~ "mdResyncDb" )      { delete d; split(a,d,"="); resync_db=d[2] }   # bjp999 3/8/11 - 5.0b6 update
+        if ( a ~ "mdResync=" )       { delete d; split(a,d,"="); mdresync=d[2] }    # bjp999 3/8/11 - 5.0b6 update
         # array status
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
         # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id.
         if ( a ~ "diskName" )        { delete d; split(a,d,"[.=]"); disk_name[d[2]]=d[3]; }
-        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1;
-                                                 disk_id[d[2]]=substr(d[3],offset); }
+        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); disk_id[d[2]]=d[3]; }        # bjp999 3/8/11 - 5.0b6 update
+        #if ( a ~ "diskId" )         { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1;  # bjp999 3/8/11 - 5.0b6 update
+        #                                        disk_id[d[2]]=substr(d[3],offset); }            # bjp999 3/8/11 - 5.0b6 update
         if ( a ~ "diskSerial" )      { delete d; split(a,d,"[.=]"); disk_serial[d[2]]=d[3]; }
         if ( a ~ "diskSize" )        { delete d; split(a,d,"[.=]"); disk_size[d[2]]=d[3]; }
         if ( a ~ "rdevSize" )        { delete d; split(a,d,"[.=]"); rdisk_size[d[2]]=d[3]; }   #bjp999
@@ -51,6 +56,39 @@ function GetArrayStatus(a, d) {
 
     }
     close("/root/mdcmd status|strings")
+
+    # Fix for 5.0 where disk_serial is not returned as a separate field    # BEGIN - bjp999 3/8/11 - 5.0b6 update
+    for(i=0; i<numdisks; i++) {
+       if(disk_serial[i] == "") {
+          delete d;
+          #perr(disk_id[i]);
+          j = last_index(disk_id[i], "_")
+          if(j > -1) {
+             disk_serial[i]  = substr(disk_id[i], j+1)
+             rdisk_serial[i] = disk_serial[i]
+             disk_model[i]   = substr(disk_id[i], 1, j-1)
+             #perr(disk_model[i])
+             rdisk_model[i]  = disk_model[i]
+          }
+       }
+    }
+    # Fix for 5.0 where parity check stats are not returned as before
+    if(mdResyncDt != "") {
+      # max_blocks = mdresync
+      # resync = resync_pos
+      # /* compute completion percentage */
+      # //	res = resync / (max_blocks/1000 + 1);
+      # //	p += sprintf(p, "mdResyncPrcnt=%llu.%llu\n", res/10, res % 10);
+      # /* sync rate in blocks/sec */
+      # // p += sprintf(p, "mdResyncSpeed=%llu\n", db/dt);
+      # /* compute remaining time in minutes */
+      # //	rt = (dt * ((max_blocks-resync) / (db/100+1)))/100;
+      # //	p += sprintf(p, "mdResyncFinish=%llu.%llu\n", rt / 60, (rt % 60)/6);
+      resync_percentage = sprintf("%.2f", resync_pos / (mdresync/1000 + 1));
+      resync_speed      = sprintf("%d", (resync_db+0) / (resync_dt+0));
+      rt = (resync_dt * ((mdresync-resync_pos) / (resync_db/100+1)))/100;
+      resync_finish     = sprintf("%d", rt/60 );
+    }                                                                      # END - bjp999 3/8/11 - 5.0b6 update
 }
 
 function GetDiskData(cmd, a, d, line, s, i) {
@@ -79,6 +117,9 @@ function GetDiskData(cmd, a, d, line, s, i) {
     while ((cmd | getline a) > 0 ) {
         delete d;
         split(a,d," ");
+        if(d[11] == "")             # bjp999 3/8/11 - 5.0b6 update
+           d[11] = d[10];           # bjp999 3/8/11 - 5.0b6 update
+        #perr("d11=" d[11]);
         sub("../../","",d[11])
         unraid_volume=d[11]
     }
@@ -88,23 +129,34 @@ function GetDiskData(cmd, a, d, line, s, i) {
     for( a = 1; a <= num_partitions; a++ ) {
         if ( device[a] == unraid_volume ) {
              assigned[a] = "UNRAID"
-        }
-    }
+             #perr("assigned["a"]=" assigned[a])
 
+        }
+
+    }
     # Now, get the model/serial numbers. They should be available in /dev/disk/id-label
     cmd="ls -l /dev/disk/by-id"
     while ((cmd | getline line) > 0 ) {
        delete d;
        split(line,d," ");
+       if(trim(d[11]) == "")        # bjp999 3/8/11 - 5.0b6 update
+          d[11] = d[10];            # bjp999 3/8/11 - 5.0b6 update
        sub("../../","",d[11])
-       for( a = 1; a <= num_partitions; a++ ) {
-           if ( d[11] == ( device[a] ) && model_serial[a] == "" ) {
-               model_serial[a]=d[9]
-               sub("-part1","", model_serial[a])
-               sub("ata-","", model_serial[a])
-               break;
-           }
-       }
+       if(index(line, "wwn-0x") == 0)
+          for( a = 1; a <= num_partitions; a++ ) {
+              if ( d[11] == ( device[a] ) ) {
+                  if(d[9] == "->")  # bjp999 3/8/11 - 5.0b6 update
+                     d[9] = d[8]    # bjp999 3/8/11 - 5.0b6 update
+
+                  model_serial[a]=d[9]
+                  sub("-part1","", model_serial[a])
+                  sub("ata-","",   model_serial[a])
+                  sub("scsi-SATA_","",  model_serial[a])
+                  #perr("ms=" model_serial[a])
+                  #sub("scsi-","",  model_serial[a])
+                  break;
+              }
+          }
     }
     close(cmd);
 
@@ -117,7 +169,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
        for( a = 1; a <= num_partitions; a++ ) {
            if ( s[1] == ( "/dev/" device[a] ) ) {
                mounted[a]=s[3]
-               fs_type[a]=s[5]
+	       fs_type[a]=s[5]
                mount_mode[a]=substr(s[6],2,2)
                break;
            }

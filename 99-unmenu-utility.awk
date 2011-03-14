@@ -7,7 +7,11 @@ BEGIN {
 #ADD_ON_OPTIONS=-f unmenu.base.lib.awk -f utility.lib.awk
 #define ADD_ON_VERSION 1.0 - contributed by bjp999
 #define ADD_ON_VERSION 1.5 - Part of myMain 12-1-10 release, contributed by bjp999
+#define ADD_ON_VERSION 1.53 - changes for myMain 3-10-11 release, contributed by bjp999 - 5.0b6 support
 #UNMENU_RELEASE $Revision$ $Date$
+
+   # (c) Copyright bjp999, 2009-2011.  All rights reserved.
+   # This program carries no warranty or guarantee of any kind.  It is used strictly at the users risk.
 
    CGI_setup()
    cmd  = GETARG["cmd"]
@@ -18,8 +22,8 @@ BEGIN {
    #print "<p> parm2='" parm2 "'</p>"
    #print "<p> parm3='" parm3 "'</p>"
 
-   if ( ScriptDirectory == "" ) { 
-       ScriptDirectory = "."; 
+   if ( ScriptDirectory == "" ) {
+       ScriptDirectory = ".";
    }
    if ( ConfigFile == "" ) {
        ConfigFile = "unmenu.conf";
@@ -51,7 +55,10 @@ BEGIN {
 
    if(cmd == "smartctl") {
       if(GETARG["file"] == "")
-         RunCommand(sprintf("smartctl -a -d ata /dev/%s", dev), disk);
+         if(GETARG["smart"] == "")
+            RunCommand(sprintf("smartctl -a -d ata /dev/%s", dev), disk);
+         else
+            RunCommand(sprintf("smartctl -a " GETARG["smart"] " /dev/%s", dev), disk);
       else
          RunCommand("fromdos<" GETARG["file"], GETARG["file"], "smartctl " GETARG["file"]);
    }
@@ -242,10 +249,10 @@ function GetConfigValues(cfile) {
           delete c;
           match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.+)/, c)
           #print c[1,"length"] " " c[2,"length"] " " c[3,"length"] " "  c[4, "length"] " " c[5, "length"] " " line
-          if ( c[1,"length"] > 0 && c[2,"length"] > 0 && 
+          if ( c[1,"length"] > 0 && c[2,"length"] > 0 &&
                c[3,"length"] > 0 && c[4, "length"] > 0 && c[5, "length"] > 0 ) {
                CONFIG[substr(line,c[1,"start"],c[1,"length"])] = substr(line,c[5,"start"],c[5,"length"])
-               if ( DebugMode == "yes" ) { 
+               if ( DebugMode == "yes" ) {
                    print "importing from unmenu.conf: " \
                      "CONFIG[" substr(line,c[1,"start"],c[1,"length"]) "] = " substr(line,c[5,"start"],c[5,"length"])
                }

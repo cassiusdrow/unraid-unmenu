@@ -1,5 +1,8 @@
-#ADD_ON_VERSION 1.0 - contributed by bjp999
+#ADD_ON_VERSION 1.2 - changes for myMain 3-10-11 release, contributed by bjp999 - 5.0b6 support
 #UNMENU_RELEASE $Revision$ $Date$
+
+   # (c) Copyright bjp999, 2009-2011.  All rights reserved.
+   # This program carries no warranty or guarantee of any kind.  It is used strictly at the users risk.
 
 #---------------------------------------------------------------------------
 # Similar to same named function in unmenu.awk.  Handles numbers that start
@@ -336,3 +339,34 @@ function HtmlRefresh(url)
    return "<HEAD> <meta HTTP-EQUIV=\"REFRESH\" content=\"0; url=" url "\"> </HEAD>"
 }
 
+function asc(c, tchar, ascval, b)
+{
+   if (c == "")
+      return ""
+
+   c = substr(c, 1, 1)
+   ascval = b = 128
+
+   while ((tchar = sprintf("%c", ascval)) != c)
+      ascval += (b /= 2) * (tchar < c) ? 1 : -1
+   return int(ascval)
+}
+
+function last_index(haystack, needle, i, p)
+{
+   p = "";
+   for(i=length(haystack); i > 0; i--) {
+      if(substr(haystack, i, length(needle)) == needle)
+         return(i);
+   }
+   return -1
+}
+
+function reverse(s, p, i)
+{
+   p = "";
+   for(i=length(s); i > 0; i--) {
+      p = p substr(s, i, 1)
+   }
+   return p
+}
