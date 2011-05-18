@@ -12,6 +12,7 @@ BEGIN {
 #define ADD_ON_VERSION     1.1.3 added unmenu_local.conf file - by Joe L.
 #define ADD_ON_VERSION     1.1.4 fixed handling of directory names with embedded spaces. Joe L.
 #define ADD_ON_VERSION     1.1.5 fixed handling of time-stamps. (forced a specific format in "ls" so parse of names works consistently) Joe L.
+#define ADD_ON_VERSION     1.1.6 update allowd disk array to have members greater than disk15.
 #UNMENU_RELEASE $Revision$ $Date$
 
   if ( MyHost == "" ) {
@@ -88,6 +89,7 @@ BEGIN {
      }
   } else {
       # if it does not have any allowed folders defined, use the following default list
+      # yes, I know we cannot have 24 disks, but who knows what will be allowed in the future
       ALLOWED_FOLDER[af++] = "/mnt/user/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk1/" 
@@ -105,6 +107,15 @@ BEGIN {
       ALLOWED_FOLDER[af++] = "/mnt/disk13/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk14/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk15/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk16/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk17/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk18/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk19/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk20/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk21/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk22/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk23/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk24/" 
   }
 
   # 10 Meg is max size to upload by default.  (Do not want to use all the memory and crash kernel. Keep well below 100Meg)
