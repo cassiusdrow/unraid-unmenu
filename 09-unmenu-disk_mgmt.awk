@@ -10,6 +10,7 @@ BEGIN {
 #ADD_ON_VERSION 1.3 - print more of smartctl output on long/short test requests Joe L.
 #ADD_ON_VERSION 1.4 - use spinup/spindown commands now available in 4.5 unRAID Joe L.
 #ADD_ON_VERSION 1.5 - added call to srand() to seed random number generator used when spinning up disks not assigned to the array.
+#ADD_ON_VERSION 1.6 - Fixed html input tags, added modprobe of ntfs module; added warning and confirm to create reiserfs.
 #UNMENU_RELEASE $Revision$ $Date$
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
@@ -34,6 +35,8 @@ BEGIN {
    # Samba File Create and Directory Create masks (by default, the same as unRAID)
    create_mask    = CONFIG["create_mask"]    ? CONFIG["create_mask"]    : "711"
    directory_mask = CONFIG["directory_mask"] ? CONFIG["directory_mask"] :  "711"
+
+   system("modprobe ntfs");
 
    GetArrayStatus();
    if ( has_spinup == "" ) {
@@ -475,8 +478,19 @@ function SetUpDiskMgmtPage( theMenuVal ) {
       }
   }
 
-
-  DiskMgmtPageDoc = "<form method=\"GET\" >"
+  DiskMgmtPageDoc = "<script type=\"text/javascript\">"
+DiskMgmtPageDoc = DiskMgmtPageDoc "<!--\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "function confirmPost()\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "{\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "var agree=confirm('Are you sure you want to format this partition with a reiser file system?  All prior contents will be lost.');\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "if (agree)\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "return true ;\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "else\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "return false ;\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "}\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "// -->\n"
+DiskMgmtPageDoc = DiskMgmtPageDoc "</script>\n"
+  DiskMgmtPageDoc = DiskMgmtPageDoc "<form method=\"GET\" >"
 
   DiskTmp = DiskManagement(val)
 
@@ -539,17 +553,17 @@ function DiskManagement(select_value, i, outstr ) {
         outstr = outstr i " " "/dev/" disk_device[i] " " disk_id[i] "</option>" ORS
     }
     outstr = outstr "</select></td>"
-    outstr = outstr "<td ><input type=submit name=\"hdparm\" value=\"HDParm Info\"</td>"
-    outstr = outstr "<td ><input type=submit name=\"smart_stats\" value=\"Smart Status Report\"</td>"
-    outstr = outstr "<td ><input type=submit name=\"smart_short\" value=\"Short Smart Test\"</td>"
-    outstr = outstr "<td ><input type=submit name=\"smart_long\" value=\"Long Smart Test\"</td>"
+    outstr = outstr "<td ><input type=submit name=\"hdparm\" value=\"HDParm Info\"></td>"
+    outstr = outstr "<td ><input type=submit name=\"smart_stats\" value=\"Smart Status Report\"></td>"
+    outstr = outstr "<td ><input type=submit name=\"smart_short\" value=\"Short Smart Test\"></td>"
+    outstr = outstr "<td ><input type=submit name=\"smart_long\" value=\"Long Smart Test\"></td>"
     outstr = outstr "<td width=\"800\">&nbsp;</td>"
     outstr = outstr "</tr><tr><td>&nbsp;</td>"
-    outstr = outstr "<td ><input type=submit name=\"spin_up\" value=\"Spin Up\"</td>"
-    outstr = outstr "<td ><input type=submit name=\"spin_down\" value=\"Spin Down\"</td>"
-    outstr = outstr "<td ><input type=submit name=\"fsck\" value=\"File System Check\"</td>"
+    outstr = outstr "<td ><input type=submit name=\"spin_up\" value=\"Spin Up\"></td>"
+    outstr = outstr "<td ><input type=submit name=\"spin_down\" value=\"Spin Down\"></td>"
+    outstr = outstr "<td ><input type=submit name=\"fsck\" value=\"File System Check\"></td>"
     if ( has_fix_fixable == "YES" ) {
-      outstr = outstr "<td ><input type=submit name=\"fsck_repair\" value=\"F-S Repair (fix-fixable)\"</td>"
+      outstr = outstr "<td ><input type=submit name=\"fsck_repair\" value=\"F-S Repair (fix-fixable)\"></td>"
     }
     outstr = outstr "<td width=\"800\">&nbsp;</td>"
     outstr = outstr "</tr>"
@@ -694,8 +708,8 @@ function DiskManagement(select_value, i, outstr ) {
                         }
                     }
                 } else {
-                    unassigned_drive = unassigned_drive "<td ><input type=submit name=\"mkreiserfs-"
-                    unassigned_drive = unassigned_drive device[a] "-" fs "\" value=\"Create reiserfs on /dev/" device[a] "\"</td>"
+                    unassigned_drive = unassigned_drive "<td ><div style=\"background-color:red; border:2px solid black\"><input type=submit onClick=\"return confirmPost();\" name=\"mkreiserfs-"
+                    unassigned_drive = unassigned_drive device[a] "-" fs "\" value=\"Create reiserfs on /dev/" device[a] "\"><br><b>Warning:</b> creating a reiser file system will reformat this partition. Any existing contents will be lost.</div></td>"
                     unassigned_drive = unassigned_drive "<td width=\"5*\"></td>"
                 }
             # If this is the raw drive, and not a partition.  
@@ -704,24 +718,24 @@ function DiskManagement(select_value, i, outstr ) {
                 if ( model_serial[a] ~ /^usb-/ ) {
                     unassigned_drive = unassigned_drive "<td align=\"left\" width=\"30%\" colspan=\"6\"></td>"
                     #unassigned_drive = unassigned_drive "<input type=submit name=\"hdparm-"
-                    #unassigned_drive = unassigned_drive device[a] "\" value=\"HDParm (" device[a] ")\"</td>"
+                    #unassigned_drive = unassigned_drive device[a] "\" value=\"HDParm (" device[a] ")\"></td>"
                 } else {
                     unassigned_drive = unassigned_drive "<td ><input type=submit name=\"hdparm-"
-                    unassigned_drive = unassigned_drive device[a] "\" value=\"HDParm (" device[a] ")\"</td>"
+                    unassigned_drive = unassigned_drive device[a] "\" value=\"HDParm (" device[a] ")\"></td>"
                     unassigned_drive = unassigned_drive "<td ><input type=submit name=\"smart_status-"
-                    unassigned_drive = unassigned_drive device[a] "\" value=\"Smart Status (" device[a] ")\"</td>"
+                    unassigned_drive = unassigned_drive device[a] "\" value=\"Smart Status (" device[a] ")\"></td>"
                     unassigned_drive = unassigned_drive "</tr>"
                     unassigned_drive = unassigned_drive "<tr><td colspan=\"6\"></td>"
                     unassigned_drive = unassigned_drive "<td ><input type=submit name=\"smart_short-"
-                    unassigned_drive = unassigned_drive device[a] "\" value=\"Short Smart Test (" device[a] ")\"</td>"
+                    unassigned_drive = unassigned_drive device[a] "\" value=\"Short Smart Test (" device[a] ")\"></td>"
                     unassigned_drive = unassigned_drive "<td ><input type=submit name=\"smart_long-"
-                    unassigned_drive = unassigned_drive device[a] "\" value=\"Long Smart Test (" device[a] ")\"</td>"
+                    unassigned_drive = unassigned_drive device[a] "\" value=\"Long Smart Test (" device[a] ")\"></td>"
                     unassigned_drive = unassigned_drive "</tr>"
                     unassigned_drive = unassigned_drive "<tr><td colspan=\"6\"></td>"
                     unassigned_drive = unassigned_drive "<td ><input type=submit name=\"spin_up-"
-                    unassigned_drive = unassigned_drive device[a] "\" value=\"Spin Up (" device[a] ")\"</td>"
+                    unassigned_drive = unassigned_drive device[a] "\" value=\"Spin Up (" device[a] ")\"></td>"
                     unassigned_drive = unassigned_drive "<td ><input type=submit name=\"spin_down-"
-                    unassigned_drive = unassigned_drive device[a] "\" value=\"Spin Down (" device[a] ")\"</td>"
+                    unassigned_drive = unassigned_drive device[a] "\" value=\"Spin Down (" device[a] ")\"></td>"
                     unassigned_drive = unassigned_drive "</tr>"
                 }
             }

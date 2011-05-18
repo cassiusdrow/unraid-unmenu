@@ -70,6 +70,12 @@ function GetArrayStatus(a, d) {
              #perr(disk_model[i])
              rdisk_model[i]  = disk_model[i]
           }
+          else {
+             disk_serial[i]  = disk_id[i]
+             rdisk_serial[i] = disk_serial[i]
+             disk_model[i]   = "Unknown"
+             rdisk_model[i]  = disk_model[i]
+          }
        }
     }
     # Fix for 5.0 where parity check stats are not returned as before

@@ -8,6 +8,7 @@ BEGIN {
 #define ADD_ON_VERSION 1.0 - contributed by bjp999
 #define ADD_ON_VERSION 1.5 - Part of myMain 12-1-10 release, contributed by bjp999
 #define ADD_ON_VERSION 1.53 - changes for myMain 3-10-11 release, contributed by bjp999 - 5.0b6 support
+#define ADD_ON_VERSION 1.54 - changes for myMain 4-10-11 release, contributed by bjp999 - smartctl support
 #UNMENU_RELEASE $Revision$ $Date$
 
    # (c) Copyright bjp999, 2009-2011.  All rights reserved.
@@ -55,10 +56,18 @@ BEGIN {
 
    if(cmd == "smartctl") {
       if(GETARG["file"] == "")
+
          if(GETARG["smart"] == "")
             RunCommand(sprintf("smartctl -a -d ata /dev/%s", dev), disk);
-         else
-            RunCommand(sprintf("smartctl -a " GETARG["smart"] " /dev/%s", dev), disk);
+         else {
+            smart=GETARG["smart"]
+            gsub("%20", " ", smart);
+            if(index(smart, "/dev") <= 0)
+               smart = smart " /dev/" dev;
+
+            #perr(smart);
+            RunCommand("smartctl -a " smart, disk);
+         }
       else
          RunCommand("fromdos<" GETARG["file"], GETARG["file"], "smartctl " GETARG["file"]);
    }

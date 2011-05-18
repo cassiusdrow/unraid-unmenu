@@ -4,10 +4,13 @@
 #ADD_ON_VERSION 1.51 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update 1
 #ADD_ON_VERSION 1.52 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update 2
 #ADD_ON_VERSION 1.53 - changes for myMain 3-10-11 release, contributed by bjp999 - 5.0b6 support
+#ADD_ON_VERSION 1.54 - changes for myMain 4-10-11 release, contributed by bjp999 - preclear support
 #UNMENU_RELEASE $Revision$ $Date$
 
    # (c) Copyright bjp999, 2009-2011.  All rights reserved.
    # This program carries no warranty or guarantee of any kind.  It is used strictly at the users risk.
+
+# http://chart.apis.google.com/chart?chxl=1:|%25label1%25|%25label2%25|%25label3%25|%25lable4%25|%25label5%25&chxr=0,0,150|1,0,150&chxt=y,x&chbh=a&chs=300x225&cht=bvg&chco=A2C180&chds=0,150&chd=t:90,130,112,75,98&chtt=%25MyChart%25
 
 #-----------------------------------------------------------------------
 # This function begins the creation of the drivedb[] associative array.
@@ -529,9 +532,15 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
       #--------------------------------------------------------------------
       if(drivedb[ix, "file"] == "") {
          smartopt="-d ata"
+
          if(drivedb[ix, "smartopt"] != "")
-             smartopt = drivedb[ix, "smartopt"];
-         cmd = "smartctl -a " PERMISSIVE_OPTION " " smartopt " /dev/" drivedb[ix, "dev"];
+            smartopt = drivedb[ix, "smartopt"];
+
+         if(index(smartopt, "/dev/") <= 0)
+            smartopt = smartopt " /dev/" drivedb[ix, "dev"];
+
+         cmd = "smartctl -a " PERMISSIVE_OPTION " " smartopt;
+
          #perr("1 smartctl " drivedb[ix, "dev"]);
       }
       else
@@ -887,6 +896,7 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
              drivedb[i, "status_raw"] = "DISK_UN"
              drivedb[i, "status"] = "UN"
              drivedb[i, "disk"]   = "--";
+             drivedb[i, "staticon"] = constant["ICON_UN"];
           }
           else {
              drivedb[i, "status_raw"] = "DISK_MT"
@@ -926,7 +936,7 @@ function GetOtherDisks(bootdrive, cachedrive, a, i, modela, k, m, ms, outstr) {
 
           drivedb[i, "serial"] = ms[k];
           drivedb[i, "autoid"] = lastchars(drivedb[i, "serial"], constant["IdLen"])
-          drivedb[i, "autoid4"] = lastchars(drivedb[i, "serial"], 0)
+          drivedb[i, "autoid4"] = lastchars(drivedb[i, "serial"], 4)
           drivedb[i, "modelnum"]  = substr(modela,2);
           GetDriveManufacturer(i)
 
@@ -1023,7 +1033,10 @@ function GetDiskTemps(smart_already_run, cmd, a, ix, ix2, lst, t, dev) {
                    smartopt="-d ata -A"
                    if(drivedb[ix, "smartopt"] != "")
                        smartopt = drivedb[ix, "smartopt"];
-                   cmd = "smartctl " PERMISSIVE_OPTION " " smartopt " /dev/" drivedb[ix, "dev"] "| grep -i '^194'"
+                   if(index(smartopt, "/dev/") <= 0)
+                      smartopt = smartopt " /dev/" drivedb[ix, "dev"];
+
+                   cmd = "smartctl " PERMISSIVE_OPTION " " smartopt "| grep -i '^194'"
                    #perr("2 smartctl " drivedb[ix, "dev"]);
                    #perr("cmd="cmd)
                    while ((cmd | getline a) > 0 ) {
@@ -1136,8 +1149,8 @@ function GetDiskSpinState(lst, cmd, ix, a) {
             else if(a ~ "active")
                drivedb[ix, "spinind"] = 1;
             else {
-               perr("Unrecognized state, drive " drivedb[ix, "dev"] ", assuming not spinning: " a)
-               drivedb[ix, "spinind"] = 0;
+               perr("Unrecognized state, drive " drivedb[ix, "dev"] " (set spinind to -1 for this drive): " a)
+               drivedb[ix, "spinind"] = -1;
             }
          }
       }
@@ -1148,10 +1161,12 @@ function GetDiskSpinState(lst, cmd, ix, a) {
 function SetSpinstat(ix) {
    for(ix=0; ix<drivedb["count"]; ix++)
       if(drivedb[ix, "role"] != "boot")   # 1.3
-         if(drivedb[ix, "spinind"] == 1)
+         if(drivedb[ix, "spinind"] > 0)
             drivedb[ix, "spinstat"] = constant["SpinHtml"];
-         else
+         else if(drivedb[ix, "spinind"] == 0)
             drivedb[ix, "spinstat"] = constant["NospinHtml"];
+         else
+            drivedb[ix, "spinstat"] = ""
 }
 
 
@@ -1630,12 +1645,15 @@ function LoadConfigFile(fn, config, getconfig, li, li2, ix, l, curline)
 # Apply values from the config file (stored in the "configvalue" array) to
 # the drivedb array.
 #--------------------------------------------------------------------------
-function ApplyConfigValues() {
+function ApplyConfigValues(logit,a) {
+   logit=0
    for(i=0; i<configvalue["count"]; i++) {
+
       for(;;) {
          j = drivedb[configvalue[i, 0]]
          if(j != "")
             break;
+
          if(length(configvalue[i, 0]) > 4) {
             j=drivedb[ lastchars(configvalue[i,0], 4) ]
             if(j != "")
@@ -1648,9 +1666,54 @@ function ApplyConfigValues() {
       if(j == "")
          #perr("WARNING: SetDriveValue(" configvalue[i, 0] ", " configvalue[i, 1] ", " configvalue[i, 2] ") - No drive found");
          ;
-      else
+      else {
          drivedb[j, configvalue[i, 1]] = configvalue[i, 2];
+         if(logit == 1)
+           perr(configvalue[i, 1] "=" configvalue[i,2])
+      }
    }
+
+   for(i=0; i<drivedb["count"]; i++) {
+      if(drivedb[i, "icon"] != "") {
+         s = drivedb[i, "status_raw"];
+         if((s == "DISK_MT") ||
+            (s == "DISK_OK") ||
+            (s == "DISK_RAW") ||
+            (s == "DISK_UN") ||
+            (s == "DISK_BT"))
+            drivedb[i, "staticon"] = constant[drivedb[i, "icon"]];
+      }
+      cmd = "cat /tmp/preclear_stat_* 2>/dev/null"
+   }
+
+   while ((cmd | getline a) > 0 ) {
+      #lines look like this...
+      # sda|YY|PreRead ...
+      # sda=device
+      # YY = <first char is done or not done><second char is error ind>
+      delete d;
+      i=split(a,d,"|");
+      if(i < 3)
+         continue;
+      gsub("\\^n", "<br>", d[3]);
+      ix = drivedb[d[1]];
+      if(ix < 1)
+         perr("Precleared disk " d[1] " not found in drivedb[]")
+      else {
+         drivedb[ix, "usage"]="<a href=\"" myMainLink("cmd=pcclear" amp "dev=" drivedb[ix, "dev"]) "\"><span title='Click (when finished) to delete the final preclear status'>" d[3] "</span></a>"
+         if(substr(d[2], 2, 1) == "Y")
+            drivedb[ix, "rowextra"] = drivedb[ix, "rowextra"] ColorHtml["red"];
+         else
+            drivedb[ix, "usageextra"] = drivedb[ix, "usageextra"] ColorHtml["yellow"];
+
+         s = drivedb[ix, "status_raw"];
+         if((s == "DISK_MT") ||
+            (s == "DISK_RAW") ||
+            (s == "DISK_UN"))
+            drivedb[ix, "staticon"] = constant["ICON_PRECLEAR"];
+      }
+   }
+   close(cmd);
 }
 
 #---------------------------------------------------------------------------

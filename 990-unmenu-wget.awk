@@ -67,6 +67,12 @@ BEGIN {
   cmd | getline ScriptDirectory
   close(cmd)
 
+  # See if wget is available
+  has_wget="no"
+  if (system("which wget >/dev/null 2>&1" )==0) {
+    has_wget="yes"
+  }
+
   # open unmenu package files, 
   # look for any "*-unmenu-package*.conf" files
   # move them to the packages directory, then
@@ -251,6 +257,8 @@ BEGIN {
                manual_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".manual_install"
                print "PACKAGE_DIRECTORY=" PACKAGE_DIRECTORY > manual_install_file
                print "SCRIPT_DIRECTORY=" ScriptDirectory > manual_install_file
+               print "MyHost=" MyHost > manual_install_file
+               print "MyPort=" MyPort > manual_install_file
                for ( pc=1; pc <= package_variable_count[i]; pc++ ) {
                   delete f;
                   match ( package_variable[i,pc] , /^([^\|]*)(\|\|)([^=]*)(=)(.*)(\|\|)(.*)/, f);
@@ -310,6 +318,8 @@ BEGIN {
                auto_install_file = PACKAGE_DIRECTORY "/" package_file[i] ".auto_install"
                print "PACKAGE_DIRECTORY=" PACKAGE_DIRECTORY > auto_install_file
                print "SCRIPT_DIRECTORY=" ScriptDirectory > auto_install_file
+               print "MyHost=" MyHost > auto_install_file
+               print "MyPort=" MyPort > auto_install_file
                for ( pc=1; pc <= package_variable_count[i]; pc++ ) {
                   delete f;
                   match ( package_variable[i,pc] , /^([^\|]*)(\|\|)([^=]*)(=)(.*)(\|\|)(.*)/, f);
@@ -370,8 +380,18 @@ BEGIN {
                     theServer = substr(package_url[i],c[2,"start"],c[2,"length"])
                     #theURL    = "/" substr(package_url[i],c[3,"start"],c[3,"length"])
                     port   = "/80"
-                    dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_file[i],  theServer, port, package_url[i] )
+                    if ( has_wget == "yes" ) {
+                      dl_out = wget_package( PACKAGE_DIRECTORY "/" package_file[i], package_url[i]);
+                    } else {
+                      dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_file[i],  theServer, port, package_url[i] )
+                    }
                     theHTML = theHTML "<br>" dl_out "<br>"
+                  } else {
+                    # not a simple http:// request, use wget if we have it.
+                    if ( has_wget == "yes" ) {
+                      dl_out = wget_package( PACKAGE_DIRECTORY "/" package_file[i], package_url[i]);
+                      theHTML = theHTML "<br>" dl_out "<br>"
+                    }
                   }
                   if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
                     theHTML = theHTML "<font color=\"blue\"><b>" the_package " has been downloaded</b></font><br>"
@@ -388,8 +408,19 @@ BEGIN {
                       theServer = substr(package_extra_url[i,p],c[2,"start"],c[2,"length"])
                       #theURL    = "/" substr(package_extra_url[i,p],c[3,"start"],c[3,"length"])
                       port   = "/80"
-                      dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_extra_file[i,p],  theServer, port, package_extra_url[i,p] )
-                      theHTML = theHTML "<br>" dl_out "<br>"
+                      if ( has_wget == "yes" ) {
+                        dl_out = wget_package( PACKAGE_DIRECTORY "/" package_file[i], package_url[i]);
+                        theHTML = theHTML "<br>" dl_out "<br>"
+                      } else {
+                        dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_extra_file[i,p],  theServer, port, package_extra_url[i,p] )
+                        theHTML = theHTML "<br>" dl_out "<br>"
+                      } 
+                    } else {
+                      # not a simple http:// request, use wget if we have it.
+                      if ( has_wget == "yes" ) {
+                        dl_out = wget_package( PACKAGE_DIRECTORY "/" package_file[i], package_url[i]);
+                        theHTML = theHTML "<br>" dl_out "<br>"
+                      }
                     }
                     if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" ) {
                       theHTML = theHTML "<font color=\"blue\"><b>" package_extra_file[i,p] " has been downloaded</b></font><br>"
@@ -791,6 +822,16 @@ BEGIN {
   theHTML = theHTML "</fieldset>"
 
   print theHTML
+}
+
+function wget_package( pfile, purl, cmd, f, t) {
+  t=""
+  cmd = "wget -O " pfile " " purl " 2>&1"
+  while (( cmd | getline f ) > 0) {
+    t = t f "<br>"
+  }
+  close(cmd);
+  return t
 }
 
 function SubstituteVariables( theString , k) {
