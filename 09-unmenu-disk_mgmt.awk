@@ -11,6 +11,7 @@ BEGIN {
 #ADD_ON_VERSION 1.4 - use spinup/spindown commands now available in 4.5 unRAID Joe L.
 #ADD_ON_VERSION 1.5 - added call to srand() to seed random number generator used when spinning up disks not assigned to the array.
 #ADD_ON_VERSION 1.6 - Fixed html input tags, added modprobe of ntfs module; added warning and confirm to create reiserfs.
+#ADD_ON_VERSION 1.7 - fixed "mount" command to get file system type even if disk is apparently not spinning (where temp = "*" or "")
 #UNMENU_RELEASE $Revision$ $Date$
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
@@ -634,14 +635,16 @@ function DiskManagement(select_value, i, outstr ) {
               prev_disk = model_serial[a]
               unassigned_drive = unassigned_drive "<td>" model_serial[a] "</td>"
               temp= GetDiskTemperature( "/dev/" substr(device[a],1,3) );
-              if ( temp != "*" && temp != "" ) {
+              #if ( temp != "*" && temp != "" ) {
+              if ( 1 == 1) {
                 fs = GetDiskFileSystem("/dev/" device[a] );
               } else {
                 fs = ""
               }
               unassigned_drive = unassigned_drive "<td align=\"center\">" temp "</td>"
             } else {
-              if ( temp != "*" && temp != "" ) {
+              #if ( temp != "*" && temp != "" ) {
+              if ( 1 == 1) {
                 fs = GetDiskFileSystem("/dev/" device[a] );
               }
               unassigned_drive = unassigned_drive "<td align=right>partition (" CommaFormat(blocks[a]) " blocks):</td><td>&nbsp;</td>"
