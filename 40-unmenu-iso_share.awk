@@ -81,6 +81,7 @@ BEGIN {
      }
   } else {
       # if it does not have any allowed folders defined, use the following default list
+      # I know we cannot have 24 disks, but just in case in the future they are defined.
       ALLOWED_FOLDER[af++] = "/mnt/user/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk1/" 
@@ -98,6 +99,15 @@ BEGIN {
       ALLOWED_FOLDER[af++] = "/mnt/disk13/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk14/" 
       ALLOWED_FOLDER[af++] = "/mnt/disk15/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk16/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk17/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk18/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk19/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk20/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk21/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk22/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk23/" 
+      ALLOWED_FOLDER[af++] = "/mnt/disk24/" 
   }
 
   num_mounts=GetLoopMountedISO()
