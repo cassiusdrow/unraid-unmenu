@@ -419,7 +419,7 @@ BEGIN {
                     } else {
                       # not a simple http:// request, use wget if we have it.
                       if ( has_wget == "yes" ) {
-                        dl_out = wget_package( PACKAGE_DIRECTORY "/" package_file[i], package_url[i]);
+                        dl_out = wget_package( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_url[i,p]);
                         theHTML = theHTML "<br>" dl_out "<br>"
                       }
                     }
