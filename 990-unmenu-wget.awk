@@ -20,6 +20,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.3   Modified to select package and then only show selected package.
 #define ADD_ON_VERSION     2.4   Fixed bug when dealing with multiple packages defined in a single file (depricated usage)
 #define ADD_ON_VERSION     2.5   Fixed bug when URL is re-directed when downloading from a server. Enhanced error messages when download fails. Added logic to not download if file already exists with correct checksum.
+#define ADD_ON_VERSION     2.6   Fixed accidentally introduced cut/paste bug that prevented downloading of extra files.
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -409,7 +410,7 @@ BEGIN {
                       #theURL    = "/" substr(package_extra_url[i,p],c[3,"start"],c[3,"length"])
                       port   = "/80"
                       if ( has_wget == "yes" ) {
-                        dl_out = wget_package( PACKAGE_DIRECTORY "/" package_file[i], package_url[i]);
+                        dl_out = wget_package( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_url[i,p]);
                         theHTML = theHTML "<br>" dl_out "<br>"
                       } else {
                         dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_extra_file[i,p],  theServer, port, package_extra_url[i,p] )
