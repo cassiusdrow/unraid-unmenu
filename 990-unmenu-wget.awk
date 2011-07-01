@@ -21,6 +21,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.4   Fixed bug when dealing with multiple packages defined in a single file (depricated usage)
 #define ADD_ON_VERSION     2.5   Fixed bug when URL is re-directed when downloading from a server. Enhanced error messages when download fails. Added logic to not download if file already exists with correct checksum.
 #define ADD_ON_VERSION     2.6   Fixed accidentally introduced cut/paste bug that prevented the downloading of extra files.
+#define ADD_ON_VERSION     2.7   added --no-get-certificate to wget to allow use of https sites for packages
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -827,7 +828,7 @@ BEGIN {
 
 function wget_package( pfile, purl, cmd, f, t) {
   t=""
-  cmd = "wget -O " pfile " " purl " 2>&1"
+  cmd = "wget --no-check-certificate -O " pfile " " purl " 2>&1"
   while (( cmd | getline f ) > 0) {
     t = t f "<br>"
   }
