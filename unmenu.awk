@@ -25,7 +25,7 @@ BEGIN {
   }
   close("unmenu.awk")
 
-  version = "Version 1.4 " theRevision " Joe L.... with modifications as suggested by bjp999 and many others"
+  version = "Version 1.5 " theRevision " Joe L.... with modifications as suggested by bjp999 and many others"
 
   # Plug-in scripts are expected to reside in the same directory where this program is invoked if the following
   # variable is not changed.  If you wish to speciify a different directory for the plug-in scripts, you
@@ -1719,7 +1719,8 @@ function GetArrayStatus(a) {
     # Compute values that pre-5.0 computed automatically                               #bjp999 3/7/11 Change for 5.0b6
     if(resync_dt != "") {                                                              #bjp999 3/7/11 Change for 5.0b6
       resync_percentage = sprintf("%.2f", resync_pos / (mdresync/1000 + 1));           #bjp999 3/7/11 Change for 5.0b6
-      resync_speed      = sprintf("%d", (resync_db+0) / (resync_dt+0));                #bjp999 3/7/11 Change for 5.0b6
+      #resync_speed      = sprintf("%d", (resync_db+0) / (resync_dt+0));                #bjp999 3/7/11 Change for 5.0b6
+      resync_speed      = sprintf("%d", (resync_db+0) / (resync_dt+0.1));              #Joe L. temp fix for divide by 0
       rt = (resync_dt * ((mdresync-resync_pos) / (resync_db/100+1)))/100;              #bjp999 3/7/11 Change for 5.0b6
       resync_finish     = sprintf("%d", rt/60 );                                       #bjp999 3/7/11 Change for 5.0b6
     }                                                                                  #bjp999 3/7/11 Change for 5.0b6

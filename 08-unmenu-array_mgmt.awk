@@ -8,6 +8,7 @@ BEGIN {
 #ADD_ON_VERSION 1.2 - modified spin-up/spin down to use commands available as of 4.5 unRAID  - Joe L.
 #ADD_ON_VERSION 1.2.1 - modified spin-up/spin down to use commands available as of 4.5 unRAID  - Joe L.
 #ADD_ON_VERSION 1.2.3 - fixed "Stop" button - Joe L.
+#ADD_ON_VERSION 1.2.4 - fixed path to md.c to detect NOCORRECT mode
 #UNMENU_RELEASE $Revision$ $Date$
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
@@ -398,7 +399,7 @@ function IsSambaStarted( cmd) {
 
 function HasParity_NOCORRECT() {
     has_parity_nocorrect="no"
-    cmd="grep NOCORRECT /usr/src/linux/drivers/md/md.c"
+    cmd="grep NOCORRECT /usr/src/linux*/drivers/md/md.c"
     while (( cmd | getline f ) > 0)  {
       if ( f ~ "NOCORRECT" ) {
         has_parity_nocorrect="yes"
