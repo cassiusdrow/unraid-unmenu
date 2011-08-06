@@ -79,7 +79,7 @@ function GetArrayStatus(a, d) {
        }
     }
     # Fix for 5.0 where parity check stats are not returned as before
-    if(mdResyncDt != "") {
+    if((mdResyncDt+0) > 0) {                                             # bjp999 7-10-11 - 5.0b8
       # max_blocks = mdresync
       # resync = resync_pos
       # /* compute completion percentage */

@@ -1697,7 +1697,7 @@ function ApplyConfigValues(logit,a) {
          continue;
       gsub("\\^n", "<br>", d[3]);
       ix = drivedb[d[1]];
-      if(ix < 1)
+      if(ix == "")
          perr("Precleared disk " d[1] " not found in drivedb[]")
       else {
          drivedb[ix, "usage"]="<a href=\"" myMainLink("cmd=pcclear" amp "dev=" drivedb[ix, "dev"]) "\"><span title='Click (when finished) to delete the final preclear status'>" d[3] "</span></a>"
