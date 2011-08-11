@@ -22,6 +22,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.5   Fixed bug when URL is re-directed when downloading from a server. Enhanced error messages when download fails. Added logic to not download if file already exists with correct checksum.
 #define ADD_ON_VERSION     2.6   Fixed accidentally introduced cut/paste bug that prevented the downloading of extra files.
 #define ADD_ON_VERSION     2.7   added --no-get-certificate to wget to allow use of https sites for packages
+#define ADD_ON_VERSION     2.8   added PACKAGE_MIN_SIZE and PACKAGE_EXTRA_MIN_SIZE paramaters to make it easier to deal with unknown source file MD5 checksums.
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -118,6 +119,9 @@ BEGIN {
           package_md5[package_count]    = ""
           package_extra_md5[package_count]    = ""
           package_extra_md5_count[package_count] = 0
+          package_min_size[package_count]    = ""
+          package_extra_min_size[package_count]    = ""
+          package_extra_min_size_count[package_count] = 0
           package_installed[package_count]   = ""
           package_version_test[package_count]   = "echo undefined"
           package_version_string[package_count]   = ""
@@ -168,11 +172,24 @@ BEGIN {
 	  package_md5[package_count] = substr(line,c[3,"start"],c[3,"length"])
       }
       delete c;
+      # the alt min size if an MD5 is not given
+      match( line , /^(PACKAGE_MIN_SIZE)([\t =]+)(.+)/, c)
+      if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+	  package_min_size[package_count] = substr(line,c[3,"start"],c[3,"length"])
+      }
+      delete c;
       # the MD5 checksum to verify the downloaded extra file arrived intact.
       match( line , /^(PACKAGE_EXTRA_MD5)([\t =]+)(.+)/, c)
       if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
           package_extra_md5_count[package_count]++
 	  package_extra_md5[package_count,package_extra_md5_count[package_count]] = substr(line,c[3,"start"],c[3,"length"])
+      }
+      delete c;
+      # the alt min size if an MD5 is not given
+      match( line , /^(PACKAGE_EXTRA_MIN_SIZE)([\t =]+)(.+)/, c)
+      if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+          package_extra_min_size_count[package_count]++
+	  package_extra_min_size[package_count,package_extra_min_size_count[package_count]] = substr(line,c[3,"start"],c[3,"length"])
       }
       delete c;
       # the name of a file to test if package installed.  If it exists, package is installed.
@@ -376,6 +393,8 @@ BEGIN {
                select_package_file = the_package
                if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" && VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
                   theHTML = theHTML "<b>" package_file[i] " download not necessary, file already exists with correct MD5 checksum<br></b>"
+               } else if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" && VerifyMIN_SIZE( PACKAGE_DIRECTORY "/" package_file[i], package_min_size[i] ) == "OK" ) {
+                  theHTML = theHTML "<b>" package_file[i] " download not necessary, file already exists with the correct minimum size<br></b>"
                } else {
                   match( package_url[i] , /^(http:\/\/)([^\/]*)(.*)/, c)
                   if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
@@ -404,6 +423,8 @@ BEGIN {
                for ( p = 1; p <= package_extra_url_count[i]; p++ ) {
                  if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" && VerifyMD5( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_md5[i,p] ) == "OK" ) {
                     theHTML = theHTML "<b>" package_extra_file[i,p] " download not necessary, file already exists with correct MD5 checksum.<br></b>"
+                 } else if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" && VerifyMIN_SIZE( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_min_size[i,p] ) == "OK" ) {
+                    theHTML = theHTML "<b>" package_extra_file[i,p] " download not necessary, file already exists with the correct minimum size.<br></b>"
                  } else {
                     match( package_extra_url[i,p] , /^(http:\/\/)([^\/]*)(.*)/, c)
                     if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
@@ -633,7 +654,7 @@ BEGIN {
                  nomd5="true"
                } else {
                  if ( allPackageFilesExist(i) == "yes" ) {
-                   if (allMD5Verify( i ) == "OK" ) {
+                   if (AllFileVerify( i ) == "OK" ) {
                      theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
                    } else {
                      theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
@@ -660,11 +681,12 @@ BEGIN {
              } else {
                theHTML = theHTML "<td><font color=\"purple\">Package downloaded, but not yet installed</font></td>"
              }
-             if ( nomd5 == "true" || VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" ) {
+             if ( nomd5 == "true" || VerifyMD5( PACKAGE_DIRECTORY "/" package_file[i], package_md5[i] ) == "OK" || 
+					VerifyMIN_SIZE(  PACKAGE_DIRECTORY "/" package_file[i], package_min_size[i] ) == "OK" ) {
                theHTML = theHTML "<td><input type=submit name=\"manual_install-" package_file[i] "\" value=\"Install " package_file[i] "\"</td>"
                nomd5=""
              } else {
-               theHTML = theHTML "<td><b><font color=\"red\"> (MD5 of existing downloaded file NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
+               theHTML = theHTML "<td><b><font color=\"red\"> (MD5 or min size of existing downloaded file NOT matched - download may be corrupted or download URL no longer valid.)</b></font>"
                theHTML = theHTML "<input type=submit name=\"download-" package_file[i] "\" value=\"Re-Download " package_file[i] "\"</td>"
              }
           }
@@ -713,10 +735,25 @@ BEGIN {
         }
       } 
       theHTML = theHTML "</td></tr>"
+    } else if ( package_min_size[i] != "" ) {
+      theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Min Size:</b></td>"
+      theHTML = theHTML "<td valign=\"top\">" package_min_size[i] 
+      if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
+        if ( VerifyMIN_SIZE( PACKAGE_DIRECTORY "/" package_file[i], package_min_size[i] ) == "OK" ) {
+          theHTML = theHTML "<b> (matches min size of downloaded file " package_file[i] ")</b>"
+        } else {
+          theHTML = theHTML "<b><font color=\"red\"> (NOT min size - download may be corrupted or download URL no longer valid.)<br>"
+          if ( IsHTML( PACKAGE_DIRECTORY "/" package_file[i], 30 ) == "YES" ) {
+              theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_file[i], 20)
+          }
+          theHTML = theHTML "</b></font><br>"
+        }
+      } 
+      theHTML = theHTML "</td></tr>"
     } else {
       if ( package_url[i] != "none" ) {
         theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>md5 Checksum:</b></td>"
-        theHTML = theHTML "<td valign=\"top\"> md5 not specified in config file </td></tr>"
+        theHTML = theHTML "<td valign=\"top\"> neither md5 or min-size not specified in config file </td></tr>"
       }
     }
     for ( p = 1; p <= package_extra_url_count[i]; p++ ) {
@@ -739,9 +776,24 @@ BEGIN {
           }
         } 
         theHTML = theHTML "</td></tr>"
+      } else if ( package_extra_min_size[i,p] != "" ) {
+        theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Addl. Min-Size:</b></td>"
+        theHTML = theHTML "<td valign=\"top\">" package_extra_min_size[i,p] 
+        if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" ) {
+          if ( VerifyMIN_SIZE( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_min_size[i,p] ) == "OK" ) {
+            theHTML = theHTML "<b> (matches min size of downloaded file " package_extra_file[i,p] ")</b>"
+          } else {
+            theHTML = theHTML "<b><font color=\"red\"> (NOT min-size - download may be corrupted, or download URL no longer valid.)<br>"
+            if ( IsHTML( PACKAGE_DIRECTORY "/" package_extra_file[i,p], 30 ) == "YES" ) {
+                theHTML = theHTML ShowFile( PACKAGE_DIRECTORY "/" package_extra_file[i,p], 20)
+            }
+            theHTML = theHTML "</b></font><br>"
+          }
+        } 
+        theHTML = theHTML "</td></tr>"
       } else {
         theHTML = theHTML "<tr><td align=\"right\" valign=\"top\"><b>Addl. md5 Checksum:</b></td>"
-        theHTML = theHTML "<td valign=\"top\"> md5 not specified in config file </td></tr>"
+        theHTML = theHTML "<td valign=\"top\"> neither MD5 nor min-size specified in config file </td></tr>"
       }
     }
 
@@ -885,13 +937,29 @@ function PackageVersionTest( theTest ) {
   return verString;
 }
 
-function allMD5Verify( package_index , p) {
-    if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_file[package_index], package_md5[package_index] ) != "OK" ) {
-      return "BAD"
+function AllFileVerify( package_index , p) {
+    if (  package_md5[package_index] != "none" &&  package_md5[package_index] != "" ) { 
+        if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_file[package_index], package_md5[package_index] ) != "OK" ) {
+          return "BAD"
+        }
     }
     for ( p = 1; p <= package_extra_md5_count[ package_index ]; p++ ) {
-      if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_extra_file[package_index,p], package_extra_md5[package_index,p] ) != "OK" ) {
-        return "BAD"
+      if ( package_extra_md5[package_index,p] != "" ) {
+          if ( VerifyMD5( PACKAGE_DIRECTORY "/" package_extra_file[package_index,p], package_extra_md5[package_index,p] ) != "OK" ) {
+            return "BAD"
+          }
+      }
+    }
+    if (  package_min_size[package_index] != "" ) { 
+        if ( VerifyMIN_SIZE( PACKAGE_DIRECTORY "/" package_file[package_index], package_min_size[package_index] ) != "OK" ) {
+          return "BAD"
+        }
+    }
+    for ( p = 1; p <= package_extra_min_size_count[ package_index ]; p++ ) {
+      if ( package_extra_min_size[package_index,p] != "" ) {
+          if ( VerifyMIN_SIZE( PACKAGE_DIRECTORY "/" package_extra_file[package_index,p], package_extra_min_size[package_index,p] ) != "OK" ) {
+            return "BAD"
+          }
       }
     }
     return "OK"
@@ -910,6 +978,21 @@ function VerifyMD5( fpath , md5 , cmd) {
   close(cmd);
   RS=OLD_RS
   return md5result;
+}
+
+function VerifyMIN_SIZE( fpath , min_size , cmd) {
+  OLD_RS=RS
+  RS="\n"
+  cmd = "ls -l " fpath " | sed 1q | awk '{print $5}'"
+  cmd | getline
+  if ( min_size <= $1 ) {
+    min_size_result="OK"
+  } else {
+    min_size_result="BAD"
+  }
+  close(cmd);
+  RS=OLD_RS
+  return min_size_result;
 }
 
 function IsHTML( fpath , numlines,  line, linecounter) {
