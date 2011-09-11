@@ -4,6 +4,7 @@ BEGIN {
 #define ADD_ON_STATUS NO
 #define ADD_ON_TYPE   awk
 #define ADD_ON_VERSION   1.1 Joe L. -- Added parse of "ps" to check for non-standard emhttp port.
+#define ADD_ON_VERSION   1.2 Joe L. -- Added code to detect presence of /etc/unraid-version and change main URL accordingly
 #UNMENU_RELEASE $Revision$ $Date$
 
   if ( ScriptDirectory == "" ) { 
@@ -23,8 +24,13 @@ BEGIN {
   GetConfigValues(ScriptDirectory "/" LocalConfigFile);
 
   MyHost = CONFIG["unRAIDHost"] ? CONFIG["unRAIDHost"] : getHost()
+  if (system("test -f /etc/unraid-version")==0) {
+     unRAID_main = "/Main"
+  } else {
+     unRAID_main = "/main.htm"
+  }
 
-  theHTML = "<br><iframe width=100% height=\"1200\" src=\"http://" MyHost "/main.htm\">"
+  theHTML = "<br><iframe width=100% height=\"1200\" src=\"http://" MyHost unRAID_main "\">"
   theHTML = theHTML "Sorry: your browser does not seem to support inline frames"
   theHTML = theHTML "</iframe>"
 
