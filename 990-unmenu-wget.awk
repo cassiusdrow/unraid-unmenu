@@ -23,6 +23,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.6   Fixed accidentally introduced cut/paste bug that prevented the downloading of extra files.
 #define ADD_ON_VERSION     2.7   added --no-get-certificate to wget to allow use of https sites for packages
 #define ADD_ON_VERSION     2.8   added PACKAGE_MIN_SIZE and PACKAGE_EXTRA_MIN_SIZE paramaters to make it easier to deal with unknown source file MD5 checksums.
+#define ADD_ON_VERSION     2.9   Fixed spelling error on "View All Available Packages" button..
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -551,7 +552,7 @@ BEGIN {
   theHTML = theHTML "<form>"
   theHTML = theHTML "<table width=\"100%\" border=0>"
   if ( edit_package_file != "" || select_package_file != "" ) {
-      theHTML = theHTML "<tr><td colspan=\"10\"><input type=submit name=\"\" value=\"View All Avaliable Packages\"><hr></td></tr>"
+      theHTML = theHTML "<tr><td colspan=\"10\"><input type=submit name=\"\" value=\"View All Available Packages\"><hr></td></tr>"
   }
   for ( i = 1; i <= package_count; i++ ) {
     if ( edit_package_file != "" ) {
