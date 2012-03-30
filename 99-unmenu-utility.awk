@@ -3,7 +3,9 @@ BEGIN {
 #define ADD_ON_MENU
 #define ADD_ON_STATUS  NO
 #define ADD_ON_TYPE    awk
-#ADD_ON_HTTP_HEADER=NO
+#ADD_ON_HTTP_TAGS=NO
+#ADD_ON_PAGE_HEADING=NO
+#ADD_ON_HTTP_HEADER=YES
 #ADD_ON_OPTIONS=-f unmenu.base.lib.awk -f utility.lib.awk
 #define ADD_ON_VERSION 1.0 - contributed by bjp999
 #define ADD_ON_VERSION 1.5 - Part of myMain 12-1-10 release, contributed by bjp999

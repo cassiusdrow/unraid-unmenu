@@ -637,7 +637,7 @@ BEGIN {
     } else if (GETARG["Method"] == "HEAD")    {
             http_headers = GetHTTP_Header("text/html", 0, "/" )
             print http_headers ORS |& HttpService
-    } else if (GETARG["Method"] != "") { print "bad method - " $0  GETARG["Method"] "-"
+    } else if (GETARG["Method"] != "" && DebugMode == "yes") { print "bad method - " $0  GETARG["Method"] "-"
     }
 
     if ( DebugMode == "yes" ) {
@@ -1696,10 +1696,11 @@ function GetArrayStatus(a) {
         if ( a ~ "mdResync=" )       { delete d; split(a,d,"="); mdresync=d[2] }       #bjp999 3/7/11 Change for 5.0b6
         # array status
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
-        # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id.
+        # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id, if present.
         if ( a ~ "diskName" )        { delete d; split(a,d,"[.=]"); disk_name[d[2]]=d[3]; }
-        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1;
-                                                 disk_id[d[2]]=substr(d[3],offset); }
+	if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); if ( substr(d[3],1,4) == "ata-" )
+                                                                         { disk_id[d[2]]=substr(d[3],5) }
+                                                                    else { disk_id[d[2]]=d[3];} }
         if ( a ~ "diskSerial" )      { delete d; split(a,d,"[.=]"); disk_serial[d[2]]=d[3]; }
         if ( a ~ "diskSize" )        { delete d; split(a,d,"[.=]"); disk_size[d[2]]=d[3]; }
         if ( a ~ "rdevSerial" )      { delete d; split(a,d,"[.=]"); rdisk_serial[d[2]]=d[3]; }

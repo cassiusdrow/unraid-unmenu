@@ -3,7 +3,9 @@ BEGIN {
 #ADD_ON_MENU=
 #ADD_ON_STATUS=YES
 #ADD_ON_TYPE=awk
-#ADD_ON_HTTP_HEADER=NO
+#ADD_ON_HTTP_TAGS=NO
+#ADD_ON_PAGE_HEADING=NO
+#ADD_ON_HTTP_HEADER=YES
 #ADD_ON_OPTIONS=-f drivedb.lib.awk -f unmenu.base.lib.awk -f utility.lib.awk
 #ADD_ON_REFRESH = 0
 #ADD_ON_CONFIG=norefresh.conf

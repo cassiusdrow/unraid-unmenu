@@ -1054,6 +1054,7 @@ function install_auto_install_command() {
 function CGI_setup(   uri, version, i) {
   delete GETARG;         delete MENU;        delete PARAM
   GETARG["Status"] = ARGV[1]; GETARG["Method"] = ARGV[2]; GETARG["URI"] = ARGV[3]; 
+  gsub("%2B", "+", ARGV[3])
   i = index(ARGV[3], "?")
   if (i > 0) {             # is there a "?" indicating a CGI request?
     split(substr(ARGV[3], 1, i-1), MENU, "[/:]")
