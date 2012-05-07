@@ -33,6 +33,7 @@ BEGIN {
      }
      close("/root/mdcmd status|strings")
    }
+
    SetUpArrayMgmtPage()
    print ArrayMgmtPageDoc
 }
@@ -130,6 +131,12 @@ function SetUpArrayMgmtPage() {
         "<tr><td width=\"10%\"><input type=submit name=\"nocheck_parity\" value=\"Cancel Parity Check\"</td><td align=\"left\">\
         Cancel the Parity Check of the unRAID array</td></tr><tr><td><hr></td><td><hr></td></tr>"
     } else {
+        pc_ok = ParityCheckPossible( array_state ) 
+        if ( pc_ok != "" ) {
+        ArrayMgmtPageDoc = ArrayMgmtPageDoc \
+        "<tr><td width=\"10%\"><button type=\"button\" disabled=\"disabled\">Parity Check</button></td><td align=\"left\">\
+        Parity check not possible with missing or disabled disks.</td></tr><tr><td><hr></td><td><hr></td></tr>"
+        } else {
         if ( has_nocorrect == "yes" ) {
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "<tr><td valign=\"top\" width=\"10%\"><input type=submit name=\"verify_parity\" "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "value=\"Verify Parity but do NOT Correct it.\"</td> "
@@ -155,12 +162,14 @@ function SetUpArrayMgmtPage() {
         ArrayMgmtPageDoc = ArrayMgmtPageDoc " should find the same parity descrepency again and again until corrected."
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "</td></tr><tr><td><hr></td><td><hr></td></tr>"
         }
+
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "<tr><td valign=\"top\" width=\"10%\"><input type=submit name=\"check_parity\" "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "value=\"Check and Correct Parity\"</td><td valign=\"top\" align=\"left\">"
         ArrayMgmtPageDoc = ArrayMgmtPageDoc " Initiate a Parity Check of the unRAID array, "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "if the parity drive seems to be incorrect, update it.  "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "<br>This process assumes your data is correct and parity is not "
         ArrayMgmtPageDoc = ArrayMgmtPageDoc "whenever an error is detected.</td></tr><tr><td><hr></td><td><hr></td></tr>"
+	}
     }
     if ( has_spinup == false ) { 
         read_random="by reading a random block of data from each disk in turn" 
@@ -231,6 +240,19 @@ function  SpinUp( disk, cmd, f) {
             system(cmd);
         }
     }
+}
+
+function ParityCheckPossible( array_status, ret_val, i, f ) {
+    ret_val = ""
+    if ( array_status != "STARTED" ) {
+	ret_val="Array not started, parity check not possible."
+    }
+    for ( i =0; i<numdisks; i++ ) {
+	if ( disk_status[i] == "DISK_DSBL" || disk_status[i] == "DISK_NP" ) {
+           ret_val="One or more disks are disabled or not present, parity check not possible."
+	}
+    }
+    return ret_val
 }
 
 function SpinDown( disk, cmd, i, f) {
