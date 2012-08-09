@@ -1,4 +1,0 @@
-#define USER_SCRIPT_LABEL unRAID Version
-#define USER_SCRIPT_DESCR Print the current unRAID Version.
-#UNMENU_RELEASE $Revision$ $Date$
-( cat /etc/unraid-version 2>/dev/null || strings /usr/local/sbin/emhttp ) | sed -n "s/^version=\(.*\)/unRAID Version: \1/p"

@@ -1,8 +1,0 @@
-#define USER_SCRIPT_LABEL Get Existing Read-Ahead 
-#define USER_SCRIPT_DESCR Gets the existing "md" device read-ahead buffer size using <b>blockdev --getra /dev/md1</b>
-#UNMENU_RELEASE $Revision$ $Date$
-echo "<pre>"
-for i in /dev/md*
-do
-echo  $i `blockdev --getra $i`
-done

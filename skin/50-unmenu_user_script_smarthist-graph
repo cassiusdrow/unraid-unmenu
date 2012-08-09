@@ -1,9 +1,0 @@
-#define USER_SCRIPT_LABEL SMART History Report
-#define USER_SCRIPT_DESCR Run SMART paramater tracking database Report
-#define USER_SCRIPT_DESCR (requires "php" and smarthistory.php to be installed)
-#define USER_SCRIPT_DESCR <br><a href=http://lime-technology.com/forum/index.php?topic=3146.0>see this thread http://lime-technology.com/forum/index.php?topic=3146.0</a>
-#UNMENU_RELEASE $Revision$ $Date$
-#echo "<pre>"
-cd /boot/smarthistory
-#php smarthistory.php -wake ON -output HTML -graph LINK -report ALL
-php smarthistory.php -wake ON -output HTML -graph IMAGE -report ALL

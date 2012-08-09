@@ -1,7 +1,0 @@
-#define USER_SCRIPT_LABEL Power Down
-#define USER_SCRIPT_DESCR Power Down the unRAID server
-#define USER_SCRIPT_TEST [ -x /sbin/powerdown ] && echo "Power Down"
-#UNMENU_RELEASE $Revision$ $Date$
-echo "<pre>"
-/sbin/powerdown
-
