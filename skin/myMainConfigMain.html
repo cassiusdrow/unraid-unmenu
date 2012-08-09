@@ -1,0 +1,86 @@
+<!--1-->	<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!--0-->	<html xmlns="http://www.w3.org/1999/xhtml">
+<!--1-->	<head>
+<!--1-->	<meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1" />
+<!--1-->		<meta HTTP-EQUIV="Pragma" content="no-cache">
+<!--1-->		<meta HTTP-EQUIV="Expires]" content="-1">
+<!--1-->	<title>myMain Configuration</title>
+<!--1-->	</head>
+<!--1-->	<body>
+<!--1-->	<fieldset style="margin-top:1px;"><legend><img src="%ImageURL%/stock/myMainLogo.jpg" border='0' width='150' title='myMain Plugin - Enjoy!  &copy;bjp999, 2010.' /></legend>
+<!--1-->	<form action="" method="get" name="myForm">
+<!--1-->	<strong><font face="Verdana" size="4">myMain Configuration</font></strong>&nbsp;&nbsp;&nbsp;
+<!--1-->	    <input type="button" name="Save" value="Save" onclick="Javascript: myForm.Action.value = 'Save'; myForm.submit();" >
+<!--1-->	    <input type="button" name="Cancel" value="Cancel" onclick="Javascript: myForm.Action.value = 'Refresh'; myForm.submit();" >&nbsp;<br /><br />
+<!--1-->	<table width="0" border="1" cellspacing="0" cellpadding="0"  bgcolor="#E0E0E0">
+<!--1-->	  <tr>
+<!--1-->	    <th width="200" scope="col">Configuration</th>
+<!--1-->	    <th width="150" scope="col">Value</th>
+<!--1-->	    <th scope="col">Default</th>
+<!--1-->	    <th width="400" scope="col">Notes</th>
+<!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Refresh interval in seconds (0=disable) </strong></td>
+<!--1-->	    <td width="150"><input name="refreshinterval" type="text" value="$refreshinterval$" size="5" maxlength="5" /></td>
+<!--1-->		<td align="center" >  <font color="red"><em>0</em></font> </td>
+<!--1-->	    <td width="400"><em>Number of seconds to wait before automatically refreshing myMain. 0 disables the automatic refresh. A value of 300 will refresh every 5 minutes.</em></td>
+<!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>'myMain' replaces 'main'</strong></td>
+<!--1-->	    <td width="150"><input name="mymaincheck" type="checkbox" $mymaincheck$ /></td>
+<!--1-->		<td align="center" >  <font color="red"><em>(unchecked)</em></font> </td>
+<!--1-->	    <td width="400"><em>myMain is normally shown as an option in the unmenu list of plugins.  Checking this configuration will make myMain the default (replacing &quot;main&quot;).</em></td>
+<!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Length of ID field</strong></td>
+<!--1-->	    <td width="150"><input name="idlen" type="text" value="$idlen$" size="5" maxlength="3" />  
+<!--1-->		<td align="center" >  <font color="red"><em>$defidlen$</em></font> </td>
+<!--1-->	    <td width="400"><em>myMain provides a short ID field to conveniently refer to drives.  It is determined based on the last few digits of the serial number.  Consider 3 or 4 characters.</em></td> 
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Width of myServer image</strong></td>
+<!--1-->	    <td width="150"><input name="myserverwidth" type="text" value="$myserverwidth$" size="5" maxlength="3" />  
+<!--1-->		<td align="center" >  <font color="red"><em>$defmyserverwidth$</em></font> </td>
+<!--1-->	    <td width="400"><em>Depending on the number of drives in the machine, the myServer image may appear to be too small or too large. By changing the width you can control the image size (the height grows and shrinks proportionately). The default width is 150. Try values between 100 and 300.</em></td>
+<!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Width of mySlots image </strong></td>
+<!--1-->	    <td width="150"><input name="myslotswidth" type="text" value="$myslotswidth$" size="5" maxlength="3" />  
+<!--1-->		<td align="center" >  <font color="red"><em>$defmyslotswidth$</em></font> </td>
+<!--1-->	    <td width="400"><em>Width of mySlots image. See &quot;Width of myServer image&quot; above for more details. </em> </td>
+<!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Syslog Lines </strong></td>
+<!--1-->	    <td width="150"><input name="sysloglines" type="text" value="$sysloglines$" size="5" maxlength="4" />
+<!--1-->		<td align="center" >  <font color="red"><em>$defsysloglines$</em></font> </td>
+<!--1-->	    <td width="400"><em>MyMain displays the last few lines of the syslog at the bottom of the screen. Set to 0 to disable the syslog display. </em></td>
+<!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Syslog Style</strong></td>
+<!--1-->	    <td width="150"><input name="syslogstyle" type="text" value="$syslogstyle$" size="5" maxlength="5" />
+<!--1-->		<td align="center" >  <font color="red"><em>$defsyslogstyle$</em></font> </td>
+<!--1-->	    <td width="400"><p><em>First Digit - Applies to syslog displays at bottom of screens<br />Second Digit - Applies to syslog displays in fullscreen<br />Values: 1=White background/colored font, 2=Same with type of log entry in parenthsis, 3=Colored background/font (easier to see), 4=Same with type of log entry in parenthesis</em></p></td>
+<!--1-->	  </tr>
+<!--1-->	  <tr>
+<!--1-->	    <td width="200"><strong>Image Server</strong></td>
+<!--1-->	    <td width="150"><input name="imagehost" type="text" value="$imagehost$" size="25" maxlength="250" />
+<!--1-->		<td align="center" >  <font color="red"><em>(system<br />determined)</em></font></td>
+<!--1-->	    <td width="400"><p><em>By default, myMain determines based on server name (normally &quot;tower&quot;).  However, some users are unable to use the server name and must specify an IP address.  Others may need to use lighttpd or unMENU's shell script image server.<br /><br />Examples: &quot;192.168.1.20&quot;, &quot;tower:8088&quot; <br />
+  (do not put value in quotes) </em><br />
+  </td>
+<!--1-->	  </tr>
+<!--0-->	  <tr>
+<!--0-->	    <td width="200"><strong>SMART ignore list</strong> </td>
+<!--0-->	    <td width="150"><input name="smartignorelist" type="text" value="$smartignorelist$" size="30" /></td>
+<!--0-->		<td "200" align="center" >  <font color="red"><em>$defsmartignorelist$</em></font> </td>
+<!--0-->	    <td width="400"><em>On the smart view (by default), unRAID displays a field called smart_failed_list based on the raw value reported by the drive. Some of these values are not meaningful, so a way to suppress their values is desired. myMain suppresses some of them by default. But this column allows the user to configure additional values to omit from this list. The attribute names must be separated by tilde (~) characters. If on this list, the attribute will be ignored for all drives. This should not be used to hide an attributre VALUE that you don't want to keep seeing. See the drive configuration screen for instuctions on how to accomplish. </em></td>
+<!--0-->	  </tr>
+<!--1-->	</table>
+<!--1-->	<p>$message$</p>
+<!--1-->	   <input name="Action" type="hidden" value="" >
+<!--1-->	    <input name="mode" type="hidden" value="main" />
+<!--1-->	    <input name="dummy" type="hidden" value="xyz" />
+<!--1-->	</form>
+<!--!-->	</fieldset>
+<!--1-->	</body>
+<!--1-->	</html>
++

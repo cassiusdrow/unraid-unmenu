@@ -1,0 +1,8 @@
+#define USER_SCRIPT_LABEL Install UnMENU Updates
+#define USER_SCRIPT_DESCR Install UnMENU Updates
+#define USER_SCRIPT_TEST test -s /tmp/unmenu_new_files && echo "Install unMENU Updates"
+#UNMENU_RELEASE $Revision$ $Date$
+PATH=$PATH:.
+echo "<pre>"
+cwd=`pwd`
+./unmenu_install -u -d"$cwd"

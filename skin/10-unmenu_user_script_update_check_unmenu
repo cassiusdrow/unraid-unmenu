@@ -1,0 +1,18 @@
+#define USER_SCRIPT_LABEL Check for unMENU Updates
+#define USER_SCRIPT_DESCR Check the google.code Subversion archive for unMENU Updates
+#define USER_SCRIPT_TEST which unmenu_install >/dev/null 2>&1 && echo "Check for unMENU Updates"
+#UNMENU_RELEASE $Revision$ $Date$
+PATH=$PATH:.
+cwd=`pwd`
+f=`./unmenu_install -c -d"$cwd"`
+if [ -s /tmp/unmenu_new_files ]
+then
+cat <<EOF
+<form target="user_scripts">
+<input type=submit name="command" value="Install unMENU Updates"> Download and install updates to unMENU.<br>
+ You will probably need to re-start unMENU to have the updates take effect.
+</form>
+EOF
+fi
+echo "<pre>"
+echo "$f"

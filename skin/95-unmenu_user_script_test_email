@@ -1,0 +1,12 @@
+#define USER_SCRIPT_LABEL Send Test Email
+#define USER_SCRIPT_DESCR Send a test e-mail to the <b>root</b> account.  If it is properly forwarded, and a mail server configured, you will get the sent  message.
+#UNMENU_RELEASE $Revision$ $Date$
+
+# by using a USER_SCRIPT_TEST this button 
+# will not show itself unless mail is installed
+# the button label will be that printed by the "echo" command
+#define USER_SCRIPT_TEST which mail >/dev/null 2>&1 && echo "Send Test E-Mail"
+
+echo "<pre>"
+echo "Mail being sent to root.  With any luck, it will be forwarded properly."
+echo "This is a test e-mail to 'root' from `hostname`" | mail -s "This is a test mail" root

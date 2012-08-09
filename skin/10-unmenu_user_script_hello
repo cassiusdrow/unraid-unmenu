@@ -1,0 +1,4 @@
+#define USER_SCRIPT_LABEL Hello World
+#define USER_SCRIPT_DESCR Print a famous greeting. (sample user-script to show how easy it is to add a button to this page)
+#UNMENU_RELEASE $Revision$ $Date$
+echo "Hello World"

@@ -1,0 +1,10 @@
+#define USER_SCRIPT_LABEL Set Disk Read-Ahead 2048
+#define USER_SCRIPT_DESCR Set the "md" device read-ahead buffer size using <b>blockdev --setra 2048 /dev/md?</b>
+#UNMENU_RELEASE $Revision$ $Date$
+echo "<pre>"
+for i in /dev/md*
+do
+echo Setting $i
+  blockdev --setra 2048 $i
+  blockdev --getra $i
+done

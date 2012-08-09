@@ -1,0 +1,22 @@
+#define USER_SCRIPT_LABEL S3 Sleep
+#define USER_SCRIPT_DESCR Put the server to S3 Sleep
+#UNMENU_RELEASE $Revision$ $Date$
+
+# by using a USER_SCRIPT_TEST this button 
+# will not show itself unless S3 is supported in /proc/acpi/sleep
+# the button label will be that printed by the "awk" command
+
+#define USER_SCRIPT_TEST cat /proc/acpi/sleep | grep "S3" | awk '{ print "Go to S3 Sleep" }'
+
+echo "<pre>"
+# pre-sleep, sync the disks
+echo "Syncing disks"
+/bin/sync
+
+# go to sleep
+echo 3 > /proc/acpi/sleep
+echo "Awaking from sleep"
+
+# Do post-sleep activities, reset wake-on-lan
+ethtool -s eth0 speed 1000
+ethtool -s eth0 wol g
