@@ -25,7 +25,7 @@ BEGIN {
   }
   close("unmenu.awk")
 
-  version = "Version 1.5 " theRevision " Joe L.... with modifications as suggested by bjp999 and many others"
+  version = "Version 1.6 " theRevision " Joe L.... with modifications as suggested by bjp999, mvdzwaan, and many others"
 
   # Plug-in scripts are expected to reside in the same directory where this program is invoked if the following
   # variable is not changed.  If you wish to speciify a different directory for the plug-in scripts, you
@@ -45,6 +45,9 @@ BEGIN {
   close(cmd)
 
   system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
+
+  # If the default .css style has not been selected, use horizontal.
+  system("if [ ! -f " ScriptDirectory "/images/stock/unmenu.css ]; then cp " ScriptDirectory "/images/stock/unmenu_horizontal.css  " ScriptDirectory "/images/stock/unmenu.css; fi");
 
   if ( ConfigFile == "" ) {
       ConfigFile = "unmenu.conf";
@@ -294,7 +297,7 @@ BEGIN {
      }
   }
 
-  Footer      = "</BODY></HTML>"
+  Footer      = "</div><div style=\"clear:both\"></div></body></html>"
 
   while ("3.14159" != "PI") {
       if ( DebugMode == "yes" ) {
@@ -735,16 +738,17 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
 
   # build the HTML for the top menu
   top_menu=""  # passed to plug-ins, in case they need it.
-  theMenu  = "<table cellspacing=0 cellpadding=0 border=0 width=\"100%\"><tr><td width=\"40%\"><font size=\"-1\">"
+  # theMenu  = "<link rel=\"stylesheet\" type=\"text/css\" href=\"http://" MyHost "/log/images/stock/unmenu.css\" />"
+  theMenu  = theMenu "<div id=\"topArea\"><div id=\"topMenu\">"
   for ( a = 1; a<idx; a++ ) {
     if ( url[a]  != "syslog" && menu[a] != "" ) {
         top_menu = top_menu url[a] "|" menu[a] "|"
         if ( url[a] == urlName ) {
-            theMenu = theMenu " <nobr>" menu[a] "</nobr> "
+            theMenu = theMenu " <div class=\"menu_item active\">" menu[a] "</div> "
         } else {
-            theMenu = theMenu " <nobr><A HREF=" MyPrefix "/" url[a] ">" menu[a] "</A></nobr> "
+            theMenu = theMenu " <div class=\"menu_item\" onclick=\"window.location='" MyPrefix "/" url[a] "'\">" menu[a] "</div> "
         }
-        theMenu = theMenu "|"
+        # theMenu = theMenu "|"
     }
   }
   # just in case the user embedded a single quote in a menu label.
@@ -754,11 +758,9 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
   close("date")
 
   theMenu = substr(theMenu,1, length(theMenu)-1);
-  theMenu = theMenu "</font></td><td align=center width=\"20%\"><font size=\"4\"><b>" MyHost
-  theMenu = theMenu " unRAID Server</b></font></td>\
-    <td align=\"right\" width=\"40%\">" DateTime "</td></tr>\
-    </table>\
-    " ORS ORS
+  theMenu = theMenu "<div style=\"clear:both\"></div></div><div id=\"topTitle\">" MyHost
+  theMenu = theMenu " unRAID Server</div>\
+    <div id=\"topTime\">" DateTime "</div><div style=\"clear:both\"></div></div><div id=\"mainContent\">" ORS ORS
   return theMenu
 }
 
@@ -781,18 +783,33 @@ function MenuIndex(theurl, mindex, found_url, a) {
 
 function GetPageHEAD(add_on_num, theHEAD, i) {
 
-  theHEAD = "<HTML><title>" MyHost " unRAID Server</title><HEAD>\
-    <STYLE type=\"text/css\">\
+  theHEAD = "<!DOCTYPE html><html><title>" MyHost " unRAID Server</title><head><meta http-equiv=\"X-UA-Compatible\" value=\"IE=9\">\
+    <style type=\"text/css\">\
     td.t {\
     border-top: 1px solid black;\
-    }\
-    </STYLE>"
+    }</style>"
   if ( add_on_num >= 0 ) {
     for ( i =1; i<= add_on_head_count[add_on_num]; i++ ) {
       theHEAD = theHEAD add_on_head[add_on_num, i]
     }
   }
-  theHEAD = theHEAD "</HEAD><BODY onload=\"self.scrollTo(0,0)\">"
+
+  theHEAD = theHEAD "<style type=\"text/css\">"
+  while(( getline line<CONFIG["UNMENU_SKIN_CSS"] ) > 0 ) {
+		theHEAD = theHEAD line
+	}
+	close(CONFIG["UNMENU_SKIN_CSS"])
+    theHEAD = theHEAD "</style>"
+	
+  theHEAD = theHEAD "<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js\"></script>"
+  theHEAD = theHEAD "<script type=\"text/javascript\">"
+  while(( getline line<CONFIG["UNMENU_SKIN_JS"] ) > 0 ) {
+		theHEAD = theHEAD line
+	}
+	close(CONFIG["UNMENU_SKIN_JS"])
+  
+  theHEAD = theHEAD "</script>"
+  theHEAD = theHEAD "</head><body>"
   return theHEAD;
 }
 
@@ -952,7 +969,7 @@ function SetUpHomePage() {
       gsub("%MyHost%",MyHost,main_page_user_content)
       gsub("%MyPort%",MyPort,main_page_user_content)
 
-      PageDoc = PageDoc "<iframe width=\"100%\" "  main_page_user_content "\">"
+      PageDoc = PageDoc "<iframe width=\"100%\" "  main_page_user_content ">"
       PageDoc = PageDoc "Sorry: your browser does not seem to support inline frames"
       PageDoc = PageDoc "</iframe>"
   }
@@ -1656,7 +1673,7 @@ function GetSyslogTail(numlines, syslog, f) {
     cmd = "tail -" nl " /var/log/syslog"
     RS="\n"
     syslog=""
-    syslog=syslog "<fieldset style=\"margin-top:10px;\"><legend><strong>Syslog (last " nl " lines)</strong></legend>"
+    syslog=syslog "<fieldset style=\"margin-top:10px;\"><legend class=\"syslog_legend\"><strong>Syslog (last " nl " lines)</strong></legend>"
     syslog=syslog "<table cellpadding=0 cellspacing=0 width=\"100%\"><tr><td>"
     while (( cmd | getline f ) > 0) {
         syslog = syslog f "<br>"
@@ -2186,7 +2203,7 @@ function DiskStatusHTML(i,outstr) {
     total_disk_used = 0
     total_disk_avail = 0
     outstr ="<fieldset style=\"margin-top:10px;\"><legend><strong>Array Disk Status</strong></legend>"
-    outstr = outstr "<table width=\"100%\" cellpadding=0 cellspacing=0 border=0>"
+    outstr = outstr "<table class=\"table_array_disk_status\" width=\"100%\" cellpadding=0 cellspacing=0 border=0>"
     outstr = outstr "<tr>"
     outstr = outstr "<td><u>Status</u></td><td><u>Disk</u></td><td><u>Mounted</u></td>"
     outstr = outstr "<td><u>Device</u></td><td><u>Model/Serial</u></td><td align=\"right\"><u>Temp</u></td>"
@@ -2236,7 +2253,7 @@ function DiskStatusHTML(i,outstr) {
         outstr = outstr disk_writes[i] "</td><td align=\"right\">" disk_errors[i] "</td>"
 
         outstr = outstr "<td align=\"right\">" disk_size[i] "</td><td align=\"right\">" disk_used[i]
-        outstr = outstr "</td><td align=\"right\">" disk_pctuse[i] "</td>"
+        outstr = outstr "</td><td align=\"center\" width=\"110\"><div class=\"disk_usage_background\"><div class=\"disk_usage_text\">" disk_pctuse[i] "</div><div class=\"disk_usage_used\" style=\"width:" disk_pctuse[i] "\"></div></div></td>"
         outstr = outstr "<td align=\"right\">" disk_avail[i] "</td>"
         outstr = outstr "</tr>"
     }
@@ -2537,3 +2554,4 @@ function perr(printme)          # BJP 10/17/10 - The above version does not work
 {                               #    is run from command line vs "uu".  This version does work.
    print printme | "cat 1>&2"   #    Feel free to edit - I just needed to display some results
 }                               #    to do some debugging.
+

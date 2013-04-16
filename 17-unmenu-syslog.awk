@@ -5,6 +5,7 @@ BEGIN {
 #ADD_ON_PAGE_HEADING=NO
 #ADD_ON_TYPE=awk
 #ADD_ON_VERSION= Version: .8  - modified by Joe L. to use a pattern file.
+#ADD_ON_VERSION= Version: .9  - added css class to fieldset - mvdzwaan
 #UNMENU_RELEASE $Revision$ $Date$
 
   if ( ScriptDirectory == "" ) {
@@ -27,7 +28,7 @@ BEGIN {
 
   log_fname = "/var/log/syslog"
 
-  theHTML = "<fieldset><legend><strong>System Log (last " nl " lines)</strong>"
+  theHTML = "<fieldset><legend class=\"syslog_legend\"><strong>System Log (last " nl " lines)</strong>"
   theHTML = theHTML "&nbsp&nbsp;Legend => <font color=red> Errors </font> <font color=orange> Minor Issues </font> "
   theHTML = theHTML "<font color=lime> Lime Tech </font> <font color=green> unRAID engine </font> "
   theHTML = theHTML "<font color=blue> System </font> <font color=teal> Drive related </font> "

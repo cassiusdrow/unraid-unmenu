@@ -1,0 +1,7 @@
+#define USER_SCRIPT_LABEL unMENU Vertical Skin
+#define USER_SCRIPT_DESCR Switch to unRAID Vertical Skin appearance
+#UNMENU_RELEASE $Revision$ $Date$
+PATH=$PATH:.
+cwd=`pwd`
+cp -v "${cwd}"/images/stock/unmenu_vertical.css  "${cwd}"/images/stock/unmenu.css
+echo "<script type=\"text/javascript\">window.location=\"/\"</script>"

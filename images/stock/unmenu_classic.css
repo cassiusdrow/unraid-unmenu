@@ -1,0 +1,44 @@
+.menu_item
+{
+	float:left;
+	padding-right:4px;
+	padding-left:8px;
+	white-space:none;
+	cursor:pointer;
+	text-decoration:underline;
+	font-size:0.8em;
+	color:#0000cc;
+	border-right:1px solid black;
+}
+
+.menu_item.active
+{
+	color:Black;
+	text-decoration:none;
+	cursor:standard;
+}
+#topMenu
+{
+	width:40%;
+	float:left;
+}
+
+#topTitle
+{
+float:left;
+	font-weight:bold;
+	font-size:1.0em;
+	text-align:center;
+	width:20%;
+	padding-top:12px;
+}
+
+#topTime
+{
+float:left;
+	width:40%;
+	text-align:right;
+	clear:right;
+}
+
+

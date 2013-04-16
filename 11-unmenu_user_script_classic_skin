@@ -1,0 +1,7 @@
+#define USER_SCRIPT_LABEL unMENU Classic Skin
+#define USER_SCRIPT_DESCR Switch to unRAID Classic appearance
+#UNMENU_RELEASE $Revision$ $Date$
+PATH=$PATH:.
+cwd=`pwd`
+cp -v "${cwd}"/images/stock/unmenu_classic.css  "${cwd}"/images/stock/unmenu.css
+echo "<script type=\"text/javascript\">window.location=\"/\"</script>"

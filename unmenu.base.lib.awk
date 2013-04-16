@@ -437,7 +437,7 @@ function GetSyslogFieldset(nl, option, log_fname, theHTML)
    if(log_fname == "")
       log_fname = "/var/log/syslog"
 
-   theHTML = "<fieldset><legend><strong>System Log (last " nl " lines)</strong>"
+   theHTML = "<fieldset><legend class=\"syslog_legend\"><strong>System Log (last " nl " lines)</strong>"
    theHTML = theHTML "&nbsp&nbsp;" GetColorBar(option)
    theHTML = theHTML "</legend>"
    theHTML = theHTML GetSysLogRows(nl, log_fname);

@@ -554,9 +554,10 @@ BEGIN {
 
    tm = "";
 
-   theHTMLtop = "<fieldset style=\"margin-top:1px;\"><legend>" \
+                #"<img src='%ImageURL%/stock/myMainLogo.jpg' height=25 style='width:150; border: solid 3px black; display: block; text-align: center; vertical-align: text-top;' title='myMain Plugin - Enjoy!  " \
+   theHTMLtop = "<fieldset style=\"margin-top:1px;\"><legend style='position:absolute;top:-1.7em;'>" \
                 "<a href='" myLink("", "myConfig") amp "mode=main' target='_blank'>" \
-                "<img src='%ImageURL%/stock/myMainLogo.jpg' border='0' width='150' title='myMain Plugin - Enjoy!  " \
+                "<img src='%ImageURL%/stock/myMainLogo.jpg' border='0' height=35 width='150' style='vertical-align:text-top;' title='myMain Plugin - Enjoy!  " \
                 amp "copy;bjp999, 2010. Click here to configure.'>" \
                 "</a>" \
                 "</legend>" \

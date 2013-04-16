@@ -1,0 +1,7 @@
+#define USER_SCRIPT_LABEL unMENU Horizontal Skin
+#define USER_SCRIPT_DESCR Switch to unRAID Horizontal Skin appearance
+#UNMENU_RELEASE $Revision$ $Date$
+PATH=$PATH:.
+cwd=`pwd`
+cp -v "${cwd}"/images/stock/unmenu_horizontal.css  "${cwd}"/images/stock/unmenu.css
+echo "<script type=\"text/javascript\">window.location=\"/\"</script>"
