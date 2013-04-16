@@ -46,7 +46,7 @@ BEGIN {
 
   system("if [ ! -d /var/log/images ]; then ln -s " ScriptDirectory "/images /var/log/images; fi");
 
-  # If the default .css style has not been selected, use horizontal.
+  # If the default .css style has not been selected, use horizontal style menu.
   system("if [ ! -f " ScriptDirectory "/images/stock/unmenu.css ]; then cp " ScriptDirectory "/images/stock/unmenu_horizontal.css  " ScriptDirectory "/images/stock/unmenu.css; fi");
 
   if ( ConfigFile == "" ) {

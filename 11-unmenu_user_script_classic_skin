@@ -1,5 +1,5 @@
 #define USER_SCRIPT_LABEL unMENU Classic Skin
-#define USER_SCRIPT_DESCR Switch to unRAID Classic appearance
+#define USER_SCRIPT_DESCR Switch to unMENU Classic appearance
 #UNMENU_RELEASE $Revision$ $Date$
 PATH=$PATH:.
 cwd=`pwd`
