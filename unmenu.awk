@@ -260,7 +260,7 @@ BEGIN {
           match( line , /^(#ADD_ON_HEAD|#define\WADD_ON_HEAD)([\t =]+)(.+)/, c)
           if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
               add_on_head_count[i]++
-	      add_on_head[i, add_on_head_count[i]] = substr(line,c[3,"start"],c[3,"length"])
+              add_on_head[i, add_on_head_count[i]] = substr(line,c[3,"start"],c[3,"length"])
           }
           # Expect a string describing additional options to supply for a plug-in
           delete c;
@@ -365,7 +365,7 @@ BEGIN {
                   # set up the command to invoke the add-on
                   if ( add_on_type[i] == "awk" ) {
                       cmd="gawk -v ConfigFile=" ConfigFile " -v MyHost=" MyHost " -v ScriptDirectory=" ScriptDirectory
-		      cmd = cmd " -v AWK_PID=" AWK_PID
+                      cmd = cmd " -v AWK_PID=" AWK_PID
                       if ( LocalConfigFile != "" ) {
                           cmd = cmd " -v LocalConfigFile=" LocalConfigFile
                       }
@@ -744,9 +744,9 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
     if ( url[a]  != "syslog" && menu[a] != "" ) {
         top_menu = top_menu url[a] "|" menu[a] "|"
         if ( url[a] == urlName ) {
-            theMenu = theMenu " <div class=\"menu_item active\">" menu[a] "</div> "
+            theMenu = theMenu " <div class=\"menu_item active\"><a href='" MyPrefix "/" url[a] "'>" menu[a] "</a></div> "
         } else {
-            theMenu = theMenu " <div class=\"menu_item\" onclick=\"window.location='" MyPrefix "/" url[a] "'\">" menu[a] "</div> "
+            theMenu = theMenu " <div class=\"menu_item\"><a href='" MyPrefix "/" url[a] "'>" menu[a] "</a></div> "
         }
         # theMenu = theMenu "|"
     }
@@ -800,7 +800,7 @@ function GetPageHEAD(add_on_num, theHEAD, i) {
 	}
 	close(CONFIG["UNMENU_SKIN_CSS"])
     theHEAD = theHEAD "</style>"
-	
+
   theHEAD = theHEAD "<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js\"></script>"
   theHEAD = theHEAD "<script type=\"text/javascript\">"
   while(( getline line<CONFIG["UNMENU_SKIN_JS"] ) > 0 ) {
@@ -872,7 +872,7 @@ function ArrayStateHTML(theHTML, parity_status, i) {
        pct_complete = 0;
      }
 
-     theHTML = "<fieldset style=\"margin-top:8px;\"><legend><strong>Array Status</strong></legend>"
+     theHTML = "<fieldset><legend><strong>Array Status</strong></legend>"
      theHTML = theHTML "<table border=\"0\" width=\"100%\">"
      theHTML = theHTML "	<tr>"
      theHTML = theHTML "		<td width=\"35%\" valign=\"top\">" parity_status "</td>"
@@ -880,28 +880,28 @@ function ArrayStateHTML(theHTML, parity_status, i) {
      theHTML = theHTML "	        <table width=\"100%\" border=\"0\"><tr>"
      theHTML = theHTML "		<td width=37*>Total&nbsp;Size</td>"
      theHTML = theHTML "		<td align=right ><b>" CommaFormat(disk_size[rebuilding_disk]) "</b></td>"
-     theHTML = theHTML "		<td width=20*; align=\"left\"><b>&nbsp;KB</b></td>"		
-     theHTML = theHTML "	        </tr>"	
+     theHTML = theHTML "		<td width=20*; align=\"left\"><b>&nbsp;KB</b></td>"
+     theHTML = theHTML "	        </tr>"
      theHTML = theHTML "	        <tr>"
      theHTML = theHTML "		<td>Current</td>"
      theHTML = theHTML "		<td align=\"right\"><b>" CommaFormat(resync_pos) "</b></td>"
-     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(" pct_complete "%)</b></td>"		
+     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(" pct_complete "%)</b></td>"
      theHTML = theHTML "	        </tr>"
      theHTML = theHTML "	        <tr>"
      theHTML = theHTML "		<td>Speed</td>"
      theHTML = theHTML "		<td align=\"right\"><b>" CommaFormat(resync_speed) "</b></td>"
-     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;KB/sec</b></td>"		
+     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;KB/sec</b></td>"
      theHTML = theHTML "	        </tr>"
      theHTML = theHTML "	        <tr>"
      theHTML = theHTML "		<td>Finish</td>"
      theHTML = theHTML "		<td align=\"right\"><b>" resync_finish "</b></td>"
-     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;minutes</b></td>"		
+     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;minutes</b></td>"
      theHTML = theHTML "	        </tr>"
      if(rebuilding_disk == 0) { # only show sync errors here if fixing parity.
        theHTML = theHTML "	        <tr>"
        theHTML = theHTML "		<td>Sync&nbsp;Errors</td>"
        theHTML = theHTML "		<td align=\"right\"><b>" CommaFormat(last_parity_errs) "</b></td>"
-       theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(corrected)</b></td>"		
+       theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(corrected)</b></td>"
        theHTML = theHTML "	        </tr>"
      }
      theHTML = theHTML "		</table>"
@@ -948,7 +948,7 @@ function ArrayStateHTML(theHTML, parity_status, i) {
     #parity_status= "; " parity_valid " Last parity check: " strftime("%a %b %d %H:%M:%S %Z %Y",last_parity_sync) " \
     # finding " last_parity_errs " errors. ";
 
-     theHTML = "<fieldset style=\"margin-top:10px;\"><legend><strong>Array Status</strong></legend>\
+     theHTML = "<fieldset><legend><strong>Array Status</strong></legend>\
      " state_font array_state "</font>, " array_status_text arraydisks " disks in array.&nbsp;&nbsp;&nbsp" parity_status  SambaStatus "</fieldset>"
   }
 
@@ -1673,7 +1673,7 @@ function GetSyslogTail(numlines, syslog, f) {
     cmd = "tail -" nl " /var/log/syslog"
     RS="\n"
     syslog=""
-    syslog=syslog "<fieldset style=\"margin-top:10px;\"><legend class=\"syslog_legend\"><strong>Syslog (last " nl " lines)</strong></legend>"
+    syslog=syslog "<fieldset><legend class=\"syslog_legend\"><strong>Syslog (last " nl " lines)</strong></legend>"
     syslog=syslog "<table cellpadding=0 cellspacing=0 width=\"100%\"><tr><td>"
     while (( cmd | getline f ) > 0) {
         syslog = syslog f "<br>"
@@ -1715,7 +1715,7 @@ function GetArrayStatus(a) {
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
         # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id, if present.
         if ( a ~ "diskName" )        { delete d; split(a,d,"[.=]"); disk_name[d[2]]=d[3]; }
-	if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); if ( substr(d[3],1,4) == "ata-" )
+    if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); if ( substr(d[3],1,4) == "ata-" )
                                                                          { disk_id[d[2]]=substr(d[3],5) }
                                                                     else { disk_id[d[2]]=d[3];} }
         if ( a ~ "diskSerial" )      { delete d; split(a,d,"[.=]"); disk_serial[d[2]]=d[3]; }
@@ -1931,7 +1931,7 @@ function GetOtherDisks(outstr) {
     }
 
     outstr = ""
-    outstr = outstr "<fieldset style=\"margin-top:5px;\">"
+    outstr = outstr "<fieldset>"
     outstr = outstr "<table width=\"100%\" cellpadding=2 cellspacing=4 border=0>"
     outstr = outstr bootdrive
     if ( cachedrive != "" ) {
@@ -1948,7 +1948,7 @@ function GetOtherDisks(outstr) {
 function DiskRepair(select_value, i, outstr) {
 
     outstr = ""
-    outstr = outstr "<fieldset style=\"margin-top:10px;\">"
+    outstr = outstr "<fieldset>"
     outstr = outstr "<table width=\"100%\" cellpadding=2 cellspacing=2 border=0>"
     GetDiskData()
     bootdrive = ""
@@ -2051,7 +2051,7 @@ function DiskRepair(select_value, i, outstr) {
 function DiskManagement(select_value, i, outstr ) {
 
     outstr = ""
-    outstr = outstr "<fieldset style=\"margin-top:10px;\"><legend><strong>Array Disk Management</strong></legend>"
+    outstr = outstr "<fieldset><legend><strong>Array Disk Management</strong></legend>"
     outstr = outstr "<table width=\"100%\" cellpadding=1 cellspacing=1 border=0>"
     outstr = outstr "<tr>"
     outstr = outstr "<td><u>Device</u>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"
@@ -2094,7 +2094,7 @@ function DiskManagement(select_value, i, outstr ) {
     outstr = outstr "check, then re-mount the drive and re-start SAMBA.<br>"
     outstr = outstr "<b>Neither Disk or User Shares will be visible on the LAN when SAMBA is stopped</b></font></td></tr>"
     outstr = outstr "</table></fieldset>"
-    outstr = outstr "<fieldset style=\"margin-top:10px;\">"
+    outstr = outstr "<fieldset>"
     outstr = outstr "<table width=\"100%\" cellpadding=2 cellspacing=2 border=0>"
 
     GetDiskData()
@@ -2202,14 +2202,14 @@ function DiskStatusHTML(i,outstr) {
     total_disk_size = 0
     total_disk_used = 0
     total_disk_avail = 0
-    outstr ="<fieldset style=\"margin-top:10px;\"><legend><strong>Array Disk Status</strong></legend>"
+    outstr ="<fieldset><legend><strong>Array Disk Status</strong></legend>"
     outstr = outstr "<table class=\"table_array_disk_status\" width=\"100%\" cellpadding=0 cellspacing=0 border=0>"
     outstr = outstr "<tr>"
     outstr = outstr "<td><u>Status</u></td><td><u>Disk</u></td><td><u>Mounted</u></td>"
     outstr = outstr "<td><u>Device</u></td><td><u>Model/Serial</u></td><td align=\"right\"><u>Temp</u></td>"
     outstr = outstr "<td align=\"right\"><u>Reads</u></td><td align=\"right\"><u>Writes</u></td><td align=\"right\"><u>Errors</u></td>"
 
-    outstr = outstr "<td align=\"right\"><u>Size</u></td><td align=\"right\"><u>Used</u></td><td align=\"right\"><u>%Used</u></td>"
+    outstr = outstr "<td align=\"right\"><u>Size</u></td><td align=\"right\"><u>Used</u></td><td align=\"center\"><u>%Used</u></td>"
     outstr = outstr "<td align=\"right\"><u>Free</u></td>"
     outstr = outstr "</tr>"
     for ( i =0; i<numdisks; i++ ) {
@@ -2264,7 +2264,7 @@ function DiskStatusHTML(i,outstr) {
     outstr = outstr "<td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>"
     outstr = outstr "<td>&nbsp;</td><td>&nbsp;</td><td align=\"right\" class=\"t\">Total:</td>"
     outstr = outstr "<td align=\"right\" class=\"t\">" disk_size[i] "</td><td align=\"right\" class=\"t\">" disk_used[i]
-    outstr = outstr "</td><td align=\"right\" class=\"t\">" disk_pctuse[i] "</td>"
+    outstr = outstr "</td><td align=\"center\" class=\"t\">" disk_pctuse[i] "</td>"
     outstr = outstr "<td align=\"right\" class=\"t\">" disk_avail[i] "</b></td>"
     outstr = outstr "</tr>"
     outstr = outstr "</table></fieldset>"
