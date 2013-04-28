@@ -184,3 +184,21 @@ hr {
   height: 100%;
   background-color: #ffa0a0;
 }
+
+#syslog_key {
+  padding-top: 15px;
+}
+#syslog_key > label {
+  cursor: pointer;
+  display: block;
+  margin-right: 3px;
+  margin-bottom: 5px;
+  float: left;
+  line-height: 20px;
+  padding: 0 4px;
+}
+#syslog_key > label > input {
+  float: left;
+  margin: 4px 4px 4px 0;
+  cursor: pointer;
+}
