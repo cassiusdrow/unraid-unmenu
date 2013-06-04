@@ -248,8 +248,8 @@ function ParityCheckPossible( array_status, ret_val, i, f ) {
 	ret_val="Array not started, parity check not possible."
     }
     for ( i =0; i<numdisks; i++ ) {
-	if ( disk_status[i] == "DISK_DSBL" || disk_status[i] == "DISK_NP" ) {
-           ret_val="One or more disks are disabled or not present, parity check not possible."
+	if ( disk_status[i] == "DISK_DSBL" || disk_status[i] == "DISK_DSBL_NP" || disk_status[i] == "DISK_NP_MISSING" || disk_status[i] == "DISK_INVALID" || disk_status[i] == "DISK_WRONG" ) {
+           ret_val="One or more disks are disabled, invalid, wrong, or not present, parity check not possible."
 	}
     }
     return ret_val
