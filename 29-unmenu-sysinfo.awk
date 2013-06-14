@@ -110,13 +110,17 @@ function LoadCmds( theType, theButton, theCommand, theErrorMsg, theToolTip ) {
 }
 
 function GetCpuInfo(f) {
+    sixtyfourbit = "<b>CPU is 32 Bit Capable. <font color=red>It is NOT 64 Bit capable.</font></b><br><br>"
     cmd = "cat /proc/cpuinfo"
     RS="\n"
     cpuinfo = "<strong>CPU Info (from /proc/cpuinfo)</strong><br><pre>"
     while (( cmd | getline f ) > 0) {
      cpuinfo = cpuinfo f  "<br>"
+     if ( f ~ / lm / ) {
+         sixtyfourbit = "<b><font clor=blue>CPU is 64 Bit Capable.</font><b><br><br>"
+     }
     }
-    cpuinfo = cpuinfo "</pre><br>"
+    cpuinfo = sixtyfourbit cpuinfo "</pre><br>"
     close(cmd)
     return cpuinfo
 }

@@ -2395,7 +2395,8 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping, i) {
 
     the_temp="*"
     if ( is_sleeping == "n" ) {
-        cmd = "smartctl -d ata -A " theDisk "| grep -i temperature"
+        # first try without -d ata
+        cmd = "smartctl -A " theDisk "| grep -i temperature"
         while ((cmd | getline a) > 0 ) {
             delete t;
             split(a,t," ")
@@ -2415,6 +2416,29 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping, i) {
             }
         }
         close(cmd);
+        # if no temp, try with -d ata
+        if ( the_temp == "*" ) {
+            cmd = "smartctl -d ata -A " theDisk "| grep -i temperature"
+            while ((cmd | getline a) > 0 ) {
+                delete t;
+                split(a,t," ")
+                the_temp = t[10] "&deg;C"
+                t[10] = t[10] + 0 # coerce to a number
+                yellow_temp = yellow_temp + 0
+                orange_temp = orange_temp + 0
+                red_temp = red_temp + 0
+                if ( t[10] >= yellow_temp && t[10] < orange_temp ) {
+                    the_temp = "<div style=\"background-color:yellow;\">" the_temp "</div>"
+                }
+                if ( t[10] >= orange_temp && t[10] < red_temp ) {
+                    the_temp = "<div style=\"background-color:orange;\">" the_temp "</div>"
+                }
+                if ( t[10] >= red_temp ) {
+                    the_temp = "<div style=\"background-color:red;\">" the_temp "</div>"
+                }
+            }
+            close(cmd);
+        }
     }
     return extra the_temp
 }
