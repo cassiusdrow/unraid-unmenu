@@ -449,7 +449,7 @@ function GetColorBar(option, template)
 {
    saveColorOption = option
 
-   return "" \
+   return "Legend ==" amp "gt; " \
           ColorizeText("white",     "red",    "Errors",        1, template) " " \
           ColorizeText("black",     "orange", "Minor Issues",  1, template) " " \
           ColorizeText("blue",      "lime",   "Lime Tech",     1, template) " " \
@@ -579,8 +579,10 @@ function SyslogHtml(syslog, style, full)
    if(syslog == "")
       syslog="/var/log/syslog"
 
-    template="<label style='background-color: $bcolor$; color: $fcolor$'>" \
-             "<input type='checkbox' name='cb_$bcoloro$' $ch_$bcoloro$$> $label$</label>"
+   template="<input name='cb_$bcoloro$' type='checkbox' $ch_$bcoloro$$>" \
+            "<span id='l_$bcoloro$' style='cursor:hand; background-color:$bcolor$; color: $fcolor$'" \
+            "onClick=\"changeBox('document.myForm.cb_$bcoloro$')\">$label$</span>"
+
 
    if(length(style) > 1)
       style = substr(style, 2, 1)
