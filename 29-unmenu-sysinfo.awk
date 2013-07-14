@@ -117,7 +117,7 @@ function GetCpuInfo(f) {
     while (( cmd | getline f ) > 0) {
      cpuinfo = cpuinfo f  "<br>"
      if ( f ~ / lm / ) {
-         sixtyfourbit = "<b><font color=blue>CPU is 64 Bit Capable.</font><b><br><br>"
+         sixtyfourbit = "<b><font color=blue>CPU is 64 Bit Capable.</font></b><br><br>"
      }
     }
     cpuinfo = sixtyfourbit cpuinfo "</pre><br>"
