@@ -770,12 +770,12 @@ function GetDiskFileSystem(theDisk , thePartition, file_system, a, s) {
         }
         close(cmd);
     } else {
-        cmd = "blkid " theDisk thePartition " 2>/dev/null"
+        cmd = "blkid " theDisk thePartition " 2>/dev/null |  sed 's/:.* TYPE=/ TYPE=/'"
         while ((cmd | getline a) > 0 ) {
             if ( a ~ "TYPE" ) {
                 delete s;
                 split(a,s,"=");
-                file_system=s[3]
+                file_system=s[2]
                 gsub("\"", "", file_system)
                 gsub(" ", "", file_system)
             }
