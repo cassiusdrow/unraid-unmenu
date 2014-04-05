@@ -755,33 +755,21 @@ function DiskManagement(select_value, i, outstr ) {
 }
 function GetDiskFileSystem(theDisk , thePartition, file_system, a, s) {
     # get the file system of the specified partition
-    #/dev/sdb1: UUID="f48885ea-1ec2-4e02-9a6c-9c569d589547" TYPE="reiserfs"
     file_system=""
     RS="\n"
-    if (system("which vol_id >/dev/null 2>&1" )==0) {
+    if (system("which vol_id >/dev/null 2>&1" )==0)
         cmd = "vol_id " theDisk thePartition " 2>/dev/null"
-        #print cmd
-        while ((cmd | getline a) > 0 ) {
-            if ( a ~ "ID_FS_TYPE" ) {
-                delete s;
-                split(a,s,"=");
-                file_system=s[2]
-            }
+    else
+        cmd = "blkid -o udev " theDisk thePartition " 2>/dev/null"
+    #print cmd
+    while ((cmd | getline a) > 0 ) {
+        if ( a ~ "ID_FS_TYPE" ) {
+            delete s;
+            split(a,s,"=");
+            file_system=s[2]
         }
-        close(cmd);
-    } else {
-        cmd = "blkid " theDisk thePartition " 2>/dev/null |  sed 's/:.* TYPE=/ TYPE=/'"
-        while ((cmd | getline a) > 0 ) {
-            if ( a ~ "TYPE" ) {
-                delete s;
-                split(a,s,"=");
-                file_system=s[2]
-                gsub("\"", "", file_system)
-                gsub(" ", "", file_system)
-            }
-        }
-        close(cmd);
     }
+    close(cmd);
     return file_system
 }
 

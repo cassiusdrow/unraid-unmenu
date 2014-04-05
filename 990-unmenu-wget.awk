@@ -24,6 +24,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.7   added --no-get-certificate to wget to allow use of https sites for packages
 #define ADD_ON_VERSION     2.8   added PACKAGE_MIN_SIZE and PACKAGE_EXTRA_MIN_SIZE paramaters to make it easier to deal with unknown source file MD5 checksums.
 #define ADD_ON_VERSION     2.9   Fixed spelling error on "View All Available Packages" button..
+#define ADD_ON_VERSION     3.0   Added 64bit compatible flag to packages.
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -75,6 +76,15 @@ BEGIN {
   has_wget="no"
   if (system("which wget >/dev/null 2>&1" )==0) {
     has_wget="yes"
+  }
+
+  cmd="uname -m"
+  cmd | getline OS_Type
+  close(cmd)  
+  if ( OS_Type ~ "64" ) {
+	  OS_64_BIT="true"
+  } else {
+	  OS_64_BIT="false"
   }
 
   # open unmenu package files, 
@@ -133,6 +143,7 @@ BEGIN {
           package_variable_count[package_count] = 0
           package_variable[package_count, 0]   = "PACKAGE_VARIABLE undefined"
           package_mem[package_count]   = ""
+          package_os[package_count]   = ""
       }
       # expect the package description.  There may be more than one line, just concatenate
       delete c;
@@ -238,6 +249,12 @@ BEGIN {
       match( line , /^(PACKAGE_MEMORY_USAGE)([\t =]+)(.+)/, c)
       if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
 	  package_mem[package_count] = substr(line,c[3,"start"],c[3,"length"])
+      }
+      delete c;
+      # package is 64 bit compatible (permissible values are 64bit,32bit,or "any"
+      match( line , /^(PACKAGE_OS)([\t =]+)(.+)/, c)
+      if ( c[1,"length"] > 0 && c[2,"length"] > 0 && c[3,"length"] > 0 ) {
+	  package_os[package_count] = substr(line,c[3,"start"],c[3,"length"])
       }
     }
     close(package[i]);
@@ -555,6 +572,25 @@ BEGIN {
       theHTML = theHTML "<tr><td colspan=\"10\"><input type=submit name=\"\" value=\"View All Available Packages\"><hr></td></tr>"
   }
   for ( i = 1; i <= package_count; i++ ) {
+	skip_package="false"
+	if (  OS_64_BIT == "true" ) {
+		# only packages designated as 64 bit OK are normally shown on a 64 BitOS.
+		if ( package_os[i] != "64bit" && package_os[i] != "any" ) {
+			skip_package="true"
+			# if a package is installed, and not 64 bit compatible, allow ability to disable 
+			if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ".auto_install" ) == "yes" ) {
+			skip_package="allow_uninstall"
+			}
+		}
+	} else { # on a 32bit OS, do not show 64 bit packages.
+		if ( package_os[i] == "64bit" ) {
+			skip_package="true"
+		}
+		
+	}
+	if ( skip_package == "true" ) {
+		continue;
+	}
     if ( edit_package_file != "" ) {
         if ( edit_package_file != package_file[i] ) {
           continue;
@@ -571,6 +607,16 @@ BEGIN {
             theHTML = theHTML package_file[i] "\" value=\"Select " package_file[i] "\"></td>"
             theHTML = theHTML "<td width=\"80%\" style=\"background-color:#DDDDDD\">"
             theHTML = theHTML package_name[i]
+	    if ( edit_package_file == ""  && skip_package == "allow_uninstall" ) {
+		 if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ".auto_install" ) == "yes" ) {
+		     theHTML = theHTML "</td></tr><tr><td></td>"
+		     theHTML = theHTML "<td><input type=submit name=\"no_install-"
+		     theHTML = theHTML package_file[i] "\" value=\"Disable Re-Install on Re-Boot\">"
+		     theHTML = theHTML "<br><font color=\"red\"><b>Currently Auto-Installed on reboot, but NOT 64 bit compatible."
+		     theHTML = theHTML "<br>This is likely to cause issues.  Please disable auto \"Re-Install on Re-Boot\".</b></font><br><br></td></tr>"
+		     continue;
+		}
+	    }
             if ( allPackageFilesExist(i) == "yes" ) {
                 if ( FileExists( package_installed[i] ) == "yes" ) {
                    ver_string = PackageVersionTest( package_version_test[i] )
@@ -612,7 +658,7 @@ BEGIN {
     theHTML = theHTML package_name[i]
     theHTML = theHTML "</td>"
      
-    if ( edit_package_file == "" ) {
+    if ( edit_package_file == ""  && skip_package != "allow_uninstall" ) {
       if ( allPackageFilesExist(i) == "yes" ) {
           if ( FileExists( package_installed[i] ) == "yes" ) {
              ver_string = PackageVersionTest( package_version_test[i] )
