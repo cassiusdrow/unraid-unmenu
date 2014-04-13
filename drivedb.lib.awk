@@ -478,6 +478,8 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
          continue;
       }
 
+      #perr("drivedb[" ix ", autoid]='" drivedb[ix, "autoid"])
+
       #-------------------------------------------------------------------
       # Don't run a smart report on drives that are spun down / can't run
       # smart while spun down
@@ -718,7 +720,7 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
             }
 
             #else if ("reported_uncorrect high_fly_writes offline_uncorrectable udma_crc_error_count calibration_retry_count spin_retry_count" ~ d[1]) {
-            else if((",187,189,11,10,5," ~ "," d[1] ",") || (d[1]>195) || ((d[1] == 193) && (t>1000) && (t>drivedb[ix, "smart_attr_9_raw"]))) {
+            else if((",227,221,220,205,204,203,202,201,200,199,198,197,196,189,187,184,183,174,172,171,13,11,10,5," ~ "," d[1] ",") || ((d[1] == 193) && (t>1000) && (t>drivedb[ix, "smart_attr_9_raw"]))) {
                #co1lor="yellow";
                if((drivedb[ix, ix2 "_ok"]>0) && (t<=drivedb[ix, ix2 "_ok"]) && !rawsmart)
                   drivedb[ix, ix2 "extra"] = drivedb[ix, ix2 "extra"] ColorHtml[color="override"];
@@ -741,6 +743,7 @@ function GetSmartData(cmd, a, ix, ix2, lst, t, d, mode, i, color, v, found, cmd2
                if(index(constant["SmartIgnoreList"], ix2) == 0) {
                   #drivedb[ix, "smart_fail_lst"] = drivedb[ix, "smart_fail_lst"] "<div style='" ColorHtml[color] ";'>" bullet ix2 "=" t "</div>"
                   hlink="<a href=\"myConfig?mode=drive"amp"serial=" drivedb[ix,"serial"] amp "newattr=" ix2 amp "newvalue=" t "\" target='_blank'><span title='Click to override'>"
+                  if(qqi==1) perr("HERE2!!")
                   drivedb[ix, "smart_fail_lst"] = drivedb[ix, "smart_fail_lst"] hlink "<div style='" ColorHtml[color] ";'>" bullet ix2 "=" t "</div></a>"
                }
          }
