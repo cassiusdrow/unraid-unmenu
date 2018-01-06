@@ -3,13 +3,9 @@
 
 Loaded from the [Google Code website repository](https://code.google.com/archive/p/unraid-unmenu/)
 
-[Downloads](./downloads)
-[Source archives](./archives)
+[[Downloads]](./downloads)   [[Source archives]](./archives)
 
-### unraid-unmenu
-
-Labels: [unraid](https://code.google.com/archive/search?q=domain:code.google.com%20label:unraid)  [unmenu](https://code.google.com/archive/search?q=domain:code.google.com%20label:unmenu)  [web-server](https://code.google.com/archive/search?q=domain:code.google.com%20label:web-server)  [awk](https://code.google.com/archive/search?q=domain:code.google.com%20label:awk)  [lime-technology](https://code.google.com/archive/search?q=domain:code.google.com%20label:lime-technology)  [unmenuisaweb-server](https://code.google.com/archive/search?q=domain:code.google.com%20label:unmenuisaweb-server)
-
+## unraid-unmenu
 
 *An improved, extensible web-interface to Lime-Technology's unRAID NAS*
 
@@ -52,13 +48,17 @@ This will typically do it:
 If you are running an older version of unRAID that does not have the "wget" command you will need to download and install it. (wget was added in version 4.4-final of unRAID)
 Instructions are in this post on the unRAID forum:
 
-   *(http://lime-technology.com/forum/index.php?topic=6018.msg57535#msg57535)*
+   *http://lime-technology.com/forum/index.php?topic=6018.msg57535#msg57535*
 
-#### Project Information
+### Project Information
 
  - License: [GNU GPL v2](http://www.gnu.org/licenses/old-licenses/gpl-2.0.html)
  - 25 stars
  - svn-based source control
+
+Labels: [[unraid]](https://code.google.com/archive/search?q=domain:code.google.com%20label:unraid)  [[unmenu]](https://code.google.com/archive/search?q=domain:code.google.com%20label:unmenu)  [[web-server]](https://code.google.com/archive/search?q=domain:code.google.com%20label:web-server)  [[awk]](https://code.google.com/archive/search?q=domain:code.google.com%20label:awk)  [[lime-technology]](https://code.google.com/archive/search?q=domain:code.google.com%20label:lime-technology)  [[unmenuisaweb-server]](https://code.google.com/archive/search?q=domain:code.google.com%20label:unmenuisaweb-server)
+
+
 
 
 
