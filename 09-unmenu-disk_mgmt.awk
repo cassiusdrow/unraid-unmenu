@@ -12,6 +12,7 @@ BEGIN {
 #ADD_ON_VERSION 1.5 - added call to srand() to seed random number generator used when spinning up disks not assigned to the array.
 #ADD_ON_VERSION 1.6 - Fixed html input tags, added modprobe of ntfs module; added warning and confirm to create reiserfs.
 #ADD_ON_VERSION 1.7 - fixed "mount" command to get file system type even if disk is apparently not spinning (where temp = "*" or "")
+#ADD_ON_VERSION 1.8 - Added SMART_ATTRIB to unmenu_local.conf to set to "-d ata" if using older hardware where smartctl is unable to determine controller type.
 #UNMENU_RELEASE $Revision$ $Date$
 
    GetConfigValues(ScriptDirectory "/" ConfigFile, "");
@@ -126,7 +127,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_stats"] == "Smart Status Report" ) {
     SpinUp(d[3])
     DiskCommandOutput = "<b><u><font size=\"+1\">Statistics for " d[1] " " d[2] "</font></u></b><br><pre>"
-    cmd="smartctl -a -d ata " d[1]
+    cmd="smartctl " CONFIG["SMART_ATTRIB"] " -a " d[1]
     DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b>" ORS
     RS="\n"
     while (( cmd | getline f ) > 0)  {
@@ -139,7 +140,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_short"] == "Short Smart Test" ) {
     SpinUp(d[3])
     DiskCommandOutput = "Smart Short Test of " d[1] " will take from several minutes to an hour or more.<br><pre>"
-    cmd="smartctl -t short -d ata " d[1] " 2>&1"
+    cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t short " d[1] " 2>&1"
     RS="\n"
     DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b>" ORS
     while (( cmd | getline f ) > 0)  {
@@ -152,7 +153,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_long"] == "Long Smart Test" ) {
     SpinUp(d[3])
     DiskCommandOutput = "Smart Long Test of " d[1] " could take several hours or more.<br>You must disable disk spin-down during this test, otherwise it will abort when the disk is spun down.<pre>"
-    cmd="smartctl -t long -d ata " d[1] " 2>&1"
+    cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t long " d[1] " 2>&1"
     RS="\n"
     DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b>" ORS
     while (( cmd | getline f ) > 0)  {
@@ -219,7 +220,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "<b><u><font size=\"+1\">SMART status Info for /dev/" d[2] "</font></u></b><br><pre>"
-          cmd="smartctl -a -d ata /dev/" d[2] " 2>&1"
+          cmd="smartctl " CONFIG["SMART_ATTRIB"] " -a /dev/" d[2] " 2>&1"
           RS="\n"
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
@@ -232,7 +233,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Short Test of /dev/" d[2] " will take from several minutes to an hour or more.<pre>"
-          cmd="smartctl -t short -d ata /dev/" d[2] " 2>&1"
+          cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t short /dev/" d[2] " 2>&1"
           RS="\n"
           DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b><br>" ORS
           while (( cmd | getline f ) > 0)  {
@@ -245,7 +246,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Long Test of " d[2] " could take several hours or more.<pre>"
-          cmd="smartctl -t long -d ata /dev/" d[2] " 2>&1"
+          cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t long /dev/" d[2] " 2>&1"
           RS="\n"
           DiskCommandOutput = DiskCommandOutput "<b>" cmd "</b><br>" ORS
           while (( cmd | getline f ) > 0)  {
@@ -877,7 +878,7 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping) {
     }
     close(cmd);
     if ( is_sleeping == "n" ) {
-        cmd = "smartctl -d ata -A " theDisk "| grep -i temperature" 
+        cmd = "smartctl -A " CONFIG["SMART_ATTRIB"] " " theDisk "| grep -i temperature" 
         while ((cmd | getline a) > 0 ) {
             delete t;
             split(a,t," ")
@@ -901,18 +902,22 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping) {
     return the_temp
 }
 
-function GetConfigValues(cfile, preface) {
+function GetConfigValues(cfile, preface, i, v) {
     RS="\n"
+    i = ""
+    v = ""
     while (( getline line < cfile ) > 0 ) {
           delete c;
-          match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.+)/, c)
-          #print c[1,"length"] " " c[2,"length"] " " c[3,"length"] " "  c[4, "length"] " " c[5, "length"] " " line
-          if ( c[1,"length"] > 0 && c[2,"length"] > 0 && 
-               c[3,"length"] > 0 && c[4, "length"] > 0 && c[5, "length"] > 0 ) {
-               CONFIG[ preface substr(line,c[1,"start"],c[1,"length"])] = substr(line,c[5,"start"],c[5,"length"])
-               if ( DebugMode == "yes" ) { 
-                   print "importing from " cfile ": " \
-                     "CONFIG[" preface substr(line,c[1,"start"],c[1,"length"]) "] = " substr(line,c[5,"start"],c[5,"length"])
+          match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.*)/, c)
+          if ( c[1,"length"] > 0 && c[3,"length"] == 1 ) {
+               i = preface substr(line,c[1,"start"],c[1,"length"])
+               v = substr(line,c[5,"start"],c[5,"length"])
+               if ( v == "\"\"" ) {
+                  v = ""
+               }
+               CONFIG[ i ] = v
+               if ( DebugMode == "yes" ) {
+                   print "importing from " cfile ": CONFIG[" i "] = " CONFIG[ i ]
                }
           }
     }

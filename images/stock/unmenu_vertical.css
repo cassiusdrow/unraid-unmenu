@@ -58,7 +58,7 @@ body {
   padding-top: 36px;
   padding-right: 20px;
   overflow: visible;
-  background-image: url('http://lime-technology.com/images/stories/lime-logo-small.png');
+  /* background-image: url('http://lime-technology.com/images/stories/lime-logo-small.png');*/
   background-position: 0 4px;
   background-repeat: no-repeat;
 }
@@ -86,6 +86,7 @@ body {
   position: absolute;
   top: 4px;
   right: 16px;
+  text-align: right;
 }
 
 fieldset {

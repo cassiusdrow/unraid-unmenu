@@ -1,10 +1,12 @@
-#ADD_ON_VERSION 1.6 - changes for myMain 3-10-11 release
 #UNMENU_RELEASE $Revision$ $Date$
 function GetArrayStatus(a, d) {
     RS="\n"
     array_numdisks=0
     numdisks=0
     last_parity_sync=0
+    last_parity_sync_blk=0
+    last_parity_sync_len=0
+    last_parity_sync_speed=0
     resync_percentage=""
     resync_finish=""
     resync_speed=""
@@ -21,23 +23,24 @@ function GetArrayStatus(a, d) {
         if ( a ~ "mdNumProtected" )  { delete d; split(a,d,"="); array_numdisks=d[2] }
         # datetime (in seconds) of last parity sync
         if ( a ~ "sbSynced" )        { delete d; split(a,d,"="); last_parity_sync=d[2] }
+        # total blocks of last parity sync
+        if ( a ~ "diskSize.0" )      { delete d; split(a,d,"="); last_parity_sync_blk=d[2] }
         # number of errors detected in last parity sync
         if ( a ~ "sbSyncErrs" )      { delete d; split(a,d,"="); last_parity_errs=d[2] }
+
         # percentage of sync completed thus far
         if ( a ~ "mdResyncPrcnt" )   { delete d; split(a,d,"="); resync_percentage=d[2] }
         if ( a ~ "mdResyncFinish" )  { delete d; split(a,d,"="); resync_finish=d[2] }
         if ( a ~ "mdResyncSpeed" )   { delete d; split(a,d,"="); resync_speed=d[2] }
         if ( a ~ "mdResyncPos" )     { delete d; split(a,d,"="); resync_pos=d[2] }
-        if ( a ~ "mdResyncDt" )      { delete d; split(a,d,"="); resync_dt=d[2] }   # bjp999 3/8/11 - 5.0b6 update
-        if ( a ~ "mdResyncDb" )      { delete d; split(a,d,"="); resync_db=d[2] }   # bjp999 3/8/11 - 5.0b6 update
-        if ( a ~ "mdResync=" )       { delete d; split(a,d,"="); mdresync=d[2] }    # bjp999 3/8/11 - 5.0b6 update
+        if ( a ~ "mdResyncDt" )      { delete d; split(a,d,"="); resync_dt=d[2] }      #bjp999 3/7/11 Change for 5.0b6
+        if ( a ~ "mdResyncDb" )      { delete d; split(a,d,"="); resync_db=d[2] }      #bjp999 3/7/11 Change for 5.0b6
+        if ( a ~ "mdResync=" )       { delete d; split(a,d,"="); mdresync=d[2] }       #bjp999 3/7/11 Change for 5.0b6
         # array status
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
-        # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id.
+        # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id, if present.
         if ( a ~ "diskName" )        { delete d; split(a,d,"[.=]"); disk_name[d[2]]=d[3]; }
-        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); disk_id[d[2]]=d[3]; }        # bjp999 3/8/11 - 5.0b6 update
-        #if ( a ~ "diskId" )         { delete d; split(a,d,"[.=]"); offset = index(d[3],"-")+1;  # bjp999 3/8/11 - 5.0b6 update
-        #                                        disk_id[d[2]]=substr(d[3],offset); }            # bjp999 3/8/11 - 5.0b6 update
+        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); sub("-ata","", d[3]); disk_id[d[2]]=d[3] }
         if ( a ~ "diskSerial" )      { delete d; split(a,d,"[.=]"); disk_serial[d[2]]=d[3]; }
         if ( a ~ "diskSize" )        { delete d; split(a,d,"[.=]"); disk_size[d[2]]=d[3]; }
         if ( a ~ "rdevSize" )        { delete d; split(a,d,"[.=]"); rdisk_size[d[2]]=d[3]; }   #bjp999
@@ -49,10 +52,11 @@ function GetArrayStatus(a, d) {
                                        if ( disk_device[d[2]] != "" ) GetReadWriteStats(d[2])
                                      }
         if ( a ~ "rdevLastIO" )      { delete d; split(a,d,"[.=]"); rdisk_lastIO[d[2]]=d[3]; }
+        if ( a ~ "rdevLastIO" )      { delete d; split(a,d,"[.=]"); disk_lastIO[d[2]]=d[3]; }
         #if ( a ~ "diskNumWrites" )   { delete d; split(a,d,"[.=]"); disk_writes[d[2]]=d[3]; }
         #if ( a ~ "diskNumReads" )    { delete d; split(a,d,"[.=]"); disk_reads[d[2]]=d[3]; }
         if ( a ~ "diskNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
-	if ( a ~ "rdevNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
+        if ( a ~ "rdevNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
         if ( a ~ "rdevSpinupGroup" ) { has_spinup="true"; }
 
     }
@@ -120,15 +124,12 @@ function GetDiskData(cmd, a, d, line, s, i) {
     close(cmd)
 
     # Now, identify the UNRAID device... It should be available in /dev/disk/by-label
-    cmd="ls -l /dev/disk/by-label | grep 'UNRAID'"
+    cmd="ls -l --time-style=long-iso /dev/disk/by-label | grep 'UNRAID'"
     while ((cmd | getline a) > 0 ) {
         delete d;
         split(a,d," ");
-        if(d[11] == "")             # bjp999 3/8/11 - 5.0b6 update
-           d[11] = d[10];           # bjp999 3/8/11 - 5.0b6 update
-        #perr("d11=" d[11]);
-        sub("../../","",d[11])
-        unraid_volume=d[11]
+        sub("../../","",d[10])
+        unraid_volume=d[10]
     }
     close(cmd);
 
@@ -136,28 +137,21 @@ function GetDiskData(cmd, a, d, line, s, i) {
     for( a = 1; a <= num_partitions; a++ ) {
         if ( device[a] == unraid_volume ) {
              assigned[a] = "UNRAID"
-             #perr("assigned["a"]=" assigned[a])
-
         }
-
     }
+
     # Now, get the model/serial numbers. They should be available in /dev/disk/id-label
-    cmd="ls -l /dev/disk/by-id"
+    cmd="ls -l --time-style=long-iso /dev/disk/by-id"
     while ((cmd | getline line) > 0 ) {
        delete d;
        split(line,d," ");
-       if(trim(d[11]) == "")        # bjp999 3/8/11 - 5.0b6 update
-          d[11] = d[10];            # bjp999 3/8/11 - 5.0b6 update
-       sub("../../","",d[11])
+       sub("../../","",d[10])
        if(index(line, "wwn-0x") == 0)
           for( a = 1; a <= num_partitions; a++ ) {
-              if ( d[11] == ( device[a] ) ) {
-                  if(d[9] == "->")  # bjp999 3/8/11 - 5.0b6 update
-                     d[9] = d[8]    # bjp999 3/8/11 - 5.0b6 update
-
-                  model_serial[a]=d[9]
+              if ( d[10] == ( device[a] ) && model_serial[a] == "" ) {
+                  model_serial[a]=d[8]
                   sub("-part1","", model_serial[a])
-                  sub("ata-","",   model_serial[a])
+                  sub("ata-","", model_serial[a])
                   sub("scsi-SATA_","",  model_serial[a])
                   #perr("ms=" model_serial[a])
                   #sub("scsi-","",  model_serial[a])
@@ -176,7 +170,7 @@ function GetDiskData(cmd, a, d, line, s, i) {
        for( a = 1; a <= num_partitions; a++ ) {
            if ( s[1] == ( "/dev/" device[a] ) ) {
                mounted[a]=s[3]
-	       fs_type[a]=s[5]
+               fs_type[a]=s[5]
                mount_mode[a]=substr(s[6],2,2)
                break;
            }
@@ -279,7 +273,7 @@ function GetRawDiskBlocks( theDisk, partition, a, s, d_size, cmd) {
       return(constant["minrawsectors"]);
 
     d_size = ""
-    cmd = "fdisk -l " theDisk
+    cmd = "fdisk -l " theDisk " 2>/dev/null"
     RS="\n"
     while ((cmd | getline a) > 0 ) {
         if ( a ~ theDisk ) {

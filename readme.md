@@ -1,5 +1,7 @@
 
-Loaded from the [Google Code website repository](https://code.google.com/archive/p/unraid-unmenu/)
+"Original-Google-Code-Archive" branch loaded from the [Google Code website repository](https://code.google.com/archive/p/unraid-unmenu/)
+
+"master" branch has further changes not made by the original author.
 
 # unraid-unmenu
 
@@ -15,7 +17,7 @@ To install this on an unRAID server create a **/boot/unmenu** directory
 mkdir /boot/unmenu
 ```
 
-Download the unmenu_install zip file. **The install utility will download the latest version of unMENU.** (It does not have the same version number as unMENU.)  
+Download the unmenu_install zip file. **The install utility will download the latest version of unMENU.** (It does not have the same version number as unMENU.)
 
 **\*\*NOTE: The install utility no longer works properly due to code freeze in Google Code and the move to github.\*\***
 

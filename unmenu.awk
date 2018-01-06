@@ -757,10 +757,13 @@ function SetUpTopMenu(urlName, theMenu, i, menu_flag) {
   "date" | getline DateTime
   close("date")
 
+  "uptime" | getline UpTime
+  close("uptime")
+
   theMenu = substr(theMenu,1, length(theMenu)-1);
   theMenu = theMenu "<div style=\"clear:both\"></div></div><div id=\"topTitle\">" MyHost
   theMenu = theMenu " unRAID Server</div>\
-    <div id=\"topTime\">" DateTime "</div><div style=\"clear:both\"></div></div><div id=\"mainContent\">" ORS ORS
+    <div id=\"topTime\">" DateTime "<br>" UpTime "</div><div style=\"clear:both\"></div></div><div id=\"mainContent\">" ORS ORS
   return theMenu
 }
 
@@ -800,7 +803,7 @@ function GetPageHEAD(add_on_num, theHEAD, i) {
 	}
 	close(CONFIG["UNMENU_SKIN_CSS"])
     theHEAD = theHEAD "</style>"
-
+	
   theHEAD = theHEAD "<script type=\"text/javascript\" src=\"https://ajax.googleapis.com/ajax/libs/jquery/1.7.2/jquery.min.js\"></script>"
   theHEAD = theHEAD "<script type=\"text/javascript\">"
   while(( getline line<CONFIG["UNMENU_SKIN_JS"] ) > 0 ) {
@@ -880,28 +883,28 @@ function ArrayStateHTML(theHTML, parity_status, i) {
      theHTML = theHTML "	        <table width=\"100%\" border=\"0\"><tr>"
      theHTML = theHTML "		<td width=37*>Total&nbsp;Size</td>"
      theHTML = theHTML "		<td align=right ><b>" CommaFormat(disk_size[rebuilding_disk]) "</b></td>"
-     theHTML = theHTML "		<td width=20*; align=\"left\"><b>&nbsp;KB</b></td>"
-     theHTML = theHTML "	        </tr>"
+     theHTML = theHTML "		<td width=20*; align=\"left\"><b>&nbsp;KB</b></td>"		
+     theHTML = theHTML "	        </tr>"	
      theHTML = theHTML "	        <tr>"
      theHTML = theHTML "		<td>Current</td>"
      theHTML = theHTML "		<td align=\"right\"><b>" CommaFormat(resync_pos) "</b></td>"
-     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(" pct_complete "%)</b></td>"
+     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(" pct_complete "%)</b></td>"		
      theHTML = theHTML "	        </tr>"
      theHTML = theHTML "	        <tr>"
      theHTML = theHTML "		<td>Speed</td>"
      theHTML = theHTML "		<td align=\"right\"><b>" CommaFormat(resync_speed) "</b></td>"
-     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;KB/sec</b></td>"
+     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;KB/sec</b></td>"		
      theHTML = theHTML "	        </tr>"
      theHTML = theHTML "	        <tr>"
      theHTML = theHTML "		<td>Finish</td>"
      theHTML = theHTML "		<td align=\"right\"><b>" resync_finish "</b></td>"
-     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;minutes</b></td>"
+     theHTML = theHTML "		<td align=\"left\"><b>&nbsp;minutes</b></td>"		
      theHTML = theHTML "	        </tr>"
      if(rebuilding_disk == 0) { # only show sync errors here if fixing parity.
        theHTML = theHTML "	        <tr>"
        theHTML = theHTML "		<td>Sync&nbsp;Errors</td>"
        theHTML = theHTML "		<td align=\"right\"><b>" CommaFormat(last_parity_errs) "</b></td>"
-       theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(corrected)</b></td>"
+       theHTML = theHTML "		<td align=\"left\"><b>&nbsp;(corrected)</b></td>"		
        theHTML = theHTML "	        </tr>"
      }
      theHTML = theHTML "		</table>"
@@ -911,10 +914,13 @@ function ArrayStateHTML(theHTML, parity_status, i) {
 
   } else {
 
-     secsSinceLastParity = strftime("%s") - strftime("%s", last_parity_sync);
+     secsLastParity = strftime("%s", last_parity_sync);
+     secsSinceLastParity = strftime("%s") - secsLastParity;
      daysSinceLastParity = secsSinceLastParity/(60*60*24) + 0.5;
 
-     if(secsSinceLastParity < (60*60*24))
+     if(secsLastParity == 0)
+        ParityCheckMsg = "<font style=\"background-color:red;color:white\"><b>&nbsp;Never.&nbsp;</b></font>&nbsp;"
+     else if(secsSinceLastParity < (60*60*24))
         ParityCheckMsg = "&lt; 1 day ago";
      else if(daysSinceLastParity < 2)
         ParityCheckMsg = "1 day ago";
@@ -927,7 +933,9 @@ function ArrayStateHTML(theHTML, parity_status, i) {
      else
         ParityCheckMsg = "<font style=\"background-color:red;color:white\"><b>&nbsp;" sprintf("%d", daysSinceLastParity) "&nbsp;</b></font>&nbsp;days ago"
 
-     if(last_parity_errs == 0)
+     if(secsLastParity == 0)
+        SyncErrorMsg = ""
+     else if(last_parity_errs == 0)
         SyncErrorMsg = "with no sync errors."
      else if(last_parity_errs < 20)
         SyncErrorMsg = ".&nbsp;&nbsp;&nbsp;Parity updated <b> " last_parity_errs " </b>times to address sync errors."
@@ -936,10 +944,21 @@ function ArrayStateHTML(theHTML, parity_status, i) {
      else
         SyncErrorMsg = ".&nbsp;&nbsp;&nbsp;Parity updated&nbsp;<font style=\"background-color:red;color:white\"><b>&nbsp;" last_parity_errs " </b></font>&nbsp;times to address sync errors."
 
+     if(secsLastParity == 0 || last_parity_sync_len == 0)
+        SyncTimeMsg = ""
+     else
+        SyncTimeMsg = "&nbsp;Duration:&nbsp;" hms( last_parity_sync_len) ".&nbsp;"
+        #SyncTimeMsg = "&nbsp;Duration:&nbsp;" strftime( "%H:%M:%S", last_parity_sync_len, 1) ".&nbsp;"
+
+     if(secsLastParity == 0 || last_parity_sync_speed == 0)
+        SyncSpeedMsg = ""
+     else
+        SyncSpeedMsg = "&nbsp;Avg Speed:&nbsp;" human_readable_number(last_parity_sync_speed) "B/sec.&nbsp;"
+
     if ( parity_valid!="" && parity_valid!="Parity disk not configured." ) {
       parity_status= "; " parity_valid
       if ( parity_valid=="Parity is Valid:" ) {
-          parity_status = parity_status ".&nbsp;&nbsp;&nbsp;Last parity check&nbsp;" ParityCheckMsg " " SyncErrorMsg "&nbsp;&nbsp;&nbsp;";
+          parity_status = parity_status "&nbsp;&nbsp;&nbsp;Last parity check&nbsp;" ParityCheckMsg " " SyncErrorMsg " " SyncTimeMsg " " SyncSpeedMsg "&nbsp;&nbsp;&nbsp;";
       }
     } else {
       parity_status= "; <b>Array is not protected by a parity disk: " parity_valid "</b>"
@@ -1352,7 +1371,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_stats"] == "Smart+Statistics" ) {
     DiskCommandOutput = "<b><u><font size=\"+1\">Statistics for " d[1] " " d[2] "</font></u></b><br><pre>"
     #smartctl -a -d ata /dev/$disk_device
-    cmd="smartctl -a -d ata " d[1]
+    cmd="smartctl " CONFIG["SMART_ATTRIB"] " -a " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0)  {
         DiskCommandOutput = DiskCommandOutput f ORS
@@ -1364,7 +1383,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_short"] == "Short+Smart+Test" ) {
     DiskCommandOutput = "Smart Short Test of " d[1] " will take from several minutes to an hour or more."
     #smartctl -t short /dev/$disk_device
-    cmd="smartctl -d ata -t short " d[1]
+    cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t short " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0) ;
     close(cmd);
@@ -1373,7 +1392,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
   if ( GETARG["disk_device"] != "" && GETARG["smart_long"] == "Long+Smart+Test" ) {
     DiskCommandOutput = "Smart Long Test of " d[1] " could take several hours or more."
     #smartctl -t long /dev/$disk_device
-    cmd="smartctl -d ata -t long " d[1]
+    cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t long " d[1]
     RS="\n"
     while (( cmd | getline f ) > 0) ;
     close(cmd);
@@ -1447,7 +1466,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "<b><u><font size=\"+1\">SMART status Info for /dev/" d[2] "</font></u></b><br><pre>"
-          cmd="smartctl -a -d ata /dev/" d[2] " 2>&1"
+          cmd="smartctl " CONFIG["SMART_ATTRIB"] " -a /dev/" d[2] " 2>&1"
           RS="\n"
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
@@ -1460,7 +1479,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Short Test of /dev/" d[2] " will take from several minutes to an hour or more.<pre>"
-          cmd="smartctl -d ata -t short /dev/" d[2] " 2>&1"
+          cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t short /dev/" d[2] " 2>&1"
           RS="\n"
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
@@ -1472,7 +1491,7 @@ function SetUpDiskMgmtPage( theMenuVal ) {
           delete d
           split(PARAM[i],d,"[=-]")
           DiskCommandOutput = "Smart Long Test of " d[2] " could take several hours or more.<pre>"
-          cmd="smartctl -d ata -t long /dev/" d[2] " 2>&1"
+          cmd="smartctl " CONFIG["SMART_ATTRIB"] " -t long /dev/" d[2] " 2>&1"
           RS="\n"
           while (( cmd | getline f ) > 0)  {
               DiskCommandOutput = DiskCommandOutput f ORS
@@ -1688,21 +1707,30 @@ function GetArrayStatus(a) {
     array_numdisks=0
     numdisks=0
     last_parity_sync=0
+    last_parity_sync_blk=0
+    last_parity_sync_len=0
+    last_parity_sync_speed=0
     resync_percentage=""
     resync_finish=""
     resync_speed=""
     resync_pos=""
     last_parity_errs=0
     array_state="Not started"
+    has_spinup="false"
+
     while (("/root/mdcmd status|strings" | getline a) > 0 ) {
+
         # number of disks in the superblock
         if ( a ~ "sbNumDisks" )      { delete d; split(a,d,"="); numdisks=d[2] }
         # number of disks in the "md" array
         if ( a ~ "mdNumProtected" )  { delete d; split(a,d,"="); array_numdisks=d[2] }
         # datetime (in seconds) of last parity sync
         if ( a ~ "sbSynced" )        { delete d; split(a,d,"="); last_parity_sync=d[2] }
+        # total blocks of last parity sync
+        if ( a ~ "diskSize.0" )      { delete d; split(a,d,"="); last_parity_sync_blk=d[2] }
         # number of errors detected in last parity sync
         if ( a ~ "sbSyncErrs" )      { delete d; split(a,d,"="); last_parity_errs=d[2] }
+
         # percentage of sync completed thus far
         if ( a ~ "mdResyncPrcnt" )   { delete d; split(a,d,"="); resync_percentage=d[2] }
         if ( a ~ "mdResyncFinish" )  { delete d; split(a,d,"="); resync_finish=d[2] }
@@ -1715,11 +1743,10 @@ function GetArrayStatus(a) {
         if ( a ~ "mdState" )         { delete d; split(a,d,"="); array_state=d[2] }
         # per disk data, stored in disk_... arrays, delete "ata-" preface on disk_id, if present.
         if ( a ~ "diskName" )        { delete d; split(a,d,"[.=]"); disk_name[d[2]]=d[3]; }
-    if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); if ( substr(d[3],1,4) == "ata-" )
-                                                                         { disk_id[d[2]]=substr(d[3],5) }
-                                                                    else { disk_id[d[2]]=d[3];} }
+        if ( a ~ "diskId" )          { delete d; split(a,d,"[.=]"); sub("-ata","", d[3]); disk_id[d[2]]=d[3] }
         if ( a ~ "diskSerial" )      { delete d; split(a,d,"[.=]"); disk_serial[d[2]]=d[3]; }
         if ( a ~ "diskSize" )        { delete d; split(a,d,"[.=]"); disk_size[d[2]]=d[3]; }
+        if ( a ~ "rdevSize" )        { delete d; split(a,d,"[.=]"); rdisk_size[d[2]]=d[3]; }   #bjp999
         if ( a ~ "rdevSerial" )      { delete d; split(a,d,"[.=]"); rdisk_serial[d[2]]=d[3]; }
         if ( a ~ "diskModel" )       { delete d; split(a,d,"[.=]"); disk_model[d[2]]=d[3]; }
         if ( a ~ "rdevModel" )       { delete d; split(a,d,"[.=]"); rdisk_model[d[2]]=d[3]; }
@@ -1727,13 +1754,24 @@ function GetArrayStatus(a) {
         if ( a ~ "rdevName" )        { delete d; split(a,d,"[.=]"); disk_device[d[2]]=d[3];
                                        if ( disk_device[d[2]] != "" ) GetReadWriteStats(d[2])
                                      }
-        if ( a ~ "diskNumWrites" )   { delete d; split(a,d,"[.=]"); disk_writes[d[2]]=d[3]; }
-        if ( a ~ "diskNumReads" )    { delete d; split(a,d,"[.=]"); disk_reads[d[2]]=d[3]; }
+        if ( a ~ "rdevLastIO" )      { delete d; split(a,d,"[.=]"); rdisk_lastIO[d[2]]=d[3]; }
+        if ( a ~ "rdevLastIO" )      { delete d; split(a,d,"[.=]"); disk_lastIO[d[2]]=d[3]; }
+        #if ( a ~ "diskNumWrites" )   { delete d; split(a,d,"[.=]"); disk_writes[d[2]]=d[3]; }
+        #if ( a ~ "diskNumReads" )    { delete d; split(a,d,"[.=]"); disk_reads[d[2]]=d[3]; }
         if ( a ~ "diskNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
-	if ( a ~ "rdevNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
-        if ( a ~ "rdevLastIO" )   { delete d; split(a,d,"[.=]"); disk_lastIO[d[2]]=d[3]; }
+        if ( a ~ "rdevNumErrors" )   { delete d; split(a,d,"[.=]"); disk_errors[d[2]]=d[3]; }
+        if ( a ~ "rdevSpinupGroup" ) { has_spinup="true"; }
+
     }
     close("/root/mdcmd status|strings")
+
+    while (("tac /var/log/syslog" | getline a) > 0 ) {
+        if ( a ~ "kernel: md: sync done" )   { delete d; split(a,d,"="); sub("sec","", d[2]); last_parity_sync_len=d[2]; break}
+    }
+    close("tac /var/log/syslog")
+
+    if(last_parity_sync_len > 0)
+       last_parity_sync_speed=last_parity_sync_blk/last_parity_sync_len
 
     # Compute values that pre-5.0 computed automatically                               #bjp999 3/7/11 Change for 5.0b6
     if(resync_dt != "") {                                                              #bjp999 3/7/11 Change for 5.0b6
@@ -1761,17 +1799,19 @@ function GetDiskData() {
         device[num_partitions] = d[4]
         assigned[num_partitions] = ""
         mounted[num_partitions] = ""
+        fs_type[num_partitions] = ""
+        mount_mode[num_partitions] = ""
         model_serial[num_partitions] = ""
     }
     close(cmd)
 
     # Now, identify the UNRAID device... It should be available in /dev/disk/by-label
-    cmd="ls -l /dev/disk/by-label | grep 'UNRAID'"
+    cmd="ls -l --time-style=long-iso /dev/disk/by-label | grep 'UNRAID'"
     while ((cmd | getline a) > 0 ) {
         delete d;
         split(a,d," ");
-        sub("../../","",d[11])
-        unraid_volume=d[11]
+        sub("../../","",d[10])
+        unraid_volume=d[10]
     }
     close(cmd);
 
@@ -1783,19 +1823,23 @@ function GetDiskData() {
     }
 
     # Now, get the model/serial numbers. They should be available in /dev/disk/id-label
-    cmd="ls -l /dev/disk/by-id"
+    cmd="ls -l --time-style=long-iso /dev/disk/by-id"
     while ((cmd | getline line) > 0 ) {
        delete d;
        split(line,d," ");
-       sub("../../","",d[11])
-       for( a = 1; a <= num_partitions; a++ ) {
-           if ( d[11] == ( device[a] ) && model_serial[a] == "" ) {
-               model_serial[a]=d[9]
-               sub("-part1","", model_serial[a])
-               sub("ata-","", model_serial[a])
-               break;
-           }
-       }
+       sub("../../","",d[10])
+       if(index(line, "wwn-0x") == 0)
+          for( a = 1; a <= num_partitions; a++ ) {
+              if ( d[10] == ( device[a] ) && model_serial[a] == "" ) {
+                  model_serial[a]=d[8]
+                  sub("-part1","", model_serial[a])
+                  sub("ata-","", model_serial[a])
+                  sub("scsi-SATA_","",  model_serial[a])
+                  #perr("ms=" model_serial[a])
+                  #sub("scsi-","",  model_serial[a])
+                  break;
+              }
+          }
     }
     close(cmd);
 
@@ -1808,6 +1852,8 @@ function GetDiskData() {
        for( a = 1; a <= num_partitions; a++ ) {
            if ( s[1] == ( "/dev/" device[a] ) ) {
                mounted[a]=s[3]
+               fs_type[a]=s[5]
+               mount_mode[a]=substr(s[6],2,2)
                break;
            }
        }
@@ -2282,10 +2328,13 @@ function GetReadWriteStats(theDevIndex,  cmd) {
 
 function GetDiskFileSystem(theDisk , thePartition, file_system, a, s) {
     # get the file system of the specified partition
-    cmd = "vol_id " theDisk thePartition " 2>/dev/null"
-#print cmd
     file_system=""
     RS="\n"
+    if (system("which vol_id >/dev/null 2>&1" )==0)
+        cmd = "vol_id " theDisk thePartition " 2>/dev/null"
+    else
+        cmd = "blkid -o udev " theDisk thePartition " 2>/dev/null"
+    #print cmd
     while ((cmd | getline a) > 0 ) {
         if ( a ~ "ID_FS_TYPE" ) {
             delete s;
@@ -2370,18 +2419,18 @@ function GetDiskTemperature(theDisk, the_temp, cmd, a, t, is_sleeping, i) {
     is_sleeping = ""
     # We might be able to determine spinning status by the output of the the mdcmd status.
     # If we can, no need for the hdparm -C command
-    theDiskDevice=substr(theDisk,6,length(theDisk))
-    for ( i =0; i<numdisks; i++ ) {
-        if ( disk_device[i] == "" ) { continue; }
-        if ( disk_device[i] == theDiskDevice ) {
-           if ( disk_lastIO[i] == "0" ) {
-              is_sleeping = "y"
-           } else {
-              is_sleeping = "n"
-           }
-           break;
-        }
-    }
+    #theDiskDevice=substr(theDisk,6,length(theDisk))
+    #for ( i =0; i<numdisks; i++ ) {
+    #    if ( disk_device[i] == "" ) { continue; }
+    #    if ( disk_device[i] == theDiskDevice ) {
+    #       if ( disk_lastIO[i] == "0" ) {
+    #          is_sleeping = "y"
+    #       } else {
+    #          is_sleeping = "n"
+    #       }
+    #       break;
+    #    }
+    #}
 
     if ( is_sleeping == "" ) {
        is_sleeping = "n"
@@ -2513,8 +2562,10 @@ function human_readable_number( num ) {
 # The values found there can be used to override values of some variables in these scripts.
 # the CONFIG[] array is set with the variable.
 
-function GetConfigValues(cfile, preface) {
+function GetConfigValues(cfile, preface, i, v) {
     RS="\n"
+    i = ""
+    v = ""
     while (( getline line < cfile ) > 0 ) {
           delete c;
           match( line , /^([^# \t=]+)([\t ]*)(=)([\t ]*)(.*)/, c)
@@ -2523,10 +2574,14 @@ function GetConfigValues(cfile, preface) {
           #if ( c[1,"length"] > 0 && c[2,"length"] > 0 &&
           #     c[3,"length"] > 0 && c[4, "length"] > 0 && c[5, "length"] > 0 ) {
           if ( c[1,"length"] > 0 && c[3,"length"] == 1 ) {
-               CONFIG[ preface substr(line,c[1,"start"],c[1,"length"])] = substr(line,c[5,"start"],c[5,"length"])
+               i = preface substr(line,c[1,"start"],c[1,"length"])
+               v = substr(line,c[5,"start"],c[5,"length"])
+               if ( v == "\"\"" ) {
+                  v = ""
+               }
+               CONFIG[ i ] = v
                if ( DebugMode == "yes" ) {
-                   print "importing from " cfile ": " \
-                     "CONFIG[" preface substr(line,c[1,"start"],c[1,"length"]) "] = " substr(line,c[5,"start"],c[5,"length"])
+                   print "importing from " cfile ": CONFIG[" i "] = " CONFIG[ i ]
                }
           }
     }
@@ -2580,3 +2635,7 @@ function perr(printme)          # BJP 10/17/10 - The above version does not work
    print printme | "cat 1>&2"   #    Feel free to edit - I just needed to display some results
 }                               #    to do some debugging.
 
+function hms(s)
+{
+  return sprintf( "%02d:%02d:%02d", s/(60*60), s%(60*60)/60, s%60)
+}

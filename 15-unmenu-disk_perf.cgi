@@ -1,7 +1,9 @@
 #ADD_ON_MENU Disk Performance
 #ADD_ON_URL disk_performance
+#ADD_ON_STATUS  NO
 #ADD_ON_VERSION .1 - Proof of concept version Joe L.
 #ADD_ON_VERSION 1 - improved css by zoggy
+#ADD_ON_VERSION 1.1 - remove formatting
 #UNMENU_RELEASE $Revision$ $Date$
 
 # refresh interval
@@ -12,10 +14,10 @@ type=avg
 
 # copy of style sheet definitions from bwm-ng.css
 echo "<style type=\"text/css\">
-body {
-    font: 12pt Arial, Helvetica, sans-serif;
-    text-decoration: none;
-}
+#body {
+#    font: 12pt Arial, Helvetica, sans-serif;
+#    text-decoration: none;
+#}
 .bwm-ng-header {
     margin: 10px;
     font: bold 12px Arial, Helvetica, Sans-serif;

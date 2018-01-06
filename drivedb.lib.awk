@@ -5,6 +5,7 @@
 #ADD_ON_VERSION 1.52 - changes for myMain 12-1-10 release, contributed by bjp999 - minor update 2
 #ADD_ON_VERSION 1.53 - changes for myMain 3-10-11 release, contributed by bjp999 - 5.0b6 support
 #ADD_ON_VERSION 1.54 - changes for myMain 4-10-11 release, contributed by bjp999 - preclear support
+#ADD_ON_VERSION 1.6 - handle addtional SMART temperature values
 #UNMENU_RELEASE $Revision$ $Date$
 
    # (c) Copyright bjp999, 2009-2011.  All rights reserved.

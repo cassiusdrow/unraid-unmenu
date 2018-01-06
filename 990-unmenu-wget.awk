@@ -25,6 +25,7 @@ BEGIN {
 #define ADD_ON_VERSION     2.8   added PACKAGE_MIN_SIZE and PACKAGE_EXTRA_MIN_SIZE paramaters to make it easier to deal with unknown source file MD5 checksums.
 #define ADD_ON_VERSION     2.9   Fixed spelling error on "View All Available Packages" button..
 #define ADD_ON_VERSION     3.0   Added 64bit compatible flag to packages.
+#define ADD_ON_VERSION     3.1   Fixed some formatting issues
 #UNMENU_RELEASE $Revision$ $Date$
 
 
@@ -329,10 +330,10 @@ BEGIN {
                   system("cp " manual_install_file " " auto_install_file)
                }
                if ( FileExists( package_installed[i] ) == "yes" ) {
-                 theHTML = theHTML "<font color=\"blue\"><b>" the_package " is now installed:</b></font><br><pre>"
+                 theHTML = theHTML "<font color=\"blue\"><b>" the_package " is now installed:</b></font><br>"
                } else {
                  theHTML = theHTML "<font color=\"blue\"><b>" the_package 
-                 theHTML = theHTML " apparently did not install properly, " package_installed[i] " does not exist.</b></font><br><pre>"
+                 theHTML = theHTML " apparently did not install properly, " package_installed[i] " does not exist.</b></font><br>"
                }
                break;
             }
@@ -424,12 +425,12 @@ BEGIN {
                     } else {
                       dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_file[i],  theServer, port, package_url[i] )
                     }
-                    theHTML = theHTML "<br>" dl_out "<br>"
+                    theHTML = theHTML "<br><pre>" dl_out "</pre><br>"
                   } else {
                     # not a simple http:// request, use wget if we have it.
                     if ( has_wget == "yes" ) {
                       dl_out = wget_package( PACKAGE_DIRECTORY "/" package_file[i], package_url[i]);
-                      theHTML = theHTML "<br>" dl_out "<br>"
+                      theHTML = theHTML "<br><pre>" dl_out "</pre><br>"
                     }
                   }
                   if ( FileExists( PACKAGE_DIRECTORY "/" package_file[i] ) == "yes" ) {
@@ -451,16 +452,16 @@ BEGIN {
                       port   = "/80"
                       if ( has_wget == "yes" ) {
                         dl_out = wget_package( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_url[i,p]);
-                        theHTML = theHTML "<br>" dl_out "<br>"
+                        theHTML = theHTML "<br><pre>" dl_out "</pre><br>"
                       } else {
                         dl_out = download_package(package_name[i], PACKAGE_DIRECTORY "/" package_extra_file[i,p],  theServer, port, package_extra_url[i,p] )
-                        theHTML = theHTML "<br>" dl_out "<br>"
+                        theHTML = theHTML "<br><pre>" dl_out "</pre><br>"
                       } 
                     } else {
                       # not a simple http:// request, use wget if we have it.
                       if ( has_wget == "yes" ) {
                         dl_out = wget_package( PACKAGE_DIRECTORY "/" package_extra_file[i,p], package_extra_url[i,p]);
-                        theHTML = theHTML "<br>" dl_out "<br>"
+                        theHTML = theHTML "<br><pre>" dl_out "</pre><br>"
                       }
                     }
                     if ( FileExists( PACKAGE_DIRECTORY "/" package_extra_file[i,p] ) == "yes" ) {

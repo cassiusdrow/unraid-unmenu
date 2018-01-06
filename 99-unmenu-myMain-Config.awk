@@ -10,6 +10,7 @@ BEGIN {
 #ADD_ON_REFRESH = 0
 #ADD_ON_CONFIG=norefresh.conf
 #define ADD_ON_VERSION 1.0 - Part of myMain 12-1-10 release, contributed by bjp999
+#define ADD_ON_VERSION 1.1 - change order of attributes
 #UNMENU_RELEASE $Revision$ $Date$
 
    # Copyright bjp999, 2010.  This program carries no guarantee of any kind.
@@ -570,8 +571,9 @@ function DriveConfig(id,i,found, x, y)
    values["id4" ] = substr(values["myserial"], length(values["myserial"])-(4-1))
    values["autoid" ]  = substr(values["myserial"], length(values["myserial"])-(constant["IdLen"]-1))
 
-   names_sub_list = "myserial,autoid,manu,mysize,location,mount,slot,share,interface,modelname,cache,speed,borndate,borndate_raw,store,purchdate,purchdate_raw,invoice,cost,warranty,usage,notes";
-
+   #names_sub_list = "myserial,autoid,manu,mysize,location,mount,slot,share,interface,modelname,cache,speed,borndate,borndate_raw,store,purchdate,purchdate_raw,invoice,cost,warranty,usage,notes";
+   names_sub_list = "myserial,autoid,manu,modelname,mysize,location,mount,slot,share,interface,cache,speed,borndate,borndate_raw,store,purchdate,purchdate_raw,invoice,cost,warranty,usage,notes"
+   
    names_out_list = names_sub_list
    #gsub("serial,", "", names_out_list)
    gsub("autoid,", "", names_out_list)
