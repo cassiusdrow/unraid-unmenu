@@ -3,7 +3,7 @@ Loaded from the [Google Code website repository](https://code.google.com/archive
 
 # unraid-unmenu
 
-   *[An improved, extensible web-interface to Lime-Technology's unRAID NAS](https://lime-technology.com/forums/topic/2521-an-improved-unraid-web-interface-extensible-and-easy-to-install/)*
+   *An improved, extensible web-interface to Lime-Technology's unRAID NAS*
 
 Unmenu is an improved, extensible web interface to supplement the web-based management console on Lime-Technology's unRAID Network Attached Storage OS.
 
@@ -11,52 +11,76 @@ Unmenu is a web-server and a set of web-pages written in GNU Awk. It is restrict
 
 To install this on an unRAID server create a **/boot/unmenu** directory
 
-**mkdir /boot/unmenu**
+```bash
+mkdir /boot/unmenu
+```
 
 Download the unmenu_install zip file. **The install utility will download the latest version of unMENU.** (It does not have the same version number as unMENU)
 
 Unzip and move unmenu_install to the **/boot/unmenu** directory.
 
 Then
-**cd /boot/unmenu**
-**unmenu_install -i -d /boot/unmenu**
+
+```bash
+cd /boot/unmenu
+unmenu_install -i -d /boot/unmenu
+```
 
 If you already have an older unmenu version installed type
-**unmenu_install -u**
+
+```bash
+unmenu_install -u
+```
 
 To check an existing installation for available updates, type
-**unmenu_install -c**
+
+```bash
+unmenu_install -c
+```
 
 To start unmenu running, invoke it as
-**/boot/unmenu/uu**
+
+```bash
+/boot/unmenu/uu
+```
+
 or
-**cd /boot/unmenu**
-**./uu**
+
+```bash
+cd /boot/unmenu
+./uu
+```
 
 Once running you can view the unMENU pages in your web-browser by browsing to
-**//tower:8080**
+
+```
+//tower:8080
+```
 
 If you had a prior version of unMENU running, you'll need to restart it to see the new version.
 This will typically do it:
-**killall awk**
-**/boot/unmenu/uu**
+
+```bash
+killall awk
+/boot/unmenu/uu
+```
 
 If you are running an older version of unRAID that does not have the "wget" command you will need to download and install it. (wget was added in version 4.4-final of unRAID)
 Instructions are in this post on the unRAID forum:
 
-   *https://lime-technology.com/forums/topic/5813-unmenu-installation-problem/?tab=comments#comment-56736*
+   https://lime-technology.com/forums/topic/5813-unmenu-installation-problem/?tab=comments#comment-56736
 
 ## Useful unRAID forum threads
 
-   *[An improved, extensible web-interface to Lime-Technology's unRAID NAS](https://lime-technology.com/forums/topic/2521-an-improved-unraid-web-interface-extensible-and-easy-to-install/)*
+   [An improved, extensible web-interface to Lime-Technology's unRAID NAS](https://lime-technology.com/forums/topic/2521-an-improved-unraid-web-interface-extensible-and-easy-to-install/)
 
-   *[unMENU 1.6 - now available (A major upgrade in appearance)](https://lime-technology.com/forums/topic/25692-unmenu-16-now-available-a-major-upgrade-in-appearance/)*
+   [unMENU 1.6 - now available (A major upgrade in appearance)](https://lime-technology.com/forums/topic/25692-unmenu-16-now-available-a-major-upgrade-in-appearance/)
 
-   *[myMain 1.5 - Now Integrated into unmenu](https://lime-technology.com/forums/topic/8765-mymain-15-now-integrated-into-unmenu/)*
+   [myMain 1.5 - Now Integrated into unmenu](https://lime-technology.com/forums/topic/8765-mymain-15-now-integrated-into-unmenu/)
 
-   *[myMain Support and Information Thread](https://lime-technology.com/forums/topic/31237-mymain-support-and-information-thread/)*
+   [myMain Support and Information Thread](https://lime-technology.com/forums/topic/31237-mymain-support-and-information-thread/)
 
-   *[New unmenu pluging: myMain](https://lime-technology.com/forums/topic/2628-new-unmenu-pluging-mymain/)*
+   [New unmenu pluging: myMain](https://lime-technology.com/forums/topic/2628-new-unmenu-pluging-mymain/)
 
 ## Project Information
 
